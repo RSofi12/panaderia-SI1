@@ -14,7 +14,8 @@ El sistema está diseñado bajo una **arquitectura en capas desacoplada** con co
 ```
 +-------------------------------------------------------------------------------+
 |                       CAPA DE PRESENTACIÓN (FRONTEND)                         |
-|  React (TypeScript) + Vite + Tailwind CSS / UI Components                     |
+|  React (TypeScript) + Vite + Tailwind CSS v4 / UI Components                  |
+|  - Organizada por PANTALLAS: src/apps/{auth, dashboard/*}                     |
 |  - Vistas por Rol: Administrador | Propietario | Ventas | Producción          |
 |  - Manejo de Estado y Auth Context                                            |
 |  - Cliente HTTP (Axios / Fetch API con Interceptores)                         |
@@ -128,7 +129,161 @@ backend/
 
 ---
 
-## 3. Mapeo entre Tablas Físicas SQL y Paquetes Django
+## 3. Organización de Pantallas en `frontend/src/`
+
+A diferencia del backend (que se organiza **por paquete de dominio**, es decir por la estructura de la base de datos y la lógica de negocio), el frontend se organiza **por ventanas / flujo visual del usuario**. Esto significa que la unidad de organización es **la pantalla que el usuario ve**, y dentro de cada ventana viven sus componentes, hooks y vistas específicas.
+
+Esta asimetría es intencional y responde a dos.interfaces distintas:
+
+| Capa | Criterio de organización | Justificación |
+|---|---|---|
+| **Backend** | Por **paquete de dominio** (`apps/usuarios_seguridad/`, `apps/productos_inventario/`, …) | El mismo dato y la misma regla de negocio sirven a varios CUs y varias pantallas. Unificar la lógica evita duplicación. |
+| **Frontend** | Por **pantalla / ventana** (`src/apps/auth/`, `src/apps/dashboard/`, …) | Una pantalla es una unidad de navegación y de permiso. El usuario piensa en "ventanas", no en paquetes de base de datos. |
+
+### Estructura Actual
+
+```
+frontend/
+├── public/                            # Archivos estáticos servidos tal cual (favicon.svg, icons.svg)
+├── src/
+│   ├── apps/                          # ⭐ PANTALLAS — una carpeta por ventana del flujo visual
+│   │   ├── auth/                      # Ventanas públicas de acceso
+│   │   │   └── LoginPage.tsx          #   CU1  Iniciar sesión
+│   │   └── dashboard/                 # Ventana privada post-autenticación (shell único)
+│   │       ├── DashboardLayout.tsx    #   Shell: Sidebar + Topbar + <Outlet/>
+│   │       ├── DashboardHome.tsx      #   Hogar: identidad del actor y sus módulos
+│   │       ├── navigation.ts          #   Menú único, filtrado por permisos (RBAC)
+│   │       └── components/            #   Sidebar, Topbar, UserAvatar
+│   │
+│   ├── components/                    # UI compartida y reutilizable entre pantallas
+│   │                                 #   (Sidebar, Navbar, Button, Table, Modal, DataTable…)
+│   │
+│   ├── contexts/                      # Estado global de la aplicación
+│   │   ├── AuthContext.ts             #   Definición del contexto + hook useAuth()
+│   │   └── AuthProvider.tsx           #   Componente AuthProvider (lógica de sesión)
+│   │
+│   ├── routes/                        # Capa de enrutamiento y control de acceso
+│   │   ├── AppRoutes.tsx              #   Tabla de rutas (BrowserRouter + AuthProvider)
+│   │   └── ProtectedRoute.tsx         #   Guardia de ruta: exige sesión + permiso + rol
+│   │
+│   ├── services/                      # Capa de comunicación con la API REST
+│   │   ├── api.ts                     #   Instancia de Axios + interceptores (JWT, refresh 401)
+│   │   └── authService.ts             #   Endpoints de autenticación (login, me, logout)
+│   │
+│   ├── types/                         # Contratos de datos TypeScript
+│   │   └── auth.ts                    #   Usuario, Rol, Permiso, LoginCredentials, AuthResponse
+│   │
+│   ├── assets/                        # Imágenes, logos y recursos estáticos
+│   ├── App.tsx                        # Shell raíz; monta <AppRoutes />
+│   ├── main.tsx                       # Punto de entrada React (createRoot)
+│   ├── index.css                      # Tailwind CSS v4 + estilos base globales
+│   └── vite-env.d.ts                  # Tipado de import.meta.env (VITE_*)
+│
+├── index.html                         # Documento HTML raíz de Vite
+├── vite.config.ts                     # Plugins: @vitejs/plugin-react + @tailwindcss/vite
+├── tsconfig.app.json                  # Opciones de TypeScript para el código de la app
+└── package.json
+```
+
+### Estructura Objetivo (a medida que avanzan los ciclos)
+
+Las carpetas se crean **bajo demanda**, cuando se implemente el CU correspondiente. No se crean vacías:
+
+```
+frontend/src/apps/
+├── auth/                              # CU1, CU2
+│   ├── LoginPage.tsx                  #   CU1  Iniciar sesión
+│   └── ForgotPasswordPage.tsx         #   CU2  Recuperar contraseña
+└── dashboard/                         # Shell con Sidebar + Topbar + Outlet
+    ├── DashboardLayout.tsx            #   Shell único para los 4 actores
+    ├── DashboardHome.tsx              #   Resumen: identidad del actor y sus módulos
+    ├── navigation.ts                  #   Menú único, filtrado por permisos (RBAC)
+    ├── components/                    #   Sidebar, Topbar, UserAvatar
+    ├── usuarios/                      #   CU3 Gestionar usuarios, CU4 Roles y permisos, CU26 Bitácora
+    ├── productos/                     #   CU5, CU8–CU12, CU18, CU19
+    ├── compras/                       #   CU6, CU7, CU20
+    ├── ventas/                        #   CU13–CU17
+    └── reportes/                      #   CU21–CU25
+```
+
+### Correspondencia Pantalla ↔ Caso de Uso ↔ Paquete Backend
+
+Las carpetas de `src/apps/dashboard/` replican los **5 paquetes del backend** ([`PACKAGE_CU_MAP.md`](file:///c:/Users/PERSONAL/panaderia-SI1/backend/apps/PACKAGE_CU_MAP.md)) para que la trazabilidad CU → paquete → pantalla sea directa y defendible en la documentación PUDS/UML:
+
+| Carpeta en `src/apps/dashboard/` | Paquete Backend espejo | Casos de Uso |
+|---|---|---|
+| `usuarios/` | `apps.usuarios_seguridad` | CU2, CU3, CU4, CU26 |
+| `productos/` | `apps.productos_inventario` | CU5, CU8, CU9, CU10, CU11, CU12, CU18, CU19 |
+| `compras/` | `apps.compras` | CU6, CU7, CU20 |
+| `ventas/` | `apps.comercializacion` | CU13, CU14, CU15, CU16, CU17 |
+| `reportes/` | `apps.reportes` | CU21, CU22, CU23, CU24, CU25 |
+
+> **Nota:** `auth/` es la única carpeta que **no** replica un paquete backend. Es transversal: su lógica reside en `apps.usuarios_seguridad` pero su vida es independiente del dashboard (es lo único accesible sin sesión).
+
+### Reglas de Naming dentro de `src/apps/`
+
+- **Archivos de pantalla (componentes de ruta):** `PascalCase` + sufijo `Page` → `LoginPage.tsx`, `ForgotPasswordPage.tsx`, `DashboardHome.tsx`.
+- **Archivos internos de la pantalla:** `PascalCase` sin sufijo si son componentes → `LoginForm.tsx`, `UserTable.tsx`. `camelCase` si son hooks o utilidades → `useLoginForm.ts`, `formatCurrency.ts`.
+- **Barrel exports:** cada carpeta de pantalla expone un `index.ts` que reexporta su pantalla principal, para que el enrutador importe siempre desde el mismo lugar.
+- **Nada de lógica de negocio en la pantalla:** las pantallas orquestan; el cálculo vive en `src/services/` o en un hook local.
+
+### Un solo dashboard para los cuatro actores
+
+**Decisión: existe un único dashboard.** No hay un dashboard por rol. Lo que cambia por actor no es la pantalla, sino **qué entradas del menú sobreviven al filtro de permisos**.
+
+```
+                       ┌──────────────────────────────┐
+   Administrador ──────▶│                              │
+   Propietario    ──────▶│   DashboardLayout (shell)    │──▶ Sidebar con el menú
+   Personal Ventas ─────▶│   DashboardHome  (hogar)     │    filtrado por `hasPermission`
+   Personal Produc. ────▶│                              │──▶ Topbar con identidad del actor
+                       └──────────────────────────────┘
+```
+
+Razones:
+
+1. **Las diferencias son de datos, no de estructura.** Todos los actores ven el mismo esqueleto; solo cambia un subconjunto de un arreglo (`navigation.ts`). Cuatro dashboards obligarían a duplicar el shell cuatro veces y a corregir el mismo bug cuatro veces.
+2. **La seguridad no depende del diseño de la UI.** El bloqueo real ocurre en `ProtectedRoute` (ruta) y en los permisos de DRF (endpoint). Ocultar un botón es UX, nunca autorización.
+3. **El shell es reutilizable.** `Sidebar` y `Topbar` no reciben props por rol: leen el usuario de `useAuth()`. Agregar un quinto actor en el seed no requiere tocar el frontend.
+4. **Trazabilidad PUDS.** Una sola jerarquía de rutas para 26 CUs hace que el diagrama de navegación del sistema sea legible en la defensa.
+
+**Única excepción foreseeable:** en el Ciclo 3, el `Personal de Ventas` atiende mostrador en tablet y probablemente necesite una ventana de venta rápida sin el cromo administrativo. Esa será una **ruta distinta dentro del mismo dashboard** (`/dashboard/ventas/registro`), no un dashboard paralelo. La diferencia es de *flujo de trabajo*, no de *permiso*.
+
+### Menú como configuración filtrada
+
+`src/apps/dashboard/navigation.ts` declara los 5 módulos con sus permisos. Cada entrada tiene un flag `implemented` para que el Sidebar no publique enlaces a ventanas que aún no existen:
+
+```ts
+{
+  label: 'Ventas y Pedidos',
+  to: '/dashboard/ventas',
+  icon: TrendingUp,
+  casosDeUso: 'CU13–CU17',
+  permisos: ['registrar_ventas', 'registrar_pedidos'],   // semántica OR
+  implemented: false,   // → true al crear la carpeta
+}
+```
+
+Al implementar el CU, el flujo es: crear la carpeta en `src/apps/dashboard/ventas/`, poner `implemented: true`, y registrar la ruta anidada en `AppRoutes.tsx`. El menú se actualiza solo.
+
+### Capas del menú por actor (con el seed actual)
+
+| Actor | Permisos del seed | Módulos que ve |
+|---|---|---|
+| **Administrador** | los 11 | Todos (5 de 5) |
+| **Propietario** | 9 (sin `gestionar_usuarios`) | Productos, Compras, Ventas, Reportes (4 de 5) |
+| **Personal de Ventas** | `registrar_ventas`, `registrar_pedidos`, `gestionar_inventario`, `generar_reportes` | Ventas, Reportes (2 de 5) |
+| **Personal de Producción** | `registrar_produccion`, `gestionar_inventario` | Productos (1 de 5) |
+
+> ⚠️ **Inconsistencia detectada para revisar:** `PACKAGE_CU_MAP.md` asigna CU21–CU25 (reportes) exclusivamente al **Propietario**, pero el comando `seed_usuarios` otorga `generar_reportes` también al **Personal de Ventas**. Con el dashboard único esta diferencia solo se traduce en *ver/no ver* el menú, no en dos pantallas distintas, pero conviene alinear el seed con la matriz de actores antes del Ciclo 4.
+
+### Regla de Oro del Frontend
+
+> **Ninguna pantalla llama a `axios` directamente.** Toda la comunicación con el backend pasa por `src/services/`, y los datos tipados se definen en `src/types/`. Esto permite cambiar el endpoint o el modelo de datos en un solo lugar, y mantiene la separación de responsabilidades que exige la arquitectura en capas.
+
+---
+
+## 4. Mapeo entre Tablas Físicas SQL y Paquetes Django
 
 Las tablas definidas en [`Database_Panaderia_Santiago_FINAL.sql`](file:///c:/Users/PERSONAL/panaderia-SI1/Database_Panaderia_Santiago_FINAL.sql) se distribuyen de forma coherente en las 5 aplicaciones:
 
@@ -142,7 +297,7 @@ Las tablas definidas en [`Database_Panaderia_Santiago_FINAL.sql`](file:///c:/Use
 
 ---
 
-## 4. Patrón de Capas Interno por Paquete
+## 5. Patrón de Capas Interno por Paquete
 
 Para mantener el código limpio y fácil de probar, cada paquete sigue un patrón estándar de responsabilidades:
 
@@ -170,7 +325,7 @@ Para mantener el código limpio y fácil de probar, cada paquete sigue un patró
 
 ---
 
-## 5. Guía Paso a Paso para Implementar un Nuevo Caso de Uso (CU)
+## 6. Guía Paso a Paso para Implementar un Nuevo Caso de Uso (CU)
 
 Cuando un desarrollador vaya a implementar un nuevo Caso de Uso (por ejemplo, del Ciclo 1 o ciclos posteriores), debe seguir estrictamente este flujo de trabajo:
 
@@ -251,8 +406,11 @@ Cuando un desarrollador vaya a implementar un nuevo Caso de Uso (por ejemplo, de
 - Toda operación de modificación, inserción o eliminación de datos de negocio debe emitir un registro hacia la tabla `bitacora` indicando `id_usuario`, `accion`, `tabla_afectada`, `descripcion` y `fecha_hora`.
 
 ### Paso 8: Integración Frontend (React)
-- Crear/actualizar el servicio de API en `frontend/src/services/` con tipado TypeScript.
-- Crear la pantalla o componente en `frontend/src/pages/` o `frontend/src/components/`.
+- Localizar la carpeta de la pantalla en `frontend/src/apps/` según el CU (ver sección 3) y crear la vista con sufijo `Page`.
+- Definir los contratos de datos (interfaces TypeScript) en `frontend/src/types/`.
+- Crear/actualizar el servicio de API en `frontend/src/services/` con tipado TypeScript. Las pantallas **nunca** llaman a `axios` directamente.
+- Crear los componentes reutilizables en `frontend/src/components/` y los específicos de la pantalla junto a ella.
+- Registrar la ruta en `frontend/src/routes/AppRoutes.tsx` envolviéndola en `ProtectedRoute` con el `requiredPermission` o `requiredRole` del CU.
 - Gestionar estados de carga (`loading`), errores (`error`) y retroalimentación al usuario (toasts/alertas).
 - Restringir la visualización de botones o rutas en la interfaz según el rol del usuario logueado.
 

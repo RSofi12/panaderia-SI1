@@ -26,13 +26,23 @@
 
 ## ⚛️ 2. Frontend Web
 
-- **Librería Base:** React (TypeScript)
-- **Herramienta de Construcción (Bundler):** Vite
-- **Estilos y UI:** Tailwind CSS + PostCSS + Autoprefixer
-- **Iconografía:** Lucide React / Tabler Icons
-- **Enrutamiento:** React Router DOM
-- **Cliente HTTP:** Axios / Fetch API con interceptores para inyección automática de tokens JWT en el header `Authorization: Bearer <token>`.
-- **Manejo de Estado y Autenticación:** React Context API (`AuthContext`) para sesión de usuario, permisos y almacenamiento seguro de tokens.
+- **Librería Base:** React 19 + TypeScript
+- **Herramienta de Construcción (Bundler):** Vite 8 (`@vitejs/plugin-react`)
+- **Estilos y UI:** **Tailwind CSS v4** instalado como plugin oficial `@tailwindcss/vite`.
+  - ⚠️ En Tailwind v4 **no se usa `tailwind.config.js` ni PostCSS/Autoprefixer**. La configuración se hace con `@theme` dentro del archivo CSS, y el import es `@import "tailwindcss";`.
+  - Versión: `tailwindcss@^4.3.3` + `@tailwindcss/vite@^4.3.3`
+- **Iconografía:** `lucide-react` (árbol de iconos SVG, import individual por componente)
+- **Enrutamiento:** `react-router-dom@^7` (patrón `BrowserRouter` + `Routes`/`Route`)
+- **Cliente HTTP:** `axios@^1.20` con interceptores para inyección automática del token JWT en el header `Authorization: Bearer <token>` y refresco automático ante `401`.
+- **Manejo de Estado y Autenticación:** React Context API.
+  - `contexts/AuthContext.ts` → define el contexto y el hook `useAuth()`
+  - `contexts/AuthProvider.tsx` → componente `AuthProvider` con la lógica de sesión (login, logout, verificación de token, `hasPermission`, `hasRole`)
+- **Lint / Calidad:** ESLint 10 (flat config) con `typescript-eslint`, `eslint-plugin-react-hooks` y `eslint-plugin-react-refresh`
+- **Variables de entorno:** archivo `frontend/.env` con prefijo `VITE_` (ej. `VITE_API_URL`), tipadas en `src/vite-env.d.ts`
+
+### 2.1. Criterio de Organización del Frontend
+
+El frontend se organiza **por ventanas / flujo visual del usuario** en `frontend/src/apps/`, mientras que el backend se organiza **por paquetes de dominio** en `backend/apps/`. La justificación completa de esta asimetría y el mapeo pantalla ↔ caso de uso ↔ paquete están en [`ARCHITECTURE.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/ARCHITECTURE.md) (sección 3).
 
 ---
 
@@ -57,6 +67,14 @@
 | `DB_HOST` | Host del servidor PostgreSQL | `localhost` |
 | `DB_PORT` | Puerto de PostgreSQL | `5432` |
 | `CORS_ALLOWED_ORIGINS` | Orígenes frontend permitidos | `http://localhost:5173,http://localhost:3000` |
+
+### Variables de entorno del Frontend (`frontend/.env`)
+
+| Variable | Descripción | Ejemplo local |
+|---|---|---|
+| `VITE_API_URL` | URL base del backend (API REST) | `http://localhost:8000/api` |
+
+> ⚠️ Solo las variables con prefijo `VITE_` son expuestas al bundle del navegador. **Nunca** coloques secretos (claves, contraseñas, tokens de terceros) en este archivo: todo lo que exista ahí queda visible para el usuario.
 
 ---
 
