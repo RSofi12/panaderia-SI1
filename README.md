@@ -15,12 +15,17 @@ Sistema de información web para la gestión de ventas, producción, inventario 
 ```
 panaderia-SI1/
 ├── backend/          # API Django + Django REST Framework
-│   ├── apps/         # Paquetes por caso de uso (usuarios_seguridad, ventas, etc.)
-│   ├── config/        # Configuración del proyecto Django (settings, urls)
+│   ├── apps/         # 5 paquetes por dominio (usuarios_seguridad, productos_inventario,
+│   │                 #   compras, comercializacion, reportes)
+│   ├── config/       # Configuración del proyecto Django (settings, urls)
 │   └── requirements.txt
-├── frontend/         # Aplicación React + TypeScript (Vite)
+├── frontend/         # SPA React + TypeScript (Vite)
+│   └── src/apps/     # Pantallas por ventana del flujo visual (auth/, dashboard/*)
+├── docs/             # Perfil del proyecto, DDL, informes y memoria de IA
 └── README.md
 ```
+
+> **Nota de arquitectura:** el backend se organiza por **paquete de dominio** (coincide con la base de datos y la lógica de negocio) y el frontend por **pantalla** (coincide con el flujo visual del usuario). El detalle está en [`docs/ai/ARCHITECTURE.md`](docs/ai/ARCHITECTURE.md).
 
 ## Requisitos previos
 

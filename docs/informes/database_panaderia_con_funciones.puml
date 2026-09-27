@@ -1,0 +1,413 @@
+@startuml panaderia_santiago
+
+title DIAGRAMA DE CLASES\nSISTEMA DE INFORMACIÓN WEB - PANADERÍA SANTIAGO
+
+left to right direction
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam nodesep 50
+skinparam ranksep 70
+
+skinparam class {
+    BorderColor #444444
+    ArrowColor #555555
+    FontColor #222222
+    AttributeFontColor #333333
+}
+
+
+' =========================================================
+' USUARIOS Y SEGURIDAD
+' =========================================================
+
+class Rol #D9EAF7 {
+    -idRol : int
+    -nombre : String
+    -descripcion : String
+    +asignarPermiso()
+    +quitarPermiso()
+}
+
+class Permiso #D9EAF7 {
+    -idPermiso : int
+    -nombre : String
+    -descripcion : String
+}
+
+class Usuario #D9EAF7 {
+    -idUsuario : int
+    -nombreUsuario : String
+    -hashContrasena : String
+    -nombreCompleto : String
+    -activo : boolean
+    +registrar()
+    +editar()
+    +activar()
+    +inactivar()
+    +iniciarSesion()
+    +cerrarSesion()
+    +validarFormatoContrasena()
+    +cambiarContrasena()
+}
+
+class Bitacora #D9EAF7 {
+    -idBitacora : int
+    -accion : String
+    -tablaAfectada : String
+    -descripcion : String
+    -fechaHora : DateTime
+    +registrarAccion()
+}
+
+
+' =========================================================
+' PRODUCTOS
+' =========================================================
+
+class CategoriaProducto #FFF2CC {
+    -idCategoria : int
+    -nombre : String
+    -descripcion : String
+    +registrar()
+    +editar()
+}
+
+class Producto #FFF2CC {
+    -idProducto : int
+    -nombre : String
+    -descripcion : String
+    -costoProduccion : decimal
+    -porcentajeGanancia : decimal
+    -precioSugerido : decimal
+    -precioVenta : decimal
+    -fechaRegistro : DateTime
+    -activo : boolean
+    +registrar()
+    +editar()
+    +consultar()
+    +inactivar()
+    +calcularCostoProduccion()
+    +calcularPrecioSugerido()
+    +actualizarPrecioVenta()
+}
+
+class ProductoMateriaPrima #FFF2CC {
+    -cantidadRequerida : decimal
+    -unidadMedida : String
+    +actualizarCantidad()
+    +calcularConsumo()
+}
+
+class HistorialPrecioProducto #FFF2CC {
+    -idHistorial : int
+    -precio : decimal
+    -fechaInicio : DateTime
+    +registrarPrecio()
+}
+
+
+' =========================================================
+' PRODUCCIÓN Y COMERCIALIZACIÓN
+' =========================================================
+
+class Cliente #D5E8D4 {
+    -idCliente : int
+    -nombre : String
+    -telefono : String
+    -direccion : String
+    +registrar()
+    +editar()
+}
+
+class Pedido #D5E8D4 {
+    -idPedido : int
+    -fechaRegistro : DateTime
+    -fechaEntrega : DateTime
+    -estado : String
+    -metodoPago : String
+    -total : decimal
+    +registrar()
+    +calcularTotal()
+    +cambiarEstado()
+    +entregar()
+}
+
+class DetallePedido #D5E8D4 {
+    -cantidad : int
+    -precioUnitario : decimal
+    -subtotal : decimal
+    +calcularSubtotal()
+}
+
+class Venta #D5E8D4 {
+    -idVenta : int
+    -numeroComprobante : int
+    -fechaHora : DateTime
+    -metodoPago : String
+    -idTransaccionStripe : String
+    -total : decimal
+    +registrar()
+    +calcularTotal()
+    +confirmar()
+    +generarComprobante()
+}
+
+class DetalleVenta #D5E8D4 {
+    -cantidad : int
+    -precioUnitario : decimal
+    -subtotal : decimal
+    +calcularSubtotal()
+}
+
+class Produccion #D5E8D4 {
+    -idProduccion : int
+    -fecha : Date
+    -jornada : String
+    +registrar()
+    +confirmar()
+}
+
+class DetalleProduccion #D5E8D4 {
+    -cantidadProducida : int
+    +registrarCantidad()
+}
+
+
+' =========================================================
+' INVENTARIO DE MATERIA PRIMA
+' =========================================================
+
+class MateriaPrima #F8CECC {
+    -idMateriaPrima : int
+    -nombre : String
+    -unidadMedida : String
+    -stockMinimo : decimal
+    -fechaRegistro : DateTime
+    -activo : boolean
+    +registrar()
+    +editar()
+    +consultar()
+}
+
+class HistorialPrecioMateriaPrima #F8CECC {
+    -idHistorial : int
+    -precio : decimal
+    -fechaInicio : DateTime
+    +registrarPrecio()
+}
+
+class InventarioMateriaPrima #F8CECC {
+    -idInventario : int
+    -stockActual : decimal
+    -fechaActualizacion : DateTime
+    +registrarEntrada()
+    +registrarSalida()
+    +consultarStock()
+    +verificarStockMinimo()
+}
+
+class MovimientoMateriaPrima #F8CECC {
+    -idMovimiento : int
+    -fechaHora : DateTime
+    -tipo : String
+    -cantidad : decimal
+    +registrar()
+}
+
+
+' =========================================================
+' INVENTARIO DE PRODUCTOS TERMINADOS
+' =========================================================
+
+class InventarioProductoTerminado #E1D5E7 {
+    -idInventario : int
+    -stockActual : int
+    -fechaActualizacion : DateTime
+    +registrarEntrada()
+    +registrarSalida()
+    +consultarDisponibilidad()
+}
+
+class MovimientoProductoTerminado #E1D5E7 {
+    -idMovimiento : int
+    -fechaHora : DateTime
+    -tipo : String
+    -cantidad : int
+    +registrar()
+}
+
+
+' =========================================================
+' COMPRAS, PROVEEDORES Y GASTOS
+' =========================================================
+
+class Proveedor #FFE6CC {
+    -idProveedor : int
+    -nombre : String
+    -telefono : String
+    -direccion : String
+    -fechaRegistro : DateTime
+    -activo : boolean
+    +registrar()
+    +editar()
+    +consultar()
+}
+
+class Compra #FFE6CC {
+    -idCompra : int
+    -fechaHora : DateTime
+    -total : decimal
+    +registrar()
+    +calcularTotal()
+    +confirmar()
+}
+
+class DetalleCompra #FFE6CC {
+    -cantidad : decimal
+    -precioUnitario : decimal
+    -subtotal : decimal
+    +calcularSubtotal()
+}
+
+class MovimientoEconomico #FFE6CC {
+    -idMovimiento : int
+    -tipo : String
+    -concepto : String
+    -descripcion : String
+    -monto : decimal
+    -fechaHora : DateTime
+    +registrar()
+    +editar()
+}
+
+
+' =========================================================
+' RELACIONES - SEGURIDAD
+' =========================================================
+
+Rol "1" -- "0..*" Usuario : tiene >
+Rol "0..*" -- "0..*" Permiso : asocia >
+Usuario "1" -- "0..*" Bitacora : registra >
+
+
+' =========================================================
+' RELACIONES - PRODUCTOS
+' =========================================================
+
+CategoriaProducto "1" -- "0..*" Producto : clasifica >
+
+Producto "1" -- "0..*" ProductoMateriaPrima : requiere >
+MateriaPrima "1" -- "0..*" ProductoMateriaPrima : compone >
+
+MateriaPrima "1" -- "0..*" HistorialPrecioMateriaPrima : registra historial de >
+Producto "1" -- "0..*" HistorialPrecioProducto : registra historial de >
+
+
+' =========================================================
+' RELACIONES - PEDIDOS
+' =========================================================
+
+Cliente "1" -- "0..*" Pedido : realiza >
+Usuario "1" -- "0..*" Pedido : atiende >
+
+Pedido "1" *-- "1..*" DetallePedido : contiene >
+Producto "1" -- "0..*" DetallePedido : incluye >
+
+Pedido "0..1" -- "0..1" Venta : genera >
+
+
+' =========================================================
+' RELACIONES - VENTAS
+' =========================================================
+
+Usuario "1" -- "0..*" Venta : registra >
+
+Venta "1" *-- "1..*" DetalleVenta : contiene >
+Producto "1" -- "0..*" DetalleVenta : incluye >
+
+
+' =========================================================
+' RELACIONES - PRODUCCIÓN
+' =========================================================
+
+Usuario "1" -- "0..*" Produccion : realiza >
+
+Produccion "1" *-- "1..*" DetalleProduccion : detalla >
+Producto "1" -- "0..*" DetalleProduccion : referencia >
+
+
+' =========================================================
+' RELACIONES - INVENTARIO MATERIA PRIMA
+' =========================================================
+
+MateriaPrima "1" -- "1" InventarioMateriaPrima : tiene >
+
+InventarioMateriaPrima "1" *-- "0..*" MovimientoMateriaPrima : genera >
+
+Compra "1" -- "0..*" MovimientoMateriaPrima : origina >
+Produccion "1" -- "0..*" MovimientoMateriaPrima : consume >
+
+
+' =========================================================
+' RELACIONES - INVENTARIO PRODUCTO TERMINADO
+' =========================================================
+
+Producto "1" -- "1" InventarioProductoTerminado : tiene >
+
+InventarioProductoTerminado "1" *-- "0..*" MovimientoProductoTerminado : genera >
+
+Produccion "1" -- "0..*" MovimientoProductoTerminado : incrementa >
+Venta "1" -- "0..*" MovimientoProductoTerminado : reduce >
+Pedido "1" -- "0..*" MovimientoProductoTerminado : reduce >
+
+
+' =========================================================
+' RELACIONES - COMPRAS
+' =========================================================
+
+Proveedor "1" -- "0..*" Compra : provee >
+Usuario "1" -- "0..*" Compra : registra >
+
+Compra "1" *-- "1..*" DetalleCompra : detalla >
+MateriaPrima "1" -- "0..*" DetalleCompra : incluye >
+
+
+' =========================================================
+' RELACIONES - GASTOS E INVERSIONES
+' =========================================================
+
+Usuario "1" -- "0..*" MovimientoEconomico : registra >
+
+
+' =========================================================
+' ORGANIZACIÓN VISUAL
+' =========================================================
+
+Rol -[hidden]down-> Permiso
+Usuario -[hidden]down-> Bitacora
+
+CategoriaProducto -[hidden]down-> Producto
+
+Cliente -[hidden]down-> Pedido
+Pedido -[hidden]down-> DetallePedido
+
+Venta -[hidden]down-> DetalleVenta
+
+Produccion -[hidden]down-> DetalleProduccion
+
+Producto -[hidden]down-> ProductoMateriaPrima
+ProductoMateriaPrima -[hidden]down-> MateriaPrima
+
+MateriaPrima -[hidden]down-> HistorialPrecioMateriaPrima
+HistorialPrecioMateriaPrima -[hidden]down-> InventarioMateriaPrima
+InventarioMateriaPrima -[hidden]down-> MovimientoMateriaPrima
+
+Producto -[hidden]down-> InventarioProductoTerminado
+InventarioProductoTerminado -[hidden]down-> MovimientoProductoTerminado
+
+Proveedor -[hidden]down-> Compra
+Compra -[hidden]down-> DetalleCompra
+
+@enduml
