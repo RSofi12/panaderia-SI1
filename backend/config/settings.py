@@ -41,6 +41,10 @@ INSTALLED_APPS = [
     'corsheaders',
     # ... apps (paquetes) de Django
     'apps.usuarios_seguridad',
+    'apps.reportes',
+    'apps.compras',
+    'apps.comercializacion',
+    'apps.productos_inventario',
 ]
 
 MIDDLEWARE = [
