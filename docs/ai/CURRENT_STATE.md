@@ -23,13 +23,13 @@
 ### 📌 Ciclo 1 (7 Casos de Uso) — *Iteración Actual*
 | CU | Nombre del Caso de Uso | Paquete Backend | Estado | Detalle |
 |---|---|---|:---:|---|
-| **CU1** | Iniciar sesión | `apps.usuarios_seguridad` | 🟡 | En preparación de modelos y SimpleJWT |
-| **CU2** | Recuperar contraseña | `apps.usuarios_seguridad` | 🟡 | En preparación de servicio de tokens |
-| **CU3** | Gestionar usuarios | `apps.usuarios_seguridad` | 🟡 | En preparación de CRUD y hash de contraseñas |
-| **CU4** | Asignar roles y permisos | `apps.usuarios_seguridad` | 🟡 | En preparación de tablas RBAC |
-| **CU26**| Gestionar bitácora (versión simple) | `apps.usuarios_seguridad` | 🟡 | En preparación de modelo de auditoría |
-| **CU5** | Gestionar productos (catálogo base) | `apps.productos_inventario`| 🟡 | En preparación de modelo Producto y Categoría |
-| **CU6** | Gestionar proveedores (catálogo base)| `apps.compras` | 🟡 | En preparación de modelo Proveedor |
+| **CU1** | Iniciar sesión | `apps.usuarios_seguridad` | 🟢 | Backend completado (Endpoints `/api/auth/login/`, `/api/auth/refresh/`, `/api/auth/me/`, JWT con claims de roles/permisos). Pendiente UI en frontend. |
+| **CU2** | Recuperar contraseña | `apps.usuarios_seguridad` | 🟡 | En preparación de servicio de tokens temporales |
+| **CU3** | Gestionar usuarios | `apps.usuarios_seguridad` | 🟡 | Sub-app `users` lista con modelo `Usuario` y comando de seed data. |
+| **CU4** | Asignar roles y permisos | `apps.usuarios_seguridad` | 🟡 | Sub-apps `permisos` y `roles` listas con modelos `Permiso`, `Rol`, `RolPermiso`. |
+| **CU26**| Gestionar bitácora (versión simple) | `apps.usuarios_seguridad` | 🟢 | Sub-app `bitacora` implementada y vinculada a eventos de login/logout y auditoría. |
+| **CU5** | Gestionar productos (catálogo base) | `apps.productos_inventario`| ⚪ | Planificado en Ciclo 1 |
+| **CU6** | Gestionar proveedores (catálogo base)| `apps.compras` | ⚪ | Planificado en Ciclo 1 |
 
 ---
 

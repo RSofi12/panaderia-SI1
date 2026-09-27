@@ -36,3 +36,18 @@
 - **Decisión:** Trabajar el Ciclo 1 en entorno local directo (`python -m venv venv` y `npm install`) y postergar la configuración de Docker/Docker Compose para etapas posteriores.
 - **Motivo:** Priorizar la velocidad de desarrollo de los primeros 7 casos de uso y la familiarización del equipo con el código sin fricciones de configuración de contenedores.
 - **Impacto:** La documentación de puesta en marcha refleja comandos locales directos y uso de variables de entorno `.env`.
+
+---
+
+## 📅 2026-09-27 — Modularización por Sub-Apps en `usuarios_seguridad` y Modelo Custom
+- **Decisión:** Dividir internamente el paquete `usuarios_seguridad` en sub-apps especializadas (`permisos`, `roles`, `users`, `bitacora`, `auth_app`), manteniendo la pertenencia al Paquete 1 de PUDS.
+- **Motivo:** Evitar archivos monolíticos (`models.py`, `views.py`) de gran tamaño, otorgando a cada entidad su propio ciclo de vida, modelos, validadores y serializadores.
+- **Impacto:** `Usuario` hereda de `AbstractBaseUser` mapeando la columna `hash_contrasena` con Django y `AUTH_USER_MODEL = 'users.Usuario'`.
+
+---
+
+## 📅 2026-09-27 — Política Estricta de Validación de Contraseñas
+- **Decisión:** Implementar `ComplexPasswordValidator` en `apps.usuarios_seguridad.users.password_validators`.
+- **Motivo:** Requisito de seguridad para garantizar que todas las contraseñas contengan un mínimo de 8 caracteres, al menos 1 letra mayúscula, al menos 1 dígito numérico y al menos 1 carácter especial (`!=@#%`, etc.).
+- **Impacto:** Se aplica tanto en el backend a través de `AUTH_PASSWORD_VALIDATORS` como en el endpoint de autenticación y creación de usuarios.
+
