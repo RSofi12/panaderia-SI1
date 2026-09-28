@@ -2,12 +2,8 @@
 
 ## 📌 Proyecto: Sistema de Información Web - Panadería Santiago (SI-1)
 - **Fecha:** 2026-09-28
-- **Estado del Ciclo:** Ciclo 1 - CU1, CU2 y CU3 (backend) terminados
+- **Estado del Ciclo:** Ciclo 1 - CU1, CU2 y CU3 (backend + frontend) terminados al 100%
 - **Entorno:** Local directo (Python Virtualenv + Vite/React + PostgreSQL)
-
-> Este archivo se reescribió por completo. La versión anterior era del 2026-09-26 y
-> describía el plan de arranque, cuando todavía no existía ni el login. Un handoff
-> que miente sobre el estado es peor que no tener handoff.
 
 ---
 
@@ -17,7 +13,7 @@
 |---|---|---|---|
 | CU1 | Iniciar sesión | 🟢 Completo end-to-end | `auth_app/` + `LoginPage.tsx` |
 | CU2 | Recuperar contraseña | 🟢 Completo end-to-end | `recuperacion/` + `/recuperar-password` |
-| CU3 | Gestionar usuarios | 🟡 **Backend completo y verificado, falta el frontend** | `users/` |
+| CU3 | Gestionar usuarios | 🟢 **Completo end-to-end (Backend + Frontend)** | `users/` + `src/apps/dashboard/usuarios/` |
 | CU4 | Asignar roles y permisos | ⚪ Pendiente | Modelos ya existen en `roles/` y `permisos/` |
 | CU26 | Gestionar bitácora | 🟡 Registros ya se escriben, falta la pantalla | `bitacora/` |
 | CU5 | Gestionar productos | ⚪ Pendiente | `productos_inventario/` vacío |
@@ -28,100 +24,65 @@ Decisiones con su motivo: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panader
 
 ---
 
-## 📦 2. Lo entregado en esta sesión (CU3, backend)
+## 📦 2. Lo entregado en esta sesión (CU3, Frontend y Cierre)
 
-### Endpoints nuevos
-```
-GET    /api/usuarios/                             listado filtrado, buscable y paginado
-POST   /api/usuarios/                             alta de cuenta
-GET    /api/usuarios/roles/                       roles para el desplegable del formulario
-GET    /api/usuarios/<id>/                        detalle
-PATCH  /api/usuarios/<id>/                        edición parcial
-PUT    /api/usuarios/<id>/                        edición completa
-PATCH  /api/usuarios/<id>/toggle-activo/          activar / inactivar
-POST   /api/usuarios/<id>/restablecer-contrasena/ reset administrativo de clave  (extensión)
-POST   /api/usuarios/<id>/desbloquear/            levantar bloqueo de CU1          (extensión)
-DELETE /api/usuarios/<id>/                        405 — el CU3 no tiene borrado
-```
+### Funcionalidad implementada en el Frontend
+- **Listado y Navegación:** `UsuariosPage.tsx` con listado paginado (10 por página), buscador con debounce de 300 ms, filtros por estado (todos/activos/inactivos) y por rol (`/api/usuarios/roles/`), ordenación alfabética estable.
+- **Tabla accesible y responsiva:** `UsuariosTabla.tsx` con `overflow-x-auto`, estados textuales para no depender exclusivamente del color (WCAG 2.2 AA), avatars con `UserAvatar`, estados de carga mediante esqueleto animado (`EsqueletoTabla`) y estado vacío amigable.
+- **Alta y edición:** `ModalUsuario.tsx` con validación inline y resumen con `aria-describedby` y foco al error, checklist dinámico con `PasswordRequirements`.
+- **Cambio de estado:** `ModalEstado.tsx` para activar / inactivar con registro obligatorio/opcional de motivo para bitácora (CU26).
+- **Restablecimiento administrativo de contraseña:** `ModalRestablecerContrasena.tsx` con confirmación de clave y aviso previo de revocación de sesiones.
+- **Desbloqueo de cuentas:** Acción directa en tabla con llamada a `/api/usuarios/<id>/desbloquear/` y actualización reactiva inmediata de la fila.
+- **Módulo publicado en el dashboard:** `navigation.ts` con `implemented: true` y tarjeta en `DashboardHome.tsx` con enlace interactivo directo. Ruta protegida con `requiredPermission="gestionar_usuarios"` en `AppRoutes.tsx`.
+- **Arquitectura de modales:** `Modal.tsx` compartido dentro de `src/apps/dashboard/components/` con focus trap accesible, foco inicial/restaurado, `useId()`, Escape y bloqueo de scroll.
+- **Rendimiento y Fast Refresh:** Modales montados con `key` y lazy initialization (`useState(() => ...)`), utilidades extraídas a `estilosFormulario.ts` y `politicaContrasena.ts`.
 
-Parámetros aceptados por el listado: `search`, `ordering`, `page`,
-`activo=true|false`, `id_rol=<n>`.
+### Archivos creados en el Frontend
+- `frontend/src/types/usuarios.ts` — Contratos de TypeScript (`UsuarioFila`, `AltaUsuario`, `EditarUsuario`, `RolSimple`, etc.).
+- `frontend/src/services/erroresApi.ts` — Normalizador de errores DRF (`{"error": "..."}` vs `{"campo": ["..."]}`).
+- `frontend/src/services/usuariosService.ts` — Cliente API Axios con tipado estricto.
+- `frontend/src/apps/dashboard/components/Modal.tsx` — Modal accesible para el panel.
+- `frontend/src/apps/dashboard/usuarios/UsuariosPage.tsx` — Contenedor principal del módulo.
+- `frontend/src/apps/dashboard/usuarios/components/CampoFormulario.tsx` — Átomo de formulario accesible con `aria-describedby`.
+- `frontend/src/apps/dashboard/usuarios/components/estilosFormulario.ts` — Clases compartidas Tailwind.
+- `frontend/src/apps/dashboard/usuarios/components/UsuariosTabla.tsx` — Tabla responsiva y accesible.
+- `frontend/src/apps/dashboard/usuarios/components/ModalUsuario.tsx` — Formulario modal de alta/edición.
+- `frontend/src/apps/dashboard/usuarios/components/ModalEstado.tsx` — Modal de activación/inactivación con motivo.
+- `frontend/src/apps/dashboard/usuarios/components/ModalRestablecerContrasena.tsx` — Modal de restablecimiento de contraseña.
+- `frontend/src/apps/auth/politicaContrasena.ts` — Funciones de evaluación de política desacopladas del componente.
 
-### Archivos creados
-- `backend/apps/usuarios_seguridad/users/permissions.py` — RBAC real (`TienePermiso`, `EsAdministrador`)
-- `backend/apps/usuarios_seguridad/users/exceptions.py` — `OperacionInvalidaError` (400 con `{"error": "..."}`)
-- `backend/apps/usuarios_seguridad/users/serializers.py` — 6 serializers, separados por lectura/escritura
-- `backend/apps/usuarios_seguridad/users/services/usuarios.py` — la lógica de negocio
-- `backend/apps/usuarios_seguridad/users/views.py` — `UsuarioViewSet`
-- `backend/apps/usuarios_seguridad/users/urls.py` — router
-- `backend/apps/usuarios_seguridad/users/tests.py` — 52 pruebas
-- `backend/apps/usuarios_seguridad/users/migrations/0005_alter_usuario_nombre_usuario_and_more.py`
-- `backend/apps/usuarios_seguridad/bitacora/migrations/0006_alter_bitacora_accion.py`
-
-### Archivos modificados
-- `users/models.py` — restricción `usuario_username_unico_ci` sobre `Lower(nombre_usuario)`
-- `users/services/__init__.py` — expone el módulo de servicios
-- `bitacora/models.py` — cuatro acciones nuevas en `AccionBitacora`
-- `config/urls.py` — `path('api/', include('apps.usuarios_seguridad.users.urls'))`
-- `config/settings.py` — paginación global, throttle `usuarios: 120/min`
-- `docs/informes/Database_Panaderia_Santiago.sql` — índice nuevo, cuatro acciones de bitácora, deriva de `rol_permiso` documentada
-- `docs/ai/CURRENT_STATE.md`, `docs/ai/DECISIONS_LOG.md`
+### Archivos modificados en el Frontend
+- `frontend/src/apps/dashboard/navigation.ts` — `implemented: true` en Usuarios y Seguridad.
+- `frontend/src/routes/AppRoutes.tsx` — Ruta anidada `/dashboard/usuarios` con guardia de permiso.
+- `frontend/src/apps/dashboard/DashboardHome.tsx` — Tarjeta navegable con badge "Disponible".
+- `frontend/src/apps/auth/ResetPasswordPage.tsx` — Inicializador lazy de token para evitar parpadeo.
+- `frontend/src/apps/auth/components/PasswordRequirements.tsx` — Componente puro para Fast Refresh.
 
 ---
 
 ## 🧪 3. Verificación ejecutada
 
-| Comando | Resultado |
-|---|---|
-| `python manage.py check` | ✅ sin problemas |
-| `python manage.py makemigrations --check --dry-run` | ✅ sin cambios pendientes |
-| `python manage.py migrate` | ✅ `bitacora.0006` y `users.0005` aplicadas |
-| `python manage.py test apps.usuarios_seguridad` | ✅ **144 pruebas en verde** (1 se salta) |
-| Índice en PostgreSQL real | ✅ `usuario_username_unico_ci` creado; rechaza `MGONZALES` y acepta un alta nueva |
-
-### ⚠️ Limitación conocida de la validación
-El usuario de base de datos (`panaderia_admin`) **no tiene `CREATEDB`**, así que
-`manage.py test` no puede crear `test_panaderia_db` y falla con
-*"se ha denegado el permiso para crear la base de datos"*. La suite se ejecutó con
-un módulo de ajustes alterno **en SQLite**, que alcanza para detectar errores de
-Python y de lógica, pero **no es la validación oficial**.
-
-Para habilitar la corrida oficial, una sola vez, con un usuario superusuario de
-PostgreSQL:
-
-```sql
-ALTER ROLE panaderia_admin CREATEDB;
-```
-
-Después, `python manage.py test apps.usuarios_seguridad` funciona sin cambios
-adicionales. Vale la pena hacerlo: la prueba
-`test_la_base_rechaza_el_duplicado_por_mayusculas` depende del comportamiento del
-índice de expresión, que SQLite no reproduce igual que PostgreSQL.
+| Verificación | Comando / Entorno | Resultado |
+|---|---|---|
+| Linter Frontend | `npm run lint` en `frontend/` | ✅ **0 errores, 0 warnings** |
+| Build Frontend | `npm run build` (`tsc -b && vite build`) | ✅ **Exitoso en 26.8s (1976 módulos)** |
+| Backend Django check | `python manage.py check` | ✅ sin problemas |
+| Migraciones | `python manage.py makemigrations --check --dry-run` | ✅ sin migraciones pendientes |
+| Backend Tests | `python manage.py test apps.usuarios_seguridad` | ✅ **144 pruebas en verde** (SQLite) |
 
 ---
 
 ## 🔜 4. Punto exacto de reanudación
 
-**Siguiente paso: la SPA de gestión de usuarios (frontend del CU3).**
+**Siguiente paso: CU4 (Asignar roles y permisos) o CU5 (Gestionar productos - catálogo base).**
 
-1. Crear `frontend/src/apps/dashboard/usuarios/` con:
-   - `UsuariosPage.tsx` — tabla, buscador, filtros por rol y estado, paginación
-   - `UsuarioFormModal.tsx` — alta y edición, con el desplegable de `GET /api/usuarios/roles/`
-   - `ConfirmarEstadoModal.tsx` — activar/inactivar con motivo
-   - `RestablecerContrasenaModal.tsx` — extensión aprobada
-2. Poner `implemented: true` en la entrada de `navigation.ts` y registrar la ruta
-   anidada en `AppRoutes.tsx` (ver paso 4 de `CURRENT_STATE.md`).
-3. Leer el shape de la respuesta paginada de DRF: `{count, next, previous, results}`.
-
-**Puntos que el frontend no debe pasar por alto:**
-- El listado devuelve `esta_bloqueado` y `minutos_bloqueo_restantes`: son
-  propiedades calculadas, y sirven para explicar por qué una cuenta no entra.
-- El buscador es `icontains` y **no ignora acentos**: buscar `Maria` no encuentra
-  `María`.
-- `DELETE` devuelve 405, así que la UI no debe ofrecer una acción de borrar.
-- Los errores de las guardas vienen como `{"error": "texto"}`; los de validación de
-  campo vienen como `{"campo": ["texto"]}`. Son dos formatos distintos y el
-  `setError(...)` de React espera cadenas.
+1. Para CU4:
+   - Los modelos `Rol`, `Permiso`, `RolPermiso` ya existen en `apps/usuarios_seguridad/roles/` y `permisos/`.
+   - Implementar endpoints en backend para gestionar roles y su matriz de permisos.
+   - En el frontend, agregar la pestaña "Roles y Permisos" dentro de `src/apps/dashboard/usuarios/` compartiendo la ventana con CU3.
+2. Para CU5 (Productos e Inventario):
+   - Crear modelos base de productos y categorías en `backend/apps/productos_inventario/`.
+   - Crear pantalla en `src/apps/dashboard/productos/` y activar `implemented: true` en su navegación.
 
 ---
 
@@ -131,14 +92,7 @@ adicionales. Vale la pena hacerlo: la prueba
 # Backend
 cd backend
 .\venv\Scripts\python.exe manage.py check
-.\venv\Scripts\python.exe manage.py makemigrations --check --dry-run
-.\venv\Scripts\python.exe manage.py migrate
 .\venv\Scripts\python.exe manage.py test apps.usuarios_seguridad
-
-# Datos de prueba (crea roles, permisos y las 6 cuentas del seed)
-.\venv\Scripts\python.exe manage.py seed_usuarios
-#   usuario: admin  |  contraseña: Admin123!
-#   usuario: mgonzales (Personal de Ventas) — sirve para probar el 403
 
 # Frontend
 cd ..\frontend

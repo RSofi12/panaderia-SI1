@@ -373,3 +373,17 @@
 - **Decisión:** No se toca ni `roles/migrations/0001_initial.py` ni el DDL. La divergencia queda escrita en el DDL con un comentario explícito.
 - **Motivo:** El modelo Django `RolPermiso` declara la tabla con clave primaria IMPLÍCITA (`id`), por ser el default de un modelo con dos `ForeignKey` y ningún `id` declarado. El DDL usa clave primaria COMPUESTA `PRIMARY KEY (id_rol, id_permiso)`. La base que corre no sufre el problema, porque el índice único que creó la migración cubre la misma regla, pero DDL y código no dicen lo mismo.
 - **Impacto:** La corrección pertenece a CU4, que es el caso de uso dueño de la matriz de roles y permisos. Lo único que se hace en CU3 es dejar la deriva escrita, que es la forma de que no vuelva a aparecer como si fuera un error nuevo.
+
+---
+
+# 📅 2026-09-28 — CU3: Gestionar usuarios (frontend)
+
+### 29. Arquitectura de componentes, accesibilidad WCAG y ciclo de vida de modales
+- **Decisión:** 
+  1. La UI del CU3 se organiza en `src/apps/dashboard/usuarios/` con subcomponentes locales en `components/`. El diálogo base `Modal.tsx` se coloca en `src/apps/dashboard/components/` por ser compartido exclusivamente por el dashboard, reservando `src/components/` para futuros componentes globales de toda la SPA.
+  2. Los tres modales (`ModalUsuario`, `ModalEstado`, `ModalRestablecerContrasena`) se inicializan con lazy state (`useState(() => ...)`) y son montados con `key` dependiente del id del usuario en vez de resetear el estado con `useEffect`.
+  3. Tras una edición exitosa, la tabla vuelve a pedir la página al servidor con `trasEdicion()` en lugar de mutar la fila en el cliente, respetando el ordenamiento alfabético y el filtrado por `icontains` de PostgreSQL.
+  4. Los estilos de campos se modularizan en `estilosFormulario.ts` y los predicados de contraseñas en `politicaContrasena.ts` para cumplir estrictamente con el Fast Refresh de Vite (`react-refresh/only-export-components`).
+  5. Se implementa accesibilidad WCAG 2.2 AA integral: foco inicial en el primer control, trampa de foco (Tab / Shift+Tab) dentro del diálogo, restauración de foco al elemento disparador al cerrar, cierre con tecla Escape, bloqueo del scroll del body, `role="dialog"`, `aria-modal="true"`, `aria-labelledby` con `useId()` de React 19, resumen de errores enfocado por teclado tras fallos de red y mensajes de error inline vinculados por `aria-describedby`.
+- **Motivo:** Evitar parpadeos visuales al abrir formularios, eliminar las advertencias y errores de ESLint (`react-hooks/set-state-in-effect`), garantizar soporte total para tecnologías de asistencia y teclado sin ratón, y evitar que el cliente contradiga el ordenamiento o las reglas de coincidencia del backend.
+- **Impacto:** Código robusto, modular y 100% libre de advertencias y errores tanto en `tsc -b` como en `eslint`, listo para producción.
