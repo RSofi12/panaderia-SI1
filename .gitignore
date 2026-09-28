@@ -15,3 +15,4 @@ frontend/dist/
 *.log
 ciclo1Secuencia_CU
 CUsecuenciaEA
+.pytest_cache/

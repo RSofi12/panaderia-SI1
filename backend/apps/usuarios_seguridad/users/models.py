@@ -22,7 +22,9 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     nombre_usuario = models.CharField(
         max_length=50,
         unique=True,
-        verbose_name='Nombre de usuario'
+        verbose_name='Nombre de usuario',
+        help_text='Con este nombre inicia sesión la persona. No distingue '
+                  'mayúsculas de minúsculas al validar que sea único.',
     )
     # password se mapea físicamente a la columna hash_contrasena
     password = models.CharField(
@@ -114,6 +116,27 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
             models.UniqueConstraint(
                 Lower('email'),
                 name='usuario_email_unico_ci',
+            ),
+            # CU3 — mismo criterio para `nombre_usuario`, que es la columna por la
+            # que se inicia sesión. El `unique=True` del campo es UNICO Y DISTINTO
+            # DE MAYÚSCULAS en PostgreSQL: 'Admin' y 'admin' convivían como dos
+            # cuentas distintas, y como el login busca por coincidencia exacta
+            # (`nombre_usuario=...`), una de las dos quedaba literalmente
+            # inaccesible. Esta restricción sobre `Lower(...)` es la que
+            # realmente garantiza la unicidad sin distinguir mayúsculas, y es la
+            # que valida el serializer con `__iexact`.
+            #
+            # POR QUÉ SE MANTIENE TAMBIÉN EL `unique=True` DEL CAMPO, siendo
+            # redundante: Django exige por contrato (auth.E003) que el campo
+            # `USERNAME_FIELD` de un modelo de usuario sea único. Quitarlo
+            # funciona en una tabla, pero rompe el sistema de autenticación de
+            # Django entero, y silenciar esa verificación con
+            # `SILENCED_SYSTEM_CHECKS` sería esconder un problema real. El índice
+            # por defecto queda como el índice de búsqueda que usa el login; este
+            # es el que decide quién puede repetirse.
+            models.UniqueConstraint(
+                Lower('nombre_usuario'),
+                name='usuario_username_unico_ci',
             ),
         ]
 

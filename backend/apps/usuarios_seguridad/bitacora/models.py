@@ -37,6 +37,17 @@ class AccionBitacora(models.TextChoices):
     RECUPERACION_CONFIRMADA = 'RECUPERACION_CONFIRMADA', 'Contraseña restablecida por recuperación'
     RECUPERACION_INVALIDADA = 'RECUPERACION_INVALIDADA', 'Enlace de recuperación rechazado'
 
+    # --- CU3: Gestión de usuarios ---
+    # El detalle de QUÉ se cambió se escribe en la descripción, no en el nombre
+    # de la acción: un enum con una entrada por cada campo editable ("cambio de
+    # nombre", "cambio de correo") crecería sin límite y ningún informe lo
+    # agruparía bien. Aquí la acción identifica el TIPO de operación y la
+    # descripción lleva el diff.
+    ALTA_USUARIO = 'ALTA_USUARIO', 'Alta de usuario'
+    EDICION_USUARIO = 'EDICION_USUARIO', 'Modificación de usuario'
+    CAMBIAR_ESTADO_USUARIO = 'CAMBIAR_ESTADO_USUARIO', 'Activación o inactivación de usuario'
+    RESTABLECER_CONTRASENA = 'RESTABLECER_CONTRASENA', 'Restablecimiento administrativo de contraseña'
+
 
 class Bitacora(models.Model):
     """

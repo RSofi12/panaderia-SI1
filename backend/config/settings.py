@@ -127,6 +127,18 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+
+    # --- CU3: paginación del listado de usuarios ---
+    # El valor por defecto de DRF es PaginationDisabled, es decir, un listado sin
+    # límite: `GET /api/usuarios/` devolvería TODAS las cuentas en un solo JSON.
+    # Hoy serían seis, y por eso el descuido no se nota. El día que haya doscientos
+    # usuarios la pantalla se vuelve lenta y, peor, el navegador recibe una
+    # respuesta que no sabe renderizar. Se declara acá, de forma GLOBAL, para que
+    # cualquier listado futuro herede la protección sin tener que acordarse; el
+    # frontend ya sabe leer `{count, next, previous, results}`.
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+
     # Frecuencia de los límites anti-abuso, en formato 'nº de peticiones / ventana'.
     # Son Django Throttles y solo afectan a las vistas que los activen. El límite
     # por cuenta vive en la tabla `configuracion_seguridad`, y el de intentos por
@@ -144,6 +156,12 @@ REST_FRAMEWORK = {
         # intentos de esa misma fila.
         'password_reset_request': '5/min',
         'password_reset_confirm': '15/min',
+        # CU3. La administración de cuentas es de lectura mayoritaria —una tabla
+        # con buscador, filtros y paginación genera varias peticiones por
+        # pantalla—, así que el límite es holgado. Existe para que una sesión
+        # robada no pueda enumerar la base de cuentas ni disparar miles de altas
+        # en paralelo; no para frenar a un Administrador trabajando con normality.
+        'usuarios': '120/min',
     },
 }
 
