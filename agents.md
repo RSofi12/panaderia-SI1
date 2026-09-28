@@ -71,15 +71,31 @@ Para mantener la continuidad del trabajo entre sesiones y miembros del equipo:
 
 ### 📂 Archivos existentes actualmente en `docs/ai/`:
 - `docs/ai/PROJECT_CONTEXT.md` → Contexto del negocio, justificación, antecedentes y actores.
+- `docs/ai/PROJECT_VISION.md` → Visión del sistema y alcance de los 4 ciclos.
 - `docs/ai/ARCHITECTURE.md` → Arquitectura lógica, capas, estructura de carpetas y flujos de datos.
 - `docs/ai/IMPLEMENTATION_PHASES.md` → Detalle de los 4 ciclos PUDS y sus 26 casos de uso.
-- `docs/ai/sessions/README.md` → Guía y plantilla para el registro de sesiones de trabajo del equipo.
+- `docs/ai/TECH_STACK.md` → Dependencias y variables de entorno (⚠️ revisar: menciona `python-dotenv`, pero el código usa `python-decouple`).
+- `docs/ai/CURRENT_STATE.md` → Estado actual de avance: CUs funcionales vs CUs pendientes.
+- `docs/ai/DECISIONS_LOG.md` → Registro de decisiones arquitectónicas y técnicas del equipo.
+- `docs/ai/HANDOFF_LATEST.md` → Resumen de la última entrega.
+- `docs/ai/MASTER_AGENT_PROMPT.md` → Reglas primarias obligatorias para cualquier IA o desarrollador.
+- `docs/ai/sessions/README.md` → Guía y plantilla para el registro de sesiones.
 
-### 💡 Archivos recomendados a crear para enriquecer el contexto:
-- `docs/ai/TECH_STACK.md` → Detalle fino de dependencias (versiones exactas, librerías frontend/backend, configuración de variables de entorno `.env`).
-- `docs/ai/CURRENT_STATE.md` → Estado actual de avance del proyecto, CUs 100% funcionales vs CUs en progreso.
-- `docs/ai/DECISIONS_LOG.md` → Registro de decisiones arquitectónicas y técnicas tomadas por el equipo.
-- `docs/ai/sessions/YYYY-MM-DD-[autor]-[resumen].md` → Bitácoras individuales de cada sesión de desarrollo para trazabilidad de trabajo colaborativo.
+### 🚨 REGLA OBLIGATORIA: BITÁCORA DE SESIÓN AUTOMÁTICA
+Todo cambio en el repositorio —sin importar si es backend, frontend, base de datos, configuración o documentación— **debe** quedar registrado en un archivo de bitácora dentro de `docs/ai/sessions/`, usando la plantilla de `docs/ai/sessions/README.md` y el nombre obligatorio:
+
+```
+YYYY-MM-DD-[autor]-[resumen-corto].md      # ej. 2026-09-27-equipo-cu1-login-jwt.md
+YYYY-MM-DD-[autor]-[resumen-corto]-2.md    # segunda sesión del mismo día y autor
+```
+
+- **Cuándo se escribe:** en el momento del cambio, no al final "si queda tiempo".
+- **Si el archivo del día ya existe:** se actualiza agregando entradas; el historial nunca se sobrescribe.
+- **Contenido mínimo:** objetivo, cambios por capa (backend / frontend / BD), decisiones tomadas, pendientes y cómo probar.
+- **Alcance:** aplica a Developers senior, junior, estudiantes del equipo y a los agentes de IA del proyecto (`.opencode/agents/*.md`).
+- Una tarea sin bitácora en `docs/ai/sessions/` se considera **incompleta**, aunque el código compile y funcione.
+
+Detalle completo de esta regla en [`docs/ai/MASTER_AGENT_PROMPT.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/MASTER_AGENT_PROMPT.md) (regla 6).
 
 ---
 
