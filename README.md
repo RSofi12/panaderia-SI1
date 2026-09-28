@@ -1,104 +1,175 @@
 # Panadería Santiago — Sistema de Información Web
 
-Sistema de información web para la gestión de ventas, producción, inventario y control administrativo de la Panadería Santiago. Proyecto académico.
+Sistema de información web para la gestión de ventas, producción, inventario y control administrativo de la Panadería Santiago. Proyecto académico para la materia SI-1 (PUDS + UML).
 
-## Tecnologías
+---
 
-- **Backend:** Django (Python) + Django REST Framework
-- **Frontend:** React + TypeScript (Vite)
+## 🚀 Tecnologías
+
+- **Backend:** Python 3.12+ · Django 5.x + Django REST Framework + SimpleJWT
+- **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS v4 + Lucide Icons
 - **Base de datos:** PostgreSQL 14+
-- **Metodología:** PUDS (Proceso Unificado de Desarrollo de Software) + UML
-- **Control de calidad de datos:** el sistema funciona bajo lógica de tipo MRP (Material Requirements Planning) para el descuento automático de materia prima según la producción
+- **Servidor de correo de desarrollo:** Mailpit (servidor SMTP local y visor web)
+- **Metodología:** PUDS (Proceso Unificado de Desarrollo de Software) iterativo-incremental
 
-## Estructura del repositorio
+---
+
+## 📁 Estructura del repositorio
 
 ```
 panaderia-SI1/
 ├── backend/          # API Django + Django REST Framework
-│   ├── apps/         # 5 paquetes por dominio (usuarios_seguridad, productos_inventario,
-│   │                 #   compras, comercializacion, reportes)
-│   ├── config/       # Configuración del proyecto Django (settings, urls)
+│   ├── apps/         # 5 paquetes por dominio:
+│   │                 #   - usuarios_seguridad (CU1-CU4, CU26)
+│   │                 #   - productos_inventario (CU5, CU8-CU12, CU18, CU19)
+│   │                 #   - compras (CU6, CU7, CU20)
+│   │                 #   - comercializacion (CU13-CU17)
+│   │                 #   - reportes (CU21-CU25)
+│   │   config/       # Configuración global Django (settings, urls)
 │   └── requirements.txt
 ├── frontend/         # SPA React + TypeScript (Vite)
-│   └── src/apps/     # Pantallas por ventana del flujo visual (auth/, dashboard/*)
-├── docs/             # Perfil del proyecto, DDL, informes y memoria de IA
+│   └── src/
+│       ├── apps/     # Pantallas por ventana del flujo visual (auth/, dashboard/*)
+│       ├── contexts/ # Contexto de autenticación y sesión (AuthContext)
+│       ├── routes/   # Enrutador y guardias RBAC (AppRoutes, ProtectedRoute)
+│       ├── services/ # Clientes API Axios (authService, usuariosService, etc.)
+│       └── types/    # Contratos e interfaces TypeScript
+├── docs/             # Perfil del proyecto, DDL de base de datos, memoria de IA
 └── README.md
 ```
 
-> **Nota de arquitectura:** el backend se organiza por **paquete de dominio** (coincide con la base de datos y la lógica de negocio) y el frontend por **pantalla** (coincide con el flujo visual del usuario). El detalle está en [`docs/ai/ARCHITECTURE.md`](docs/ai/ARCHITECTURE.md).
+> **Nota de arquitectura:** El backend se organiza por **paquetes de dominio** y sub-apps (base de datos y reglas de negocio), mientras que el frontend se organiza por **ventanas/pantallas** bajo `src/apps/` (flujo visual del usuario y permisos RBAC). El detalle completo se documenta en [`docs/ai/DECISIONS_LOG.md`](docs/ai/DECISIONS_LOG.md).
 
-## Requisitos previos
+---
 
-- Python 3.12+ (recomendado; ver nota sobre 3.14 en el backend)
-- Node.js 18+ LTS
-- PostgreSQL 14+ y pgAdmin 4 (opcional, para administración visual)
-- Git
+## 📋 Requisitos previos
 
-## Cómo levantar el proyecto
+- **Python 3.12+**
+- **Node.js 18+ LTS** y `npm`
+- **PostgreSQL 14+** (con una base de datos creada, e.g. `panaderia_db`)
+- **Git**
+- **Mailpit** (para pruebas de correos transaccionales y recuperación de contraseña)
 
-### 1. Clonar el repositorio
+---
 
-```bash
-git clone <url-del-repositorio>
-cd panaderia-SI1
+## 🛠️ Cómo levantar el proyecto localmente
+
+Para ejecutar el sistema completo en entorno local, se recomienda abrir **3 terminales**:
+
+### 1. Servidor de Correo de Pruebas (Mailpit)
+
+Mailpit captura los correos emitidos por el sistema (como los enlaces de recuperación de contraseña del CU2) sin enviarlos a servidores externos reales.
+
+En una terminal dedicada:
+
+```powershell
+# Si ya tienes el ejecutable en tu equipo (ej. en tools\mailpit):
+C:\Users\PERSONAL\tools\mailpit\mailpit.exe --smtp 0.0.0.0:1025 --listen 0.0.0.0:8025
+
+# O si utilizas Docker:
+# docker run -d -p 1025:1025 -p 8025:8025 axllent/mailpit
 ```
 
-### 2. Backend (Django)
+- **Bandeja de entrada Web:** [http://localhost:8025](http://localhost:8025)
+- **Servidor SMTP:** `localhost:1025`
 
-```bash
+---
+
+### 2. Backend (Django REST Framework)
+
+En una segunda terminal:
+
+```powershell
 cd backend
 
-# Crear y activar entorno virtual
+# 1. Crear y activar entorno virtual (Windows)
 python -m venv venv
-.\venv\Scripts\activate          # Windows
-# source venv/bin/activate       # Mac/Linux
+.\venv\Scripts\Activate.ps1
+# En Linux/Mac: source venv/bin/activate
 
-# Instalar dependencias
+# 2. Instalar dependencias
 pip install -r requirements.txt
 
-# Configurar variables de entorno
-# Copia .env.example a .env y completa tus credenciales de PostgreSQL
-copy .env.example .env           # Windows
-# cp .env.example .env           # Mac/Linux
-```
+# 3. Configurar variables de entorno
+# Copia .env.example a .env y ajusta tus credenciales de PostgreSQL
+copy .env.example .env
 
-Antes de continuar, crea en PostgreSQL (por psql o pgAdmin) una base de datos vacía y un usuario dedicado, y completa esos datos en tu `.env`:
-
-```
-DB_NAME=panaderia_db
-DB_USER=panaderia_admin
-DB_PASSWORD=tu_contrasena
-DB_HOST=localhost
-DB_PORT=5432
-```
-
-Luego aplica las migraciones y levanta el servidor:
-
-```bash
+# 4. Aplicar migraciones a PostgreSQL
 python manage.py migrate
+
+# 5. Poblar datos iniciales (roles, permisos y usuarios de prueba)
+python manage.py seed_usuarios
+
+# 6. Iniciar el servidor API
 python manage.py runserver
 ```
 
-El backend queda disponible en `http://localhost:8000`.
+- **API Backend:** [http://localhost:8000](http://localhost:8000)
 
-### 3. Frontend (React + TypeScript)
+> [!TIP]
+> **Configuración en `backend/.env` para Mailpit:**
+> ```env
+> EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+> EMAIL_HOST=localhost
+> EMAIL_PORT=1025
+> ```
+> *Si dejas `EMAIL_BACKEND` sin configurar, Django imprimirá los correos directamente en la consola de `runserver`.*
 
-En otra terminal:
+---
 
-```bash
+### 3. Frontend (React + Vite)
+
+En una tercera terminal:
+
+```powershell
 cd frontend
+
+# 1. Instalar dependencias
 npm install
+
+# 2. Iniciar servidor de desarrollo
 npm run dev
 ```
 
-El frontend queda disponible en `http://localhost:5173`.
+- **Aplicación Web:** [http://localhost:5173](http://localhost:5173)
 
-## Estado actual
+---
 
-- [x] Diseño de base de datos (DDL, triggers, procedimientos almacenados) completado y defendido
-- [x] Casos de uso definidos y organizados por paquetes/módulos
-- [x] Estructura inicial del backend (Django + PostgreSQL) y frontend (React + TS) creada
-- [ ] Implementación de módulos por ciclo de desarrollo (en progreso)
-- [ ] Contenerización con Docker (planeado, pendiente)
-- [ ] Reportes dinámicos (planeado)
+## 👥 Cuentas de Prueba Preconfiguradas (`seed_usuarios`)
 
+Todas las cuentas del seed comparten la contraseña: `Admin123!`
+
+| Usuario | Rol | Permisos clave | Acceso en el sistema |
+|---|---|---|---|
+| `admin` | **Administrador** | Todos (`gestionar_usuarios`, etc.) | Panel completo y administración de cuentas (CU3) |
+| `rpanaderia` | **Propietario** | `consultar_bitacora`, reportes | Panel gerencial de supervisión |
+| `mgonzales` | **Personal de Ventas** | `registrar_ventas`, `registrar_pedidos` | Acceso denegado a CU3 (403 verificado) |
+| `jperez` | **Personal de Producción** | `registrar_produccion`, etc. | Acceso denegado a CU3 (403 verificado) |
+
+---
+
+## 🧪 Comandos de Validación y Calidad
+
+```powershell
+# === Backend ===
+cd backend
+python manage.py check                              # Validación de sistema Django
+python manage.py test apps.usuarios_seguridad       # Pruebas automatizadas (144 tests)
+
+# === Frontend ===
+cd frontend
+npm run lint                                        # Linter ESLint (0 errores)
+npm run build                                       # Chequeo TypeScript y bundle de producción Vite
+```
+
+---
+
+## 📌 Estado de los Casos de Uso (Ciclo 1)
+
+- [x] **CU1: Iniciar sesión** — 🟢 Completo end-to-end (JWT, refresco automático, bloqueo de fuerza bruta 429 con cuenta regresiva, auditoría en bitácora).
+- [x] **CU2: Recuperar contraseña** — 🟢 Completo end-to-end (Tokens SHA-256 de un solo uso, anti-enumeración, expiración de 15 min, envío SMTP con Mailpit, UI reactiva).
+- [x] **CU3: Gestionar usuarios** — 🟢 Completo end-to-end (Listado paginado con debounce 300 ms, alta/edición, activación/inactivación con motivo en bitácora, reseteo administrativo de contraseña, desbloqueo de cuentas, modales accesibles WCAG 2.2 AA).
+- [ ] **CU4: Asignar roles y permisos** — 🟡 Modelos listos (`Rol`, `Permiso`, `RolPermiso`), endpoints y vistas frontend pendientes.
+- [x] **CU26: Gestionar bitácora (versión simple)** — 🟢 Auditoría activa en backend para eventos de seguridad y cambios de usuario; pantalla pendiente.
+- [ ] **CU5: Gestionar productos (catálogo base)** — ⚪ Planificado para Ciclo 1.
+- [ ] **CU6: Gestionar proveedores (catálogo base)** — ⚪ Planificado para Ciclo 1.

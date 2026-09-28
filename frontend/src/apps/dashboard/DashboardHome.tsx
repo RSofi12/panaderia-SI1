@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle2, Clock, Construction, KeyRound } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { NAV_MODULES } from './navigation';
 import UserAvatar from './components/UserAvatar';
@@ -12,6 +13,26 @@ export const DashboardHome: React.FC = () => {
   const modulosHabilitados = NAV_MODULES.filter((modulo) =>
     modulo.permisos.some((permiso) => hasPermission(permiso))
   );
+
+  // La tarjeta "Tus módulos" lista los que el ROL alcanza, implementados
+  // o no: es el mapa de lo que le corresponde a esta persona, no el
+  // índice de lo que ya se puede hacer. Por eso el badge dice
+  // "Próximamente" solo en los que de verdad no tienen pantalla, y
+  // "Disponible" en los que sí.
+  //
+  // Antes este badge era fijo y, cuando CU3 entró en producción, seguía
+  // anunciando "Próximamente" sobre un módulo que ya funcionaba. Es el
+  // tipo de mentira que hace que alguien reporte un fallo que no existe.
+  const insigniaDe = (implementado: boolean) =>
+    implementado ? (
+      <span className="shrink-0 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+        Disponible
+      </span>
+    ) : (
+      <span className="shrink-0 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+        Próximamente
+      </span>
+    );
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -75,21 +96,39 @@ export const DashboardHome: React.FC = () => {
         </p>
 
         <ul className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          {modulosHabilitados.map((modulo) => (
-            <li
-              key={modulo.to}
-              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3"
-            >
-              <modulo.icon className="w-5 h-5 shrink-0 text-slate-400" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-700">{modulo.label}</p>
-                <p className="truncate text-[11px] text-slate-400">{modulo.casosDeUso}</p>
-              </div>
-              <span className="shrink-0 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-                Próximamente
-              </span>
-            </li>
-          ))}
+          {modulosHabilitados.map((modulo) => {
+            // Un badge que dice "Disponible" y no lleva a ningún lado es un
+            // callejón sin salida: obliga a volver al menú lateral a buscar
+            // el módulo. Lo que sí tiene pantalla es un enlace; lo que no,
+            // sigue siendo una tarjeta quieta.
+            const contenido = (
+              <>
+                <modulo.icon className="h-5 w-5 shrink-0 text-slate-400" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-700">{modulo.label}</p>
+                  <p className="truncate text-[11px] text-slate-400">{modulo.casosDeUso}</p>
+                </div>
+                {insigniaDe(modulo.implemented)}
+              </>
+            );
+
+            return (
+              <li key={modulo.to}>
+                {modulo.implemented ? (
+                  <Link
+                    to={modulo.to}
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 transition-colors hover:border-amber-200 hover:bg-amber-50/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2"
+                  >
+                    {contenido}
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
+                    {contenido}
+                  </div>
+                )}
+              </li>
+            );
+          })}
 
           {modulosHabilitados.length === 0 && (
             <li className="rounded-xl border border-dashed border-slate-200 px-4 py-6 text-center text-xs text-slate-400 sm:col-span-2">
