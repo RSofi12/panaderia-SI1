@@ -1,9 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { isAxiosError } from 'axios';
-import { useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Lock, User, Eye, EyeOff, AlertCircle, CheckCircle2, ChefHat, Sparkles } from 'lucide-react';
-import circleLogo from '../../assets/circle-logo-panaderia.svg';
+import { Lock, User, Eye, EyeOff, AlertCircle, CheckCircle2, Timer, Sparkles } from 'lucide-react';
+import AuthCard from './components/AuthCard';
+
+type RespuestaErrorLogin = {
+  error?: string;
+  detail?: string;
+  retry_after_seconds?: number;
+};
+
+/**
+ * Convierte los segundos que devuelve el backend en mm:ss.
+ *
+ * El texto "espera 10 minutos" que llegaba antes era inverificable para el
+ * usuario: no tenía forma de saber si ya había pasado el tiempo, así que
+ * reintentaba y recibía el mismo error. Con la cuenta regresiva ve exactamente
+ * cuándo vuelve a habilitarse el botón.
+ */
+const formatearEspera = (segundos: number): string => {
+  const minutos = Math.floor(segundos / 60);
+  const resto = segundos % 60;
+  return `${String(minutos).padStart(2, '0')}:${String(resto).padStart(2, '0')}`;
+};
 
 export const LoginPage: React.FC = () => {
   const [nombreUsuario, setNombreUsuario] = useState('');
@@ -12,6 +32,8 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPasswordPolicy, setShowPasswordPolicy] = useState(false);
+  // Segundos que faltan para que expire el bloqueo. 0 = la cuenta no está bloqueada.
+  const [retryAfter, setRetryAfter] = useState(0);
 
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -19,6 +41,16 @@ export const LoginPage: React.FC = () => {
 
   // Destino posterior al login (por defecto /dashboard)
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
+
+  // Cuenta regresiva. Se actualiza con un intervalo de un segundo y se detiene
+  // solo al llegar a cero, para no dejar timers huérfanos en el componente.
+  useEffect(() => {
+    if (retryAfter <= 0) return;
+    const intervalo = window.setInterval(() => {
+      setRetryAfter((actual) => Math.max(0, actual - 1));
+    }, 1000);
+    return () => window.clearInterval(intervalo);
+  }, [retryAfter]);
 
   // Si ya hay sesión activa no tiene sentido mostrar el formulario
   if (isAuthenticated) {
@@ -44,9 +76,19 @@ export const LoginPage: React.FC = () => {
       navigate(from, { replace: true });
     } catch (err) {
       setShowPasswordPolicy(true);
-      const responseData = isAxiosError<{ error?: string; detail?: string }>(err)
+      const responseData = isAxiosError<RespuestaErrorLogin>(err)
         ? err.response?.data
         : undefined;
+
+      // El backend envía `retry_after_seconds` cuando la cuenta quedó bloqueada.
+      // Si viene, se arma la cuenta regresiva y el botón queda deshabilitado
+      // hasta que expire la ventana. Si NO viene, se limpia cualquier contador
+      // anterior: si no, un error de red quedaría con el botón congelado.
+      const segundos = responseData?.retry_after_seconds;
+      const hayBloqueo =
+        typeof segundos === 'number' && Number.isFinite(segundos) && segundos > 0;
+      setRetryAfter(hayBloqueo ? Math.ceil(segundos) : 0);
+
       if (responseData?.error) {
         setError(responseData.error);
       } else if (responseData?.detail) {
@@ -64,42 +106,28 @@ export const LoginPage: React.FC = () => {
     setNombreUsuario(username);
     setPassword('Admin123!');
     setError(null);
+    setRetryAfter(0);
   };
 
+  const cuentaBloqueada = retryAfter > 0;
+
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-amber-50/60 via-slate-50 to-amber-100/40 p-4 sm:p-6 lg:p-8">
-      {/* Contenedor Principal de la Tarjeta */}
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-amber-900/5 border border-amber-100/80 overflow-hidden backdrop-blur-sm">
-        
-        {/* Cabecera con Logo e Identidad Visual */}
-        <div className="pt-8 pb-4 px-8 text-center bg-gradient-to-b from-amber-50/70 to-transparent">
-          <div className="relative inline-block mb-3">
-            <div className="w-24 h-24 sm:w-28 sm:h-28 mx-auto rounded-full bg-white shadow-md p-1 border-2 border-amber-200/80 flex items-center justify-center transition-transform duration-300 hover:scale-105">
-              <img
-                src={circleLogo}
-                alt="Logo Panadería Santiago"
-                className="w-full h-full object-contain rounded-full"
-              />
-            </div>
-            <div className="absolute -bottom-1 -right-1 bg-amber-600 text-white p-1.5 rounded-full shadow-sm">
-              <ChefHat className="w-4 h-4" />
-            </div>
-          </div>
-
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            Panadería Santiago
-          </h1>
-          <p className="text-xs sm:text-sm text-amber-800 font-medium mt-1">
-            Sistema de Información Web • SI-1
-          </p>
-        </div>
-
-        {/* Formulario de Login */}
-        <div className="px-6 sm:px-8 pb-8 pt-2">
+    <AuthCard titulo="Panadería Santiago" subtitulo="Sistema de Información Web • SI-1">
           {error && (
             <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm rounded-xl flex items-start gap-2.5 animate-shake">
               <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-500 mt-0.5" />
-              <span>{error}</span>
+              <div className="flex-1">
+                <span>{error}</span>
+                {cuentaBloqueada && (
+                  <div className="mt-2 flex items-center gap-1.5 font-mono text-sm font-semibold text-red-800 tabular-nums">
+                    <Timer className="w-4 h-4" />
+                    <span>{formatearEspera(retryAfter)}</span>
+                    <span className="font-sans font-normal text-red-600">
+                      para volver a intentar
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -138,9 +166,17 @@ export const LoginPage: React.FC = () => {
                 >
                   Contraseña
                 </label>
-                <span className="text-[11px] text-amber-700 hover:text-amber-800 font-medium cursor-pointer">
+                {/* Antes esto era un <span> sin onClick: un texto que parecía
+                    un enlace y no hacía nada. Ahora es un Link de verdad al paso 1
+                    del CU2. Se usa Link y no un navigate() con onClick para que
+                    Ctrl+clic y "abrir en pestaña nueva" funcionen, y para que no
+                    recargue la aplicación. */}
+                <Link
+                  to="/recuperar-password"
+                  className="text-[11px] text-amber-700 hover:text-amber-800 font-medium transition-colors"
+                >
                   ¿Olvidaste tu contraseña?
-                </span>
+                </Link>
               </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -179,13 +215,18 @@ export const LoginPage: React.FC = () => {
             {/* Botón de Ingreso */}
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || cuentaBloqueada}
               className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold text-sm rounded-xl shadow-md shadow-amber-600/20 hover:shadow-lg hover:shadow-amber-600/30 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
             >
               {isSubmitting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   <span>Iniciando sesión...</span>
+                </>
+              ) : cuentaBloqueada ? (
+                <>
+                  <Timer className="w-4 h-4" />
+                  <span>Espera {formatearEspera(retryAfter)}</span>
                 </>
               ) : (
                 <>
@@ -196,60 +237,62 @@ export const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          {/* Panel Rápido de Cuentas de Prueba (Seed Data) */}
-          <div className="mt-6 pt-5 border-t border-slate-100">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                Cuentas de Prueba (Demo)
-              </span>
-              <span className="text-[11px] text-slate-400 font-mono">Pass: Admin123!</span>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-1.5">
-              <button
-                type="button"
-                onClick={() => setDemoCredentials('admin')}
-                className="py-1.5 px-2 bg-amber-50 hover:bg-amber-100/80 text-amber-900 border border-amber-200/60 rounded-lg text-xs font-medium text-left transition-colors flex items-center justify-between"
-              >
-                <span>👑 Admin</span>
-                <code className="text-[10px] text-amber-700">admin</code>
-              </button>
-              <button
-                type="button"
-                onClick={() => setDemoCredentials('csantiago')}
-                className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200/70 text-slate-800 border border-slate-200 rounded-lg text-xs font-medium text-left transition-colors flex items-center justify-between"
-              >
-                <span>💼 Propietario</span>
-                <code className="text-[10px] text-slate-600">csantiago</code>
-              </button>
-              <button
-                type="button"
-                onClick={() => setDemoCredentials('mgonzales')}
-                className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200/70 text-slate-800 border border-slate-200 rounded-lg text-xs font-medium text-left transition-colors flex items-center justify-between"
-              >
-                <span>🛒 Ventas</span>
-                <code className="text-[10px] text-slate-600">mgonzales</code>
-              </button>
-              <button
-                type="button"
-                onClick={() => setDemoCredentials('mrojas')}
-                className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200/70 text-slate-800 border border-slate-200 rounded-lg text-xs font-medium text-left transition-colors flex items-center justify-between"
-              >
-                <span>🥖 Producción</span>
-                <code className="text-[10px] text-slate-600">mrojas</code>
-              </button>
-            </div>
-          </div>
+          {/* Panel Rápido de Cuentas de Prueba (Seed Data).
 
-        </div>
+              Solo en desarrollo. Este panel publica usuarios y una contraseña
+              REAL en pantalla; en un build de producción es una puerta abierta
+              para cualquiera que llegue a /login. `import.meta.env.DEV` lo
+              reemplaza por `false` en el bundle que se sirve, así que Vite elimina
+              el código y no queda ni el texto en el bundle resultante. */}
+          {import.meta.env.DEV && (
+            <div className="mt-6 pt-5 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  Cuentas de Prueba (Demo)
+                </span>
+                <span className="text-[11px] text-slate-400 font-mono">
+                  Pass: Admin123!
+                </span>
+              </div>
 
-        {/* Pie de Página de la Tarjeta */}
-        <div className="py-3 px-6 bg-slate-50 border-t border-slate-100 text-center text-[11px] text-slate-400">
-          Panadería Santiago • Santa Cruz de la Sierra, Bolivia
-        </div>
-      </div>
-    </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setDemoCredentials('admin')}
+                  className="py-1.5 px-2 bg-amber-50 hover:bg-amber-100/80 text-amber-900 border border-amber-200/60 rounded-lg text-xs font-medium text-left transition-colors flex items-center justify-between"
+                >
+                  <span>👑 Admin</span>
+                  <code className="text-[10px] text-amber-700">admin</code>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDemoCredentials('csantiago')}
+                  className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200/70 text-slate-800 border border-slate-200 rounded-lg text-xs font-medium text-left transition-colors flex items-center justify-between"
+                >
+                  <span>💼 Propietario</span>
+                  <code className="text-[10px] text-slate-600">csantiago</code>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDemoCredentials('mgonzales')}
+                  className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200/70 text-slate-800 border border-slate-200 rounded-lg text-xs font-medium text-left transition-colors flex items-center justify-between"
+                >
+                  <span>🛒 Ventas</span>
+                  <code className="text-[10px] text-slate-600">mgonzales</code>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDemoCredentials('mrojas')}
+                  className="py-1.5 px-2 bg-slate-100 hover:bg-slate-200/70 text-slate-800 border border-slate-200 rounded-lg text-xs font-medium text-left transition-colors flex items-center justify-between"
+                >
+                  <span>🥖 Producción</span>
+                  <code className="text-[10px] text-slate-600">mrojas</code>
+                </button>
+              </div>
+            </div>
+          )}
+    </AuthCard>
   );
 };
 
