@@ -1,0 +1,23 @@
+Panadería Santiago
+====================
+
+Hola {{ nombre_completo }},
+
+Recibimos una solicitud para restablecer la contraseña de tu cuenta
+"{{ nombre_usuario }}".
+
+Para elegir una contraseña nueva, entra a este enlace:
+
+{{ enlace }}
+
+El enlace vence en {{ minutos_validez }} minutos y solo puede usarse una vez.
+Si no lo usás en ese plazo, pedí uno nuevo desde la pantalla de acceso.
+
+Si no fuiste vos quien pidió esto, no hagas nada y cambiá tu contraseña desde la
+aplicación: alguien más tiene tu dirección de correo registrada y conviene
+confirmar que la cuenta sigue siendo tuya.
+
+--
+Panadería Santiago
+Santa Cruz de la Sierra, Bolivia
+Este es un mensaje automático, no respondas a este correo.

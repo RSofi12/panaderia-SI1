@@ -13,6 +13,7 @@ class BitacoraSerializer(serializers.ModelSerializer):
             'id_usuario',
             'nombre_usuario',
             'nombre_completo',
+            'nombre_usuario_intento',
             'accion',
             'tabla_afectada',
             'descripcion',
