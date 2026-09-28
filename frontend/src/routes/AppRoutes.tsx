@@ -5,6 +5,7 @@ import ProtectedRoute from './ProtectedRoute';
 import LoginPage from '../apps/auth/LoginPage';
 import DashboardLayout from '../apps/dashboard/DashboardLayout';
 import DashboardHome from '../apps/dashboard/DashboardHome';
+import ProductosPage from '../apps/dashboard/productos/ProductosPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -24,6 +25,7 @@ export const AppRoutes: React.FC = () => {
             }
           >
             <Route index element={<DashboardHome />} />
+            <Route path="productos" element={<ProductosPage />} />
           </Route>
 
           {/* Redirecciones por defecto */}

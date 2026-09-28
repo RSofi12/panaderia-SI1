@@ -50,7 +50,7 @@ export const NAV_MODULES: NavModule[] = [
     icon: Package,
     casosDeUso: 'CU5, CU8–CU12, CU18, CU19',
     permisos: ['gestionar_productos', 'gestionar_inventario', 'registrar_produccion'],
-    implemented: false,
+    implemented: true,
   },
   {
     label: 'Compras y Proveedores',

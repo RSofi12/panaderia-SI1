@@ -28,7 +28,7 @@
 | **CU3** | Gestionar usuarios | `apps.usuarios_seguridad` | 🟡 | Sub-app `users` lista con modelo `Usuario` y comando de seed data. |
 | **CU4** | Asignar roles y permisos | `apps.usuarios_seguridad` | 🟡 | Sub-apps `permisos` y `roles` listas con modelos `Permiso`, `Rol`, `RolPermiso`. |
 | **CU26**| Gestionar bitácora (versión simple) | `apps.usuarios_seguridad` | 🟢 | Sub-app `bitacora` implementada y vinculada a eventos de login/logout y auditoría. |
-| **CU5** | Gestionar productos (catálogo base) | `apps.productos_inventario`| ⚪ | Planificado en Ciclo 1 |
+| **CU5** | Gestionar productos (catálogo base) | `apps.productos_inventario`| 🟢 | **Completo end-to-end.** Modelos `CategoriaProducto`, `Producto` (precio sugerido calculado en `save()`) e `HistorialPrecioProducto`. API `/api/categorias-producto/`, `/api/productos/` (filtros nombre, categoría, activo), `/api/productos/<id>/` y `/api/productos/<id>/toggle-activo/`; escritura solo con `gestionar_productos`; bitácora en alta, edición y cambio de estado. Seed `python manage.py seed_productos` (7 categorías, 12 panes). Frontend `src/apps/dashboard/productos/ProductosPage.tsx` con formulario y confirmación de estado. |
 | **CU6** | Gestionar proveedores (catálogo base)| `apps.compras` | ⚪ | Planificado en Ciclo 1 |
 
 ---
