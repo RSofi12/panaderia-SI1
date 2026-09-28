@@ -92,25 +92,29 @@
 **Actor:** `Administrador`  
 **Prioridad:** Alta | **Riesgo:** Bajo (CRUD administrativo con activación/inactivación)
 
-- [ ] **Backend (`apps.usuarios_seguridad`):**
-  - [ ] `UsuarioSerializer` con validaciones de campos únicos (`nombre_usuario`) y formato de datos.
-  - [ ] Servicio de creación/edición de usuarios con hash automático de contraseñas.
-  - [ ] Endpoints REST protegidos para rol `Administrador`:
-    - `GET /api/usuarios/` (Listar usuarios con filtros por estado/rol).
+- [x] **Backend (`apps.usuarios_seguridad`):** — *completado y verificado el 2026-09-28*
+  - [x] `UsuarioSerializer` con validaciones de campos únicos (`nombre_usuario`) y formato de datos. → Se partió en 6 serializers por lectura/escritura; la unicidad sin distinguir mayúsculas la impone la base con el índice `usuario_username_unico_ci` sobre `Lower(nombre_usuario)`, no solo el `__iexact` del serializer.
+  - [x] Servicio de creación/edición de usuarios con hash automático de contraseñas. → `users/services/usuarios.py`, con el hash a cargo de `set_password()` y las tres guardas de auto-destrucción.
+  - [x] Endpoints REST protegidos para rol `Administrador`:
+    - `GET /api/usuarios/` (Listar usuarios con filtros por estado/rol). → Paginado y buscable; `activo` e `id_rol` a mano, sin `django-filter`.
     - `POST /api/usuarios/` (Crear nuevo usuario).
     - `GET /api/usuarios/<id>/` (Detalle de usuario).
     - `PUT/PATCH /api/usuarios/<id>/` (Modificar datos de usuario).
     - `PATCH /api/usuarios/<id>/toggle-activo/` (Activar / Inactivar usuario).
-  - [ ] Registro en Bitácora de toda alta, modificación o cambio de estado de usuarios.
+    - *Extensiones aprobadas:* `POST /api/usuarios/<id>/restablecer-contrasena/`, `POST /api/usuarios/<id>/desbloquear/`, `GET /api/usuarios/roles/`.
+  - [x] Registro en Bitácora de toda alta, modificación o cambio de estado de usuarios. → Cuatro acciones nuevas en `AccionBitacora`; el desbloqueo reutiliza `DESBLOQUEO_CUENTA` de CU1.
 - [ ] **Frontend:**
   - [ ] Vista de listado de usuarios con tabla interactiva, buscador y filtros por rol y estado.
   - [ ] Modal/Formulario de creación de usuario con selector de rol.
   - [ ] Modal de edición de datos de usuario.
   - [ ] Botón de alternar estado Activo/Inactivo con confirmación modal.
-- [ ] **Pruebas y Verificación:**
-  - [ ] Intentar acceder con rol `Personal De Ventas` -> `403 Forbidden`.
-  - [ ] Acceso con `Administrador` -> `200 OK` y operaciones CRUD funcionando.
-  - [ ] Verificar que no se puedan duplicar nombres de usuario.
+- [x] **Pruebas y Verificación (backend):** — *52 pruebas propias en verde; suite del paquete 144 en verde*
+  - [x] Intentar acceder con rol `Personal De Ventas` -> `403 Forbidden`. → Cubierto con dos pruebas: una por `permission_classes` y otra por el flujo completo con token.
+  - [x] Acceso con `Administrador` -> `200 OK` y operaciones CRUD funcionando.
+  - [x] Verificar que no se puedan duplicar nombres de usuario. → Cubierto en el serializer, en el servicio y contra la base real: el índice rechaza `MGONZALES` frente a `mgonzales`.
+
+> **Pendiente de esta fase:** solo el bloque de Frontend. La suite corrió contra SQLite
+> porque `panaderia_admin` no tiene `CREATEDB`; ver `docs/ai/HANDOFF_LATEST.md`.
 
 ---
 
