@@ -4,7 +4,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, Eye, EyeOff, KeyRound, Lock, ShieldAlert } from 'lucide-react';
 import { authService } from '../../services/authService';
 import AuthCard from './components/AuthCard';
-import PasswordRequirements, { cumplePoliticaVisible } from './components/PasswordRequirements';
+import PasswordRequirements from './components/PasswordRequirements';
+import { cumplePoliticaVisible } from './politicaContrasena';
 import type { ErrorRecuperacion } from '../../types/auth';
 
 /**
@@ -41,20 +42,28 @@ import type { ErrorRecuperacion } from '../../types/auth';
  */
 export const ResetPasswordPage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const [token, setToken] = useState<string | null>(null);
+  // 1) El token se lee con un inicializador perezoso, no con un efecto.
+  //
+  // Leer el query string ES leer estado inicial: el token no va a cambiar
+  // mientras la página esté montada, y una pantalla de restablecimiento se
+  // monta una vez y se descarta. Con `useEffect` se recarga el componente
+  // entero en el primer render con `token = null`, recién en el segundo
+  // render ya tiene el token. Ese primer render es el que pinta el estado
+  // "falta el token" durante un instante, y en una pantalla con un
+  // `return` temprano se traduce en un parpadeo visible.
+  const [token, setToken] = useState<string | null>(() =>
+    searchParams.get('token'),
+  );
 
-  // 1) Lee el token una vez y limpia la URL.
+  // Limpia el query string del historial visible. El segundo argumento
+  // vacío y el tercero con `replace` evitan que esta entrada se pueda volver
+  // atrás con el botón del navegador.
+  //
+  // Esto sí es un efecto, porque no es estado: es historia del navegador. Y
+  // va aparte del token justamente por eso, para que el token no dependa de
+  // un efecto.
   useEffect(() => {
-    const deLaUrl = searchParams.get('token');
-    if (deLaUrl) setToken(deLaUrl);
-    // Se borra el query string del historial visible. El segundo argumento
-    // vacío y el tercero con `replace` evitan que esta entrada se pueda volver
-    // atrás con el botón del navegador.
     window.history.replaceState(null, '', window.location.pathname);
-    // `searchParams` no va en las dependencias a propósito: el efecto debe
-    // correr UNA vez al montar. Si se incluyera, la limpieza de la URL
-    // dispararía un segundo render y el efecto volvería a correr en bucle.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [nueva, setNueva] = useState('');

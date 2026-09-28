@@ -7,6 +7,7 @@ import ForgotPasswordPage from '../apps/auth/ForgotPasswordPage';
 import ResetPasswordPage from '../apps/auth/ResetPasswordPage';
 import DashboardLayout from '../apps/dashboard/DashboardLayout';
 import DashboardHome from '../apps/dashboard/DashboardHome';
+import UsuariosPage from '../apps/dashboard/usuarios/UsuariosPage';
 import ProductosPage from '../apps/dashboard/productos/ProductosPage';
 
 export const AppRoutes: React.FC = () => {
@@ -43,6 +44,34 @@ export const AppRoutes: React.FC = () => {
             }
           >
             <Route index element={<DashboardHome />} />
+
+            {/* CU3 - Gestión de usuarios.
+                Va DENTRO de /dashboard y no como ruta suelta porque comparte
+                el Sidebar, el Topbar y el pie con el resto del panel. Si
+                fuera una ruta hermana, el usuario perdería el marco al entrar
+                a administrar cuentas.
+
+                El `ProtectedRoute` va AQUÍ y no en la ruta padre porque cada
+                ventana puede pedir un permiso distinto: hoy esta exige
+                `gestionar_usuarios`, y cuando CU4 se sume va a exigir
+                `asignar_permisos`. Si el permiso se comprobara en la ruta
+                padre, el día que las dos coexistan, entrar a una cerraría
+                la otra. El primer filtro es de navegación (el Sidebar
+                esconde el enlace) y este es de seguridad (la URL directa
+                no sirve). Son capas distintas y hacen falta las dos. */}
+            <Route
+              path="usuarios"
+              element={
+                <ProtectedRoute requiredPermission="gestionar_usuarios">
+                  <UsuariosPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* CU5 - Gestión de productos. Misma lógica que usuarios: vive
+                dentro de /dashboard para compartir el shell. La lectura la
+                permite el backend a cualquier autenticado; la escritura exige
+                `gestionar_productos` y la controla la propia pantalla + API. */}
             <Route path="productos" element={<ProductosPage />} />
           </Route>
 
