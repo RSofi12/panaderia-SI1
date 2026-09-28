@@ -193,7 +193,9 @@ Las carpetas se crean **bajo demanda**, cuando se implemente el CU correspondien
 frontend/src/apps/
 ├── auth/                              # CU1, CU2
 │   ├── LoginPage.tsx                  #   CU1  Iniciar sesión
-│   └── ForgotPasswordPage.tsx         #   CU2  Recuperar contraseña
+│   ├── ForgotPasswordPage.tsx         #   CU2  Pedir enlace de recuperación (público)
+│   ├── ResetPasswordPage.tsx          #   CU2  Escribir contraseña nueva (público)
+│   └── components/                    #   AuthCard, PasswordRequirements (CU1+CU2)
 └── dashboard/                         # Shell con Sidebar + Topbar + Outlet
     ├── DashboardLayout.tsx            #   Shell único para los 4 actores
     ├── DashboardHome.tsx              #   Resumen: identidad del actor y sus módulos

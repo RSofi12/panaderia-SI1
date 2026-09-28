@@ -43,10 +43,18 @@ api.interceptors.response.use(
             refresh: refreshToken,
           });
 
-          const newAccessToken = response.data.access;
-          localStorage.setItem('access_token', newAccessToken);
+          localStorage.setItem('access_token', response.data.access);
 
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          // El backend tiene ROTATE_REFRESH_TOKENS=True y BLACKLIST_AFTER_ROTATION=True:
+          // cada refresh emite un refresh NUEVO y mete el anterior en la lista negra.
+          // Si aquí se descartara el nuevo, el que queda guardado en localStorage
+          // estaría revocado y el siguiente refresh fallaría, cerrando la sesión del
+          // usuario a la mitad de su turno sin motivo aparente.
+          if (response.data.refresh) {
+            localStorage.setItem('refresh_token', response.data.refresh);
+          }
+
+          originalRequest.headers.Authorization = `Bearer ${response.data.access}`;
           return api(originalRequest);
         } catch (refreshError) {
           // Si el refresh token también expiró, cerramos sesión

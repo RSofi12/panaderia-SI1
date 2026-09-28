@@ -1,6 +1,36 @@
 import re
+# El import se aliasea porque la función pública del módulo se llama igual que la
+# de Django. Antes de este alias, `validar_contrasena()` llamaba a SÍ MISMA con el
+# keyword `usuario=`, que no existe: reventaba con TypeError en la primera
+# invocación. La función estaba muerta desde que se escribió, esperando a que
+# alguien la usara de verdad; el CU2 es el primer caso que la llama.
+from django.contrib.auth.password_validation import (
+    validate_password as validar_con_politica_de_django,
+)
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
+
+
+def validar_contrasena(contrasena, usuario=None):
+    """
+    Ejecuta TODA la política de contraseñas de settings.AUTH_PASSWORD_VALIDATORS
+    y devuelve la lista de errores como texto legible.
+
+    Dónde se usa: al CREAR o MODIFICAR una contraseña (CU3 y el reset del CU2).
+    Dónde NO se usa: en el login. Validar complejidad al iniciar sesión es un
+    error de diseño: obligaría a que TODA contraseña histórica cumpliera la
+    política vigente y dejaría sin salida a un usuario cuya contraseña fue
+    creada con reglas más débiles. Al entrar solo se comprueba que la contraseña
+    sea la correcta.
+
+    `usuario` es opcional y sirve para el validador de similitud, que rechaza
+    contraseñas parecidas al nombre de usuario.
+    """
+    try:
+        validar_con_politica_de_django(contrasena, user=usuario)
+    except ValidationError as error:
+        return list(error.messages)
+    return []
 
 
 class ComplexPasswordValidator:

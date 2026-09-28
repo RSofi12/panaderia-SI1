@@ -27,7 +27,8 @@
   - [ ] Configurar CORS para permitir comunicación con `http://localhost:5173`.
   - [ ] Configurar middleware de autenticación y manejo global de excepciones.
 - [ ] **Configuración Frontend:**
-  - [ ] Configurar cliente Axios/Fetch con interceptores para tokens y manejo de errores 401/403.
+  - [ ] Configurar cliente Axios/Fetch con interceptores para tokens y manejo de errores 401/403 (token expirado o sin permisos).
+        Ojo: el login **no** devuelve 401 ni 403, devuelve `400`/`429`. El interceptor no debe interpretar un `400` de login como "token expirado" e intentar refrescar, porque provocaría un bucle de reintentos.
   - [ ] Configurar React Router DOM para rutas públicas y rutas protegidas por rol.
   - [ ] Configurar estado global de autenticación (`AuthContext`).
 
@@ -51,8 +52,18 @@
   - [ ] Redirección inteligente al dashboard o módulo según el rol del usuario autenticado.
 - [ ] **Pruebas y Verificación:**
   - [ ] Prueba unitaria de login con credenciales válidas -> `200 OK`.
-  - [ ] Prueba de login con credenciales inválidas -> `401 Unauthorized`.
-  - [ ] Prueba de login con usuario inactivo (`activo=False`) -> `403 Forbidden`.
+  - [ ] Prueba de login con credenciales inválidas -> `400 Bad Request`.
+  - [ ] Prueba de login con usuario inexistente -> `400 Bad Request` (mismo mensaje que contraseña incorrecta, para no revelar qué usernames existen).
+  - [ ] Prueba de login con usuario inactivo (`activo=False`) -> `400 Bad Request`.
+  - [ ] Prueba de bloqueo tras agotar los intentos fallidos -> `429 Too Many Requests` con `Retry-After` y `retry_after_seconds`.
+  - [ ] Prueba de que la ventana de bloqueo respeta los minutos configurados en `ConfiguracionSeguridad`.
+  - [ ] Prueba de que al vencer la ventana el contador se reinicia y el usuario dispone de 3 intentos nuevos.
+  - [ ] Verificar que el bloqueo concurrente no duplica contadores (dos intentos simultáneos no se pierden).
+
+> **Nota de diseño (CU1).** El contrato de login es `400` / `400` / `429` y no `401` / `403` / `423`:
+> - Credenciales inválidas, usuario inexistente y cuenta inactiva devuelven `400`, no `401`. Un `401` implica que el cliente puede reenviar credenciales sin más, y aquí eso alimentaría un ataque de fuerza bruta. El mensaje es deliberadamente genérico y se registra en bitácora con `nombre_usuario_intento` y `agente_usuario`.
+> - El bloqueo es `429`, no `423 Locked`. `429` es el código estándar que significa "demasiadas peticiones, reintenta más tarde" y lo entienden los clientes y proxies automáticamente; además permite acompañar la respuesta con `Retry-After`. `423` no lo interpreta casi nadie.
+> - El `429` es siempre acumulativo: la ventana de bloqueo no se extiende en cada intento, así un atacante no puede alargar el bloqueo indefinidamente.
 
 ---
 
@@ -81,25 +92,29 @@
 **Actor:** `Administrador`  
 **Prioridad:** Alta | **Riesgo:** Bajo (CRUD administrativo con activación/inactivación)
 
-- [ ] **Backend (`apps.usuarios_seguridad`):**
-  - [ ] `UsuarioSerializer` con validaciones de campos únicos (`nombre_usuario`) y formato de datos.
-  - [ ] Servicio de creación/edición de usuarios con hash automático de contraseñas.
-  - [ ] Endpoints REST protegidos para rol `Administrador`:
-    - `GET /api/usuarios/` (Listar usuarios con filtros por estado/rol).
+- [x] **Backend (`apps.usuarios_seguridad`):** — *completado y verificado el 2026-09-28*
+  - [x] `UsuarioSerializer` con validaciones de campos únicos (`nombre_usuario`) y formato de datos. → Se partió en 6 serializers por lectura/escritura; la unicidad sin distinguir mayúsculas la impone la base con el índice `usuario_username_unico_ci` sobre `Lower(nombre_usuario)`, no solo el `__iexact` del serializer.
+  - [x] Servicio de creación/edición de usuarios con hash automático de contraseñas. → `users/services/usuarios.py`, con el hash a cargo de `set_password()` y las tres guardas de auto-destrucción.
+  - [x] Endpoints REST protegidos para rol `Administrador`:
+    - `GET /api/usuarios/` (Listar usuarios con filtros por estado/rol). → Paginado y buscable; `activo` e `id_rol` a mano, sin `django-filter`.
     - `POST /api/usuarios/` (Crear nuevo usuario).
     - `GET /api/usuarios/<id>/` (Detalle de usuario).
     - `PUT/PATCH /api/usuarios/<id>/` (Modificar datos de usuario).
     - `PATCH /api/usuarios/<id>/toggle-activo/` (Activar / Inactivar usuario).
-  - [ ] Registro en Bitácora de toda alta, modificación o cambio de estado de usuarios.
+    - *Extensiones aprobadas:* `POST /api/usuarios/<id>/restablecer-contrasena/`, `POST /api/usuarios/<id>/desbloquear/`, `GET /api/usuarios/roles/`.
+  - [x] Registro en Bitácora de toda alta, modificación o cambio de estado de usuarios. → Cuatro acciones nuevas en `AccionBitacora`; el desbloqueo reutiliza `DESBLOQUEO_CUENTA` de CU1.
 - [ ] **Frontend:**
   - [ ] Vista de listado de usuarios con tabla interactiva, buscador y filtros por rol y estado.
   - [ ] Modal/Formulario de creación de usuario con selector de rol.
   - [ ] Modal de edición de datos de usuario.
   - [ ] Botón de alternar estado Activo/Inactivo con confirmación modal.
-- [ ] **Pruebas y Verificación:**
-  - [ ] Intentar acceder con rol `Personal De Ventas` -> `403 Forbidden`.
-  - [ ] Acceso con `Administrador` -> `200 OK` y operaciones CRUD funcionando.
-  - [ ] Verificar que no se puedan duplicar nombres de usuario.
+- [x] **Pruebas y Verificación (backend):** — *52 pruebas propias en verde; suite del paquete 144 en verde*
+  - [x] Intentar acceder con rol `Personal De Ventas` -> `403 Forbidden`. → Cubierto con dos pruebas: una por `permission_classes` y otra por el flujo completo con token.
+  - [x] Acceso con `Administrador` -> `200 OK` y operaciones CRUD funcionando.
+  - [x] Verificar que no se puedan duplicar nombres de usuario. → Cubierto en el serializer, en el servicio y contra la base real: el índice rechaza `MGONZALES` frente a `mgonzales`.
+
+> **Pendiente de esta fase:** solo el bloque de Frontend. La suite corrió contra SQLite
+> porque `panaderia_admin` no tiene `CREATEDB`; ver `docs/ai/HANDOFF_LATEST.md`.
 
 ---
 
