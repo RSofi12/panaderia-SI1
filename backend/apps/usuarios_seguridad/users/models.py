@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.functions import Lower
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from .managers import UsuarioManager
 
@@ -21,7 +22,9 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     nombre_usuario = models.CharField(
         max_length=50,
         unique=True,
-        verbose_name='Nombre de usuario'
+        verbose_name='Nombre de usuario',
+        help_text='Con este nombre inicia sesión la persona. No distingue '
+                  'mayúsculas de minúsculas al validar que sea único.',
     )
     # password se mapea físicamente a la columna hash_contrasena
     password = models.CharField(
@@ -33,15 +36,40 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         max_length=150,
         verbose_name='Nombre completo'
     )
+    # El correo es OBLIGATORIO desde CU2: es el canal por el que sale el enlace
+    # de recuperación de contraseña. Dejarlo opcional significaba que un usuario
+    # sin correo podía pedir un restablecimiento, recibir el mensaje genérico de
+    # "te enviamos un correo" y no recibir nunca nada, lo que además entrena al
+    # usuario para desconfiar del sistema.
     email = models.EmailField(
         max_length=150,
-        blank=True,
-        null=True,
         verbose_name='Correo electrónico'
     )
     activo = models.BooleanField(
         default=True,
         verbose_name='Usuario activo'
+    )
+
+    # --- Estado de la política de bloqueo por intentos fallidos (CU1) ---
+    # Son datos, no configuración de despliegue: viven en la tabla usuario
+    # para poder contabilizar y auditar por cuenta. La escritura de estos
+    # campos está encapsulada en auth_app.services.politica_bloqueo.
+    intentos_fallidos = models.PositiveSmallIntegerField(
+        default=0,
+        db_default=0,
+        verbose_name='Intentos fallidos consecutivos',
+        help_text='Se reinicia a 0 tras un inicio de sesión exitoso.'
+    )
+    bloqueado_hasta = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Bloqueado hasta',
+        help_text='Instante en que expira el bloqueo. Null significa cuenta desbloqueada.'
+    )
+    ultimo_intento_fallido = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Último intento fallido'
     )
 
     # Campos administrativos para el panel de Django
@@ -69,7 +97,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     )
 
     USERNAME_FIELD = 'nombre_usuario'
-    REQUIRED_FIELDS = ['nombre_completo']
+    REQUIRED_FIELDS = ['nombre_completo', 'email']
 
     objects = UsuarioManager()
 
@@ -78,6 +106,39 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         verbose_name = 'Usuario'
         verbose_name_plural = 'Usuarios'
         ordering = ['id_usuario']
+        constraints = [
+            # Unicidad sobre `Lower('email')` y no sobre `email` a secas, porque
+            # en PostgreSQL la comparación de texto distingue mayúsculas: sin
+            # esto, 'Admin@mail.com' y 'admin@mail.com' serían dos cuentas
+            # distintas y la recuperación de contraseña quedaría ambigua. Aplica
+            # la misma lógica que la contraseña de MySQL, donde la collation no
+            # distingue mayúsculas.
+            models.UniqueConstraint(
+                Lower('email'),
+                name='usuario_email_unico_ci',
+            ),
+            # CU3 — mismo criterio para `nombre_usuario`, que es la columna por la
+            # que se inicia sesión. El `unique=True` del campo es UNICO Y DISTINTO
+            # DE MAYÚSCULAS en PostgreSQL: 'Admin' y 'admin' convivían como dos
+            # cuentas distintas, y como el login busca por coincidencia exacta
+            # (`nombre_usuario=...`), una de las dos quedaba literalmente
+            # inaccesible. Esta restricción sobre `Lower(...)` es la que
+            # realmente garantiza la unicidad sin distinguir mayúsculas, y es la
+            # que valida el serializer con `__iexact`.
+            #
+            # POR QUÉ SE MANTIENE TAMBIÉN EL `unique=True` DEL CAMPO, siendo
+            # redundante: Django exige por contrato (auth.E003) que el campo
+            # `USERNAME_FIELD` de un modelo de usuario sea único. Quitarlo
+            # funciona en una tabla, pero rompe el sistema de autenticación de
+            # Django entero, y silenciar esa verificación con
+            # `SILENCED_SYSTEM_CHECKS` sería esconder un problema real. El índice
+            # por defecto queda como el índice de búsqueda que usa el login; este
+            # es el que decide quién puede repetirse.
+            models.UniqueConstraint(
+                Lower('nombre_usuario'),
+                name='usuario_username_unico_ci',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.nombre_usuario} ({self.nombre_completo})'
@@ -90,6 +151,34 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     @is_active.setter
     def is_active(self, value):
         self.activo = bool(value)
+
+    @property
+    def is_bloqueado(self):
+        """
+        Estado derivado: True si la ventana de bloqueo sigue vigente.
+
+        OJO: es una propiedad de solo lectura, no una consulta. Para obtener el
+        tiempo restante y limpiar bloqueos vencidos hay que pasar por
+        auth_app.services.politica_bloqueo.evaluar_bloqueo(), que sí toca la BD.
+        """
+        from django.utils import timezone
+        if not self.bloqueado_hasta:
+            return False
+        return self.bloqueado_hasta > timezone.now()
+
+    @property
+    def minutos_bloqueo_restantes(self):
+        """Minutos que faltan para que expire el bloqueo. 0 si no está bloqueado."""
+        from django.utils import timezone
+        if not self.is_bloqueado:
+            return 0
+        segundos = (self.bloqueado_hasta - timezone.now()).total_seconds()
+        return max(1, int(segundos // 60) + (1 if segundos % 60 else 0))
+
+    @property
+    def esta_bloqueado(self):
+        """Alias legible usado en el panel de administración."""
+        return self.is_bloqueado
 
     @property
     def rol_nombre(self):

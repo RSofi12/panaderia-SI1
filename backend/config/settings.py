@@ -32,6 +32,9 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    # Necesario para que BLACKLIST_AFTER_ROTATION tenga efecto: sin esta app el
+    # ajuste de SimpleJWT es inerte y los refresh tokens nunca se revocan.
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
 
     # Paquete 1: Usuarios y Seguridad (Sub-apps modulares)
@@ -39,6 +42,8 @@ INSTALLED_APPS = [
     'apps.usuarios_seguridad.roles',
     'apps.usuarios_seguridad.users',
     'apps.usuarios_seguridad.bitacora',
+    'apps.usuarios_seguridad.configuracion',
+    'apps.usuarios_seguridad.recuperacion',
     'apps.usuarios_seguridad.auth_app',
 
     # Paquetes restantes
@@ -122,6 +127,42 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+
+    # --- CU3: paginación del listado de usuarios ---
+    # El valor por defecto de DRF es PaginationDisabled, es decir, un listado sin
+    # límite: `GET /api/usuarios/` devolvería TODAS las cuentas en un solo JSON.
+    # Hoy serían seis, y por eso el descuido no se nota. El día que haya doscientos
+    # usuarios la pantalla se vuelve lenta y, peor, el navegador recibe una
+    # respuesta que no sabe renderizar. Se declara acá, de forma GLOBAL, para que
+    # cualquier listado futuro herede la protección sin tener que acordarse; el
+    # frontend ya sabe leer `{count, next, previous, results}`.
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+
+    # Frecuencia de los límites anti-abuso, en formato 'nº de peticiones / ventana'.
+    # Son Django Throttles y solo afectan a las vistas que los activen. El límite
+    # por cuenta vive en la tabla `configuracion_seguridad`, y el de intentos por
+    # enlace de recuperación, en la fila `token_recuperacion`: son tres capas
+    # distintas que no se sustituyen entre sí.
+    # OJO: debe ir DENTRO de REST_FRAMEWORK; una clave suelta de primer nivel
+    # sería ignorada silenciosamente por DRF.
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '10/min',
+        'refresh': '30/min',
+        # CU2. Pedir un enlace es más caro de enviar que pedir un token de
+        # sesión, y además genera correo: por eso es más restrictivo que el
+        # login. Confirmar es más laxo porque el solicitante ya trae un token
+        # secreto en la URL, y el límite real ahí lo pone el contador de
+        # intentos de esa misma fila.
+        'password_reset_request': '5/min',
+        'password_reset_confirm': '15/min',
+        # CU3. La administración de cuentas es de lectura mayoritaria —una tabla
+        # con buscador, filtros y paginación genera varias peticiones por
+        # pantalla—, así que el límite es holgado. Existe para que una sesión
+        # robada no pueda enumerar la base de cuentas ni disparar miles de altas
+        # en paralelo; no para frenar a un Administrador trabajando con normality.
+        'usuarios': '120/min',
+    },
 }
 
 # SimpleJWT Configuration
@@ -129,7 +170,10 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': False,
+    # Cada refresh entrega un token nuevo y manda el anterior a la lista negra.
+    # Requiere la app 'rest_framework_token_blacklist' en INSTALLED_APPS.
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
     'USER_ID_FIELD': 'id_usuario',
     'USER_ID_CLAIM': 'id_usuario',
@@ -156,3 +200,50 @@ CORS_ALLOWED_ORIGINS = [
     'http://127.0.0.1:5174',
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+
+# ==================================================================
+# Envío de correo (CU2 — Recuperar contraseña)
+# ==================================================================
+# Django SIEMPRE habla SMTP. Lo único que cambia es a qué servidor apunta, y eso
+# se decide acá con `EMAIL_BACKEND`. Por eso no hay una decisión de arquitectura
+# entre "correo de prueba" y "correo real": hay una sola variable y dos valores.
+#
+#   Desarrollo  -> .env pone el backend smtp contra localhost:1025 (Mailpit)
+#                  y el correo se lee en http://localhost:8025
+#   Producción  -> .env apunta al SMTP del proveedor real
+#
+# El valor por defecto es el backend de consola: sin ninguna variable en el .env
+# el sistema sigue funcionando, escribiendo el correo en la terminal. Es
+# deliberado que ese sea el default y no el de producción: un despliegue
+# olvidado no debe dejar de enviar correos en silencio.
+#
+# Mailpit se instala FUERA de Python (binario de Windows, o scoop/winget). No es
+# una dependencia del proyecto, así que no va en requirements.txt.
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND',
+    default='django.core.mail.backends.console.EmailBackend',
+)
+EMAIL_HOST = config('EMAIL_HOST', default='localhost')
+EMAIL_PORT = config('EMAIL_PORT', default=1025, cast=int)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=False, cast=bool)
+# Corta el envío en vez de dejar la petición colgada si el servidor no responde.
+# Sin esto, un SMTP caído bloquea el hilo de la vista durante el timeout del
+# socket y el usuario ve la pantalla congelada.
+EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=10, cast=int)
+DEFAULT_FROM_EMAIL = config(
+    'DEFAULT_FROM_EMAIL',
+    default='no-reply@panaderiasantiago.com',
+)
+
+# Ruta del FRONTEND donde el usuario escribe la contraseña nueva. El backend no
+# tiene ninguna vista de recuperación: envía un enlace a la SPA, que es la que
+# muestra el formulario y consume POST /api/auth/password-reset-confirm/. Es la
+# misma división de responsabilidades que en el CU1, donde React es el cliente y
+# Django la API.
+PASSWORD_RESET_URL = config(
+    'PASSWORD_RESET_URL',
+    default='http://localhost:5173/recuperar-password/nueva',
+)

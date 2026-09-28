@@ -35,9 +35,14 @@
 5. **NO HARDCODEES Y USA VARIABLES DE ENTORNO:**
    Credenciales, puertos, URLs de API y claves secretas se gestionan mediante `.env`. La ejecución actual es en entorno local directo (`venv` y `npm`); la contenedorización con Docker se implementará tras el Ciclo 1.
 
-6. **MANDAMIENTO DE MEMORIA PERSISTENTE (`docs/ai/`):**
-   Al finalizar cada tarea o sesión de desarrollo, debes:
+6. **MEMORIA VIVA DEL PROYECTO — OBLIGATORIA Y AUTOMÁTICA (`docs/ai/`):**
+   El registro de sesión **no es opcional ni queda a criterio del autor**: se escribe en el momento en que ocurre el cambio, no "al final si sobra tiempo". Cada vez que se cree, modifique o elimine un archivo del proyecto —sin importar si es backend, frontend, base de datos, configuración o documentación— se debe:
+   - **Crear el archivo de bitácora en [`docs/ai/sessions/`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/sessions/) siguiendo la plantilla de [`docs/ai/sessions/README.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/sessions/README.md).**
+     - Nombre obligatorio: `YYYY-MM-DD-[autor]-[resumen-corto].md` (ej. `2026-09-27-equipo-cu1-login-jwt.md`).
+     - Si en el mismo día hay varias sesiones del mismo autor, se agrega un sufijo: `2026-09-27-equipo-cu5-productos-2.md`.
+     - La plantilla es obligatoria: objetivo, cambios por capa (backend/frontend/BD), decisiones, pendientes y cómo probar.
+     - Si el archivo del día ya existe, se **actualiza** (se agregan las entradas nuevas); nunca se sobrescribe el historial.
    - Actualizar [`docs/ai/CURRENT_STATE.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/CURRENT_STATE.md) reflejando el progreso real.
    - Mantener [`docs/ai/HANDOFF_LATEST.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/HANDOFF_LATEST.md) con el resumen de entrega.
    - Registrar decisiones en [`docs/ai/DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/DECISIONS_LOG.md) si hubo cambios arquitectónicos.
-   - Crear o invitar a registrar la sesión en [`docs/ai/sessions/`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/sessions/).
+   - Sin bitácora en `docs/ai/sessions/`, una tarea se considera **incompleta**, aunque el código funcione. Esto aplica también a los agentes de IA que trabajan en este repositorio (`.opencode/agents/*.md`).
