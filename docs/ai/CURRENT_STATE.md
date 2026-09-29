@@ -29,7 +29,7 @@
 | **CU4** | Asignar roles y permisos | `apps.usuarios_seguridad` | 🟡 | Sub-apps `permisos` y `roles` listas con modelos `Permiso`, `Rol`, `RolPermiso`. |
 | **CU26**| Gestionar bitácora (versión simple) | `apps.usuarios_seguridad` | 🟢 | Sub-app `bitacora` implementada y vinculada a eventos de login/logout y auditoría. |
 | **CU5** | Gestionar productos (catálogo base) | `apps.productos_inventario`| 🟢 | **Completo end-to-end.** Modelos `CategoriaProducto`, `Producto` (precio sugerido calculado en `save()`) e `HistorialPrecioProducto`. API `/api/categorias-producto/`, `/api/productos/` (filtros nombre, categoría, activo), `/api/productos/<id>/` y `/api/productos/<id>/toggle-activo/`; escritura solo con `gestionar_productos`; bitácora en alta, edición y cambio de estado. Seed `python manage.py seed_productos` (7 categorías, 12 panes). Frontend `src/apps/dashboard/productos/ProductosPage.tsx` con formulario y confirmación de estado. |
-| **CU6** | Gestionar proveedores (catálogo base)| `apps.compras` | ⚪ | Planificado en Ciclo 1 |
+| **CU6** | Gestionar proveedores (catálogo base)| `apps.compras` | 🟢 | **Completo end-to-end.** Modelo `Proveedor` (tabla `proveedor`, nombre único sin distinguir mayúsculas, baja lógica con `activo`). API `/api/proveedores/` (filtros `q` nombre/teléfono, `activo`), `/api/proveedores/<id>/` y `/api/proveedores/<id>/toggle-activo/`. Nombre, teléfono y dirección obligatorios; teléfono normalizado y sin duplicados. Consulta con `gestionar_proveedores` o `registrar_compras`; escritura solo con `gestionar_proveedores` (Administrador y Propietario). Bitácora `ALTA_PROVEEDOR`, `EDICION_PROVEEDOR`, `CAMBIAR_ESTADO_PROVEEDOR`. Seed `python manage.py seed_proveedores` (3 proveedores). Frontend `src/apps/dashboard/proveedores/ProveedoresPage.tsx` en `/dashboard/compras`. |
 
 ---
 
@@ -72,7 +72,7 @@
 
 ## 🎯 3. Próximos Pasos Inmediatos
 1. **Implementar CU4 (Asignar roles y permisos)**: modelos `Rol`, `Permiso` y `RolPermiso` ya existen en `apps/usuarios_seguridad/`. Falta endpoints en backend y vistas/pestañas en el frontend dentro de `src/apps/dashboard/usuarios/` para la gestión de roles.
-2. **Implementar modelos base** de `productos_inventario` (CU5) y `compras` (CU6) en el backend (catálogos de productos y proveedores).
+2. **Pantalla de consulta de bitácora (CU26)**: el registro ya ocurre en CU1–CU3, CU5 y CU6 con acciones de `AccionBitacora`; falta el endpoint de consulta con filtros y la pestaña en `src/apps/dashboard/usuarios/`.
 3. **Probar el flujo completo con Mailpit** (CU2): agregar el bloque `EMAIL_*` a `backend/.env`, levantar Mailpit, y recorrer login → "¿Olvidaste tu contraseña?" → correo en `http://localhost:8025` → contraseña nueva → login.
 4. **Correr `manage.py purgar_tokens_vencidos --dry-run`** y después sin la bandera, para confirmar que el comando funciona antes de agendarlo con el Programador de tareas.
 5. **Alinear el seed con la matriz de actores**: quitar `generar_reportes` al Personal de Ventas en `seed_usuarios.py` para cumplir con `PACKAGE_CU_MAP.md`.

@@ -29,5 +29,6 @@ urlpatterns = [
     path('api/auth/', include('apps.usuarios_seguridad.auth_app.urls')),
     path('api/', include('apps.usuarios_seguridad.users.urls')),
     path('api/', include('apps.productos_inventario.urls')),
+    path('api/', include('apps.compras.urls')),
 ]
 
