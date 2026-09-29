@@ -48,6 +48,19 @@ class AccionBitacora(models.TextChoices):
     CAMBIAR_ESTADO_USUARIO = 'CAMBIAR_ESTADO_USUARIO', 'Activación o inactivación de usuario'
     RESTABLECER_CONTRASENA = 'RESTABLECER_CONTRASENA', 'Restablecimiento administrativo de contraseña'
 
+    # --- CU5: Gestión de productos ---
+    # Un cambio de precio de venta es una EDICION_PRODUCTO: el precio anterior y
+    # el nuevo van en la descripción y el detalle fino queda en
+    # historial_precio_producto.
+    ALTA_PRODUCTO = 'ALTA_PRODUCTO', 'Alta de producto'
+    EDICION_PRODUCTO = 'EDICION_PRODUCTO', 'Modificación de producto'
+    CAMBIAR_ESTADO_PRODUCTO = 'CAMBIAR_ESTADO_PRODUCTO', 'Activación o inactivación de producto'
+
+    # --- CU6: Gestión de proveedores ---
+    ALTA_PROVEEDOR = 'ALTA_PROVEEDOR', 'Alta de proveedor'
+    EDICION_PROVEEDOR = 'EDICION_PROVEEDOR', 'Modificación de proveedor'
+    CAMBIAR_ESTADO_PROVEEDOR = 'CAMBIAR_ESTADO_PROVEEDOR', 'Activación o inactivación de proveedor'
+
 
 class Bitacora(models.Model):
     """
