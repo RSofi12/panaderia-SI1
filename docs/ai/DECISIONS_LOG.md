@@ -387,3 +387,43 @@
   5. Se implementa accesibilidad WCAG 2.2 AA integral: foco inicial en el primer control, trampa de foco (Tab / Shift+Tab) dentro del diálogo, restauración de foco al elemento disparador al cerrar, cierre con tecla Escape, bloqueo del scroll del body, `role="dialog"`, `aria-modal="true"`, `aria-labelledby` con `useId()` de React 19, resumen de errores enfocado por teclado tras fallos de red y mensajes de error inline vinculados por `aria-describedby`.
 - **Motivo:** Evitar parpadeos visuales al abrir formularios, eliminar las advertencias y errores de ESLint (`react-hooks/set-state-in-effect`), garantizar soporte total para tecnologías de asistencia y teclado sin ratón, y evitar que el cliente contradiga el ordenamiento o las reglas de coincidencia del backend.
 - **Impacto:** Código robusto, modular y 100% libre de advertencias y errores tanto en `tsc -b` como en `eslint`, listo para producción.
+
+---
+
+# 📅 2026-09-28 — CU4: Asignar roles y permisos (backend)
+
+### 30. Nombre del permiso `asignar_permisos` y categorización `permiso.modulo`
+- **Decisión:** Se reserva y aplica el permiso `asignar_permisos` (ID 12) para el CU4, tal como se mapeó en `PACKAGE_CU_MAP.md` y en las reservas de ruta. Se incorpora el campo `modulo` (`ModuloPermiso.TextChoices`) en el modelo `Permiso` para clasificar los permisos según los 5 paquetes del sistema.
+- **Motivo:** Facilita la presentación agrupada de la matriz de checkboxes en el cliente y garantiza trazabilidad con la arquitectura modular.
+- **Impacto:** Migración `permisos/0002_permiso_modulo_alter_permiso_nombre_and_more.py` aplicada limpiamente y DDL documentado con `-- MODIFICADA (CU4)`.
+
+### 31. Resolución definitiva de la deriva de `rol_permiso` en el DDL
+- **Decisión:** Se resuelve la discrepancia detectada en CU3 alineando el DDL a la convención estándar de Django: clave primaria subrogada `id` y restricción `UNIQUE ("id_rol", "id_permiso")`.
+- **Motivo:** La migración con clave primaria compuesta experimental resultaba en un *no-op* en Django y rompía la reversibilidad de migraciones. La restricción `UniqueConstraint(fields=['rol', 'permiso'], name='rol_permiso_unico')` ofrece exactamente la misma garantía matemática de unicidad física en PostgreSQL.
+- **Impacto:** Código ORM estándar, compatible con `ManyToManyField(through=...)`, sin fragilidad de `RunPython` ni hacks en el esquema.
+
+### 32. Inmutabilidad de roles base y guardas anti-autobloqueo en la capa de servicios
+- **Decisión:** La lógica reside en `roles/services/matriz.py` bajo `@transaction.atomic`. Se imponen 4 guardas: (1) Sin DELETE (405), (2) Roles base (`Administrador`, `Propietario`, `Personal de Ventas`, `Personal de Producción`) no pueden cambiar de nombre, (3) El rol `Administrador` nunca puede perder `asignar_permisos`, y (4) Ningún usuario autenticado puede quitar `asignar_permisos` de su propio rol activo.
+- **Motivo:** Prevenir escaladas de privilegios y callejones sin salida donde el sistema se queda sin ningún usuario o rol capaz de administrar permisos.
+- **Impacto:** Operaciones seguras tanto si se invocan vía API como desde scripts o consola.
+
+### 33. Endpoints REST granulares y coherentes con UML
+- **Decisión:** Se implementa `RolViewSet` con soporte de matriz masiva (`PUT /api/roles/<id>/permisos/`) y métodos puntuales correspondientes a `Rol.asignarPermiso()` (`POST /api/roles/<id>/permisos/asignar/`) y `Rol.quitarPermiso()` (`POST /api/roles/<id>/permisos/quitar/`).
+- **Motivo:** Cumplir al 100% con la especificación de métodos del diagrama de clases UML `database_panaderia_con_funciones.puml`.
+- **Impacto:** Cada mutación registra su diff exacto en `Bitacora` (`ALTA_ROL`, `EDICION_ROL`, `ASIGNAR_PERMISO_ROL`, `REVOCAR_PERMISO_ROL`, `ACTUALIZACION_MATRIZ_PERMISOS`).
+
+---
+
+# 📅 2026-09-28 — CU4: Asignar roles y permisos (frontend)
+
+### 34. Navegación en pestañas bajo `/dashboard/usuarios`, sincronización con URL y matriz de permisos por módulos
+- **Decisión:** 
+  1. CU4 no crea una nueva ruta de primer nivel en el menú principal; se integra como pestaña "Roles y permisos" dentro del módulo unificado de *Usuarios y Seguridad* (`/dashboard/usuarios`).
+  2. `ProtectedRoute` y `AppRoutes.tsx` se ampliaron para aceptar `requiredPermission?: string | string[]` con semántica *any-of*, permitiendo el acceso tanto con `gestionar_usuarios` como con `asignar_permisos`.
+  3. La pestaña activa se sincroniza bidireccionalmente con la URL mediante `useSearchParams` (`?tab=roles` vs `?tab=usuarios`), preservando el estado en recargas, historial y navegación directa.
+  4. La edición de la matriz (`MatrizPermisosModal`) se diseñó sin scrollbars anidadas dobles, agrupando los 12 permisos por los 5 módulos funcionales del sistema con acciones por lote ("Marcar/Desmarcar módulo"), buscador de permisos reactivo y contador de cambios pendientes.
+  5. La guarda contra auto-bloqueo del Administrador se refleja visualmente en el cliente: el checkbox de `asignar_permisos` permanece bloqueado, deshabilitado y acompañado de un callout explicativo de seguridad.
+  6. Tarjetas de roles (`TarjetaRol`) con identidad visual del personal de panadería (Administrador, Cajero, Panadero, Pastelero), barras de cobertura con `role="progressbar"` y KPI summary bar en `RolesTab`.
+- **Motivo:** Evitar fragmentar el menú lateral con ventanas redundantes para el mismo dominio de seguridad, permitir deep linking directo a roles, y garantizar accesibilidad WCAG 2.2 AA sin romper *Fast Refresh* de Vite.
+- **Impacto:** Experiencia de usuario coherente y fluida; verificación de tipos y bundling con `tsc -b && vite build` completada con 0 errores y 0 warnings.
+

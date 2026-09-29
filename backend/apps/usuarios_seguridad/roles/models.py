@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.functions import Lower
 
 
 class Rol(models.Model):
@@ -17,9 +18,32 @@ class Rol(models.Model):
         verbose_name = 'Rol'
         verbose_name_plural = 'Roles'
         ordering = ['id_rol']
+        constraints = [
+            models.UniqueConstraint(
+                Lower('nombre'),
+                name='rol_nombre_unico_ci',
+                violation_error_message='Ya existe un rol con este nombre (no distingue mayúsculas).'
+            )
+        ]
 
     def __str__(self):
         return self.nombre
+
+    def asignar_permiso(self, permiso):
+        """
+        Método de dominio correspondiente a +asignarPermiso() en el diagrama de clases UML.
+        Asocia un permiso al rol si no lo tiene previamente.
+        """
+        obj, created = RolPermiso.objects.get_or_create(rol=self, permiso=permiso)
+        return created
+
+    def quitar_permiso(self, permiso):
+        """
+        Método de dominio correspondiente a +quitarPermiso() en el diagrama de clases UML.
+        Remueve la asociación del permiso con este rol.
+        """
+        borrados, _ = RolPermiso.objects.filter(rol=self, permiso=permiso).delete()
+        return borrados > 0
 
 
 class RolPermiso(models.Model):
@@ -40,9 +64,15 @@ class RolPermiso(models.Model):
 
     class Meta:
         db_table = 'rol_permiso'
-        unique_together = (('rol', 'permiso'),)
         verbose_name = 'Rol Permiso'
         verbose_name_plural = 'Roles Permisos'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['rol', 'permiso'],
+                name='rol_permiso_unico',
+                violation_error_message='Este rol ya tiene asignado dicho permiso.'
+            )
+        ]
 
     def __str__(self):
         return f'{self.rol.nombre} -> {self.permiso.nombre}'

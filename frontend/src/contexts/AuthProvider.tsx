@@ -65,8 +65,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasPermission = (permissionName: string): boolean => {
     if (!user || !user.permisos) return false;
-    // El Administrador tiene todos los permisos
-    if (user.rol === 'Administrador') return true;
     return user.permisos.includes(permissionName);
   };
 
