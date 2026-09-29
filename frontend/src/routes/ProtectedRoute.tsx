@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredPermission?: string;
+  requiredPermission?: string | string[];
   requiredRole?: string;
 }
 
@@ -66,8 +66,20 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (requiredPermission && !hasPermission(requiredPermission)) {
-    return <AccessDenied rol={user.rol} permiso={requiredPermission} />;
+  if (requiredPermission) {
+    const permissionsToCheck = Array.isArray(requiredPermission)
+      ? requiredPermission
+      : [requiredPermission];
+    const tieneAlgunPermiso = permissionsToCheck.some((p) => hasPermission(p));
+
+    if (!tieneAlgunPermiso) {
+      return (
+        <AccessDenied
+          rol={user.rol}
+          permiso={permissionsToCheck.join(' o ')}
+        />
+      );
+    }
   }
 
   return <>{children}</>;
