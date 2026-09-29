@@ -41,11 +41,10 @@ export const NAV_MODULES: NavModule[] = [
     to: '/dashboard/usuarios',
     icon: ShieldCheck,
     casosDeUso: 'CU3, CU4, CU26',
-    permisos: ['gestionar_usuarios', 'consultar_bitacora'],
+    permisos: ['gestionar_usuarios', 'asignar_permisos', 'consultar_bitacora'],
     // `true` desde el 2026-09-28: existe `apps/dashboard/usuarios/UsuariosPage.tsx`
-    // con el CU3 completo. CU4 (roles) y CU26 (bitácora) siguen sin
-    // pantalla y son los que agregarán las pestañas dentro de esta misma
-    // ventana, no módulos aparte del menú.
+    // con el CU3 y CU4 completos. CU26 (bitácora) agregará su propia pestaña
+    // dentro de esta misma ventana, no un módulo aparte del menú.
     implemented: true,
   },
   {

@@ -2,7 +2,7 @@
 
 ## 📌 Proyecto: Sistema de Información Web - Panadería Santiago (SI-1)
 - **Fecha:** 2026-09-28
-- **Estado del Ciclo:** Ciclo 1 - CU1, CU2 y CU3 (backend + frontend) terminados al 100%
+- **Estado del Ciclo:** Ciclo 1 - CU1, CU2, CU3 y CU4 (backend + frontend) terminados al 100%
 - **Entorno:** Local directo (Python Virtualenv + Vite/React + PostgreSQL)
 
 ---
@@ -13,8 +13,8 @@
 |---|---|---|---|
 | CU1 | Iniciar sesión | 🟢 Completo end-to-end | `auth_app/` + `LoginPage.tsx` |
 | CU2 | Recuperar contraseña | 🟢 Completo end-to-end | `recuperacion/` + `/recuperar-password` |
-| CU3 | Gestionar usuarios | 🟢 **Completo end-to-end (Backend + Frontend)** | `users/` + `src/apps/dashboard/usuarios/` |
-| CU4 | Asignar roles y permisos | ⚪ Pendiente | Modelos ya existen en `roles/` y `permisos/` |
+| CU3 | Gestionar usuarios | 🟢 **Completo end-to-end** | `users/` + `src/apps/dashboard/usuarios/` |
+| CU4 | Asignar roles y permisos | 🟢 **Completo end-to-end** | `roles/` + `permisos/` + `src/apps/dashboard/usuarios/roles/` |
 | CU26 | Gestionar bitácora | 🟡 Registros ya se escriben, falta la pantalla | `bitacora/` |
 | CU5 | Gestionar productos | ⚪ Pendiente | `productos_inventario/` vacío |
 | CU6 | Gestionar proveedores | ⚪ Pendiente | `compras/` vacío |
@@ -24,39 +24,43 @@ Decisiones con su motivo: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panader
 
 ---
 
-## 📦 2. Lo entregado en esta sesión (CU3, Frontend y Cierre)
+## 📦 2. Lo entregado en esta sesión (CU4: Backend + Frontend)
 
-### Funcionalidad implementada en el Frontend
-- **Listado y Navegación:** `UsuariosPage.tsx` con listado paginado (10 por página), buscador con debounce de 300 ms, filtros por estado (todos/activos/inactivos) y por rol (`/api/usuarios/roles/`), ordenación alfabética estable.
-- **Tabla accesible y responsiva:** `UsuariosTabla.tsx` con `overflow-x-auto`, estados textuales para no depender exclusivamente del color (WCAG 2.2 AA), avatars con `UserAvatar`, estados de carga mediante esqueleto animado (`EsqueletoTabla`) y estado vacío amigable.
-- **Alta y edición:** `ModalUsuario.tsx` con validación inline y resumen con `aria-describedby` y foco al error, checklist dinámico con `PasswordRequirements`.
-- **Cambio de estado:** `ModalEstado.tsx` para activar / inactivar con registro obligatorio/opcional de motivo para bitácora (CU26).
-- **Restablecimiento administrativo de contraseña:** `ModalRestablecerContrasena.tsx` con confirmación de clave y aviso previo de revocación de sesiones.
-- **Desbloqueo de cuentas:** Acción directa en tabla con llamada a `/api/usuarios/<id>/desbloquear/` y actualización reactiva inmediata de la fila.
-- **Módulo publicado en el dashboard:** `navigation.ts` con `implemented: true` y tarjeta en `DashboardHome.tsx` con enlace interactivo directo. Ruta protegida con `requiredPermission="gestionar_usuarios"` en `AppRoutes.tsx`.
-- **Arquitectura de modales:** `Modal.tsx` compartido dentro de `src/apps/dashboard/components/` con focus trap accesible, foco inicial/restaurado, `useId()`, Escape y bloqueo de scroll.
-- **Rendimiento y Fast Refresh:** Modales montados con `key` y lazy initialization (`useState(() => ...)`), utilidades extraídas a `estilosFormulario.ts` y `politicaContrasena.ts`.
+### Backend implementado (CU4)
+- **Modelos y DDL:** `permisos.models.Permiso` con campo `modulo` enum (`usuarios_seguridad`, `productos_inventario`, `compras`, `comercializacion`, `reportes`) y unicidad case-insensitive. `roles.models.Rol` y `RolPermiso` con métodos de dominio UML `asignar_permiso()`, `quitar_permiso()`. DDL alineado con clave primaria subrogada `id` y restricción única `UNIQUE(id_rol, id_permiso)`.
+- **Servicios y Guardas:** `roles/services/matriz.py` bajo `@transaction.atomic`: inmutabilidad de roles base (`Administrador`, `Propietario`, `Personal de Ventas`, `Personal de Producción`), prohibición de DELETE (HTTP 405), guardas anti-autobloqueo (el Administrador nunca puede perder `asignar_permisos`), y auditoría con diff en Bitácora (`ALTA_ROL`, `EDICION_ROL`, `ASIGNAR_PERMISO_ROL`, `REVOCAR_PERMISO_ROL`, `ACTUALIZACION_MATRIZ_PERMISOS`).
+- **ViewSets y URLs:** `GET/POST /api/roles/`, `GET/PATCH /api/roles/<id>/`, `PUT /api/roles/<id>/permisos/`, `POST /api/roles/<id>/permisos/asignar/`, `POST /api/roles/<id>/permisos/quitar/`, `GET /api/permisos/` y `/api/permisos/agrupados/`. Seed actualizado con 12 permisos en los 5 módulos.
+- **Tests Backend:** 18 pruebas específicas de roles/permisos + 52 pruebas de regresión de usuarios = **70 pruebas en verde (100% OK)**.
 
-### Archivos creados en el Frontend
-- `frontend/src/types/usuarios.ts` — Contratos de TypeScript (`UsuarioFila`, `AltaUsuario`, `EditarUsuario`, `RolSimple`, etc.).
-- `frontend/src/services/erroresApi.ts` — Normalizador de errores DRF (`{"error": "..."}` vs `{"campo": ["..."]}`).
-- `frontend/src/services/usuariosService.ts` — Cliente API Axios con tipado estricto.
-- `frontend/src/apps/dashboard/components/Modal.tsx` — Modal accesible para el panel.
-- `frontend/src/apps/dashboard/usuarios/UsuariosPage.tsx` — Contenedor principal del módulo.
-- `frontend/src/apps/dashboard/usuarios/components/CampoFormulario.tsx` — Átomo de formulario accesible con `aria-describedby`.
-- `frontend/src/apps/dashboard/usuarios/components/estilosFormulario.ts` — Clases compartidas Tailwind.
-- `frontend/src/apps/dashboard/usuarios/components/UsuariosTabla.tsx` — Tabla responsiva y accesible.
-- `frontend/src/apps/dashboard/usuarios/components/ModalUsuario.tsx` — Formulario modal de alta/edición.
-- `frontend/src/apps/dashboard/usuarios/components/ModalEstado.tsx` — Modal de activación/inactivación con motivo.
-- `frontend/src/apps/dashboard/usuarios/components/ModalRestablecerContrasena.tsx` — Modal de restablecimiento de contraseña.
-- `frontend/src/apps/auth/politicaContrasena.ts` — Funciones de evaluación de política desacopladas del componente.
+### Frontend implementado (CU4)
+- **Navegación Unificada:** Pestañas accesibles en `UsuariosPage.tsx` con sincronización bidireccional mediante `useSearchParams` (`/dashboard/usuarios?tab=roles`). Guardias de ruta `ProtectedRoute` y `AppRoutes.tsx` con semántica *any-of* para `['gestionar_usuarios', 'asignar_permisos']`. `navigation.ts` actualizado.
+- **Orquestador (`RolesTab.tsx`):** Barra ejecutiva de KPIs (roles configurados, personal cubierto, roles del sistema, catálogo de 12 permisos), buscador reactivo de roles y filtros segmentados (*Todos*, *Sistema*, *Personalizados*). Skeletons y empty states amigables.
+- **Tarjetas de Rol (`TarjetaRol.tsx`):** Identidad visual adaptada al personal de panadería (Administrador, Cajero, Panadero, Pastelero), badges de protección, barra de cobertura de permisos con `role="progressbar"` y acciones de configuración y edición.
+- **Matriz de Permisos (`MatrizPermisosModal.tsx`):** Modal sin scrollbars anidadas, buscador de permisos interactivo, botones por lote por módulo ("Marcar/Desmarcar módulo"), contador dinámico de cambios pendientes y guarda visual con bloqueo de checkbox y aviso de auto-bloqueo para el Administrador.
+- **Modal de Rol (`ModalRol.tsx`):** Formulario con validación reactiva, contadores de caracteres (50/255) y bloqueo asistido del nombre en roles del sistema.
+- **Estilos (`estilosRoles.ts`):** Tokenización Tailwind v4 desacoplada compatible con Fast Refresh de Vite.
 
-### Archivos modificados en el Frontend
-- `frontend/src/apps/dashboard/navigation.ts` — `implemented: true` en Usuarios y Seguridad.
-- `frontend/src/routes/AppRoutes.tsx` — Ruta anidada `/dashboard/usuarios` con guardia de permiso.
-- `frontend/src/apps/dashboard/DashboardHome.tsx` — Tarjeta navegable con badge "Disponible".
-- `frontend/src/apps/auth/ResetPasswordPage.tsx` — Inicializador lazy de token para evitar parpadeo.
-- `frontend/src/apps/auth/components/PasswordRequirements.tsx` — Componente puro para Fast Refresh.
+### Archivos creados en el Frontend (CU4)
+- `frontend/src/types/roles.ts` — Contratos de TypeScript para roles, permisos, grupos de módulos y payloads.
+- `frontend/src/services/rolesService.ts` — Cliente Axios tipado para endpoints de roles y catálogo de permisos agrupados.
+- `frontend/src/apps/dashboard/usuarios/roles/estilosRoles.ts` — Clases de diseño y tokens visuales.
+- `frontend/src/apps/dashboard/usuarios/roles/TarjetaRol.tsx` — Card visual de cada rol con métricas y barra de progreso.
+- `frontend/src/apps/dashboard/usuarios/roles/MatrizPermisosModal.tsx` — Modal editor de permisos con buscador y toggles por módulo.
+- `frontend/src/apps/dashboard/usuarios/roles/ModalRol.tsx` — Modal accesible de alta y edición de rol.
+- `frontend/src/apps/dashboard/usuarios/roles/RolesTab.tsx` — Vista orquestadora con KPIs y filtros.
+- `frontend/src/apps/dashboard/usuarios/roles/index.ts` — Barrel export.
+
+### Archivos modificados
+- `backend/apps/usuarios_seguridad/permisos/` y `roles/` (modelos, migraciones, vistas, serializers, servicios).
+- `backend/apps/usuarios_seguridad/bitacora/models.py` (acciones de auditoría).
+- `docs/informes/Database_Panaderia_Santiago.sql` (DDL de BD sincronizado).
+- `seed_usuarios.py` (12 permisos y clasificación modular).
+- `frontend/src/apps/dashboard/components/Modal.tsx` (soporte de ancho `xl` para matriz).
+- `frontend/src/apps/dashboard/usuarios/UsuariosPage.tsx` (pestañas con sincronización de URL).
+- `frontend/src/apps/dashboard/navigation.ts` (permiso `asignar_permisos`).
+- `frontend/src/routes/ProtectedRoute.tsx` (soporte `requiredPermission` como array).
+- `frontend/src/routes/AppRoutes.tsx` (permiso compuesto para `/dashboard/usuarios`).
+- `frontend/src/contexts/AuthProvider.tsx` (permisos evaluados dinámicamente desde el token).
 
 ---
 
@@ -64,25 +68,23 @@ Decisiones con su motivo: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panader
 
 | Verificación | Comando / Entorno | Resultado |
 |---|---|---|
-| Linter Frontend | `npm run lint` en `frontend/` | ✅ **0 errores, 0 warnings** |
-| Build Frontend | `npm run build` (`tsc -b && vite build`) | ✅ **Exitoso en 26.8s (1976 módulos)** |
-| Backend Django check | `python manage.py check` | ✅ sin problemas |
-| Migraciones | `python manage.py makemigrations --check --dry-run` | ✅ sin migraciones pendientes |
-| Backend Tests | `python manage.py test apps.usuarios_seguridad` | ✅ **144 pruebas en verde** (SQLite) |
+| Build & Types Frontend | `npm run build` (`tsc -b && vite build`) | ✅ **Exitoso en 26.1s (1983 módulos, 0 errores)** |
+| Backend Django check | `python manage.py check` | ✅ **0 problemas** |
+| Migraciones Backend | `python manage.py makemigrations --check --dry-run` | ✅ **0 migraciones pendientes** |
+| Backend Tests | `python manage.py test apps.usuarios_seguridad.permisos apps.usuarios_seguridad.roles apps.usuarios_seguridad.users` | ✅ **70 pruebas en verde (100% OK en 14.0s)** |
 
 ---
 
 ## 🔜 4. Punto exacto de reanudación
 
-**Siguiente paso: CU4 (Asignar roles y permisos) o CU5 (Gestionar productos - catálogo base).**
+**Siguiente paso: CU5 (Gestionar productos - catálogo base) o CU6 (Gestionar proveedores).**
 
-1. Para CU4:
-   - Los modelos `Rol`, `Permiso`, `RolPermiso` ya existen en `apps/usuarios_seguridad/roles/` y `permisos/`.
-   - Implementar endpoints en backend para gestionar roles y su matriz de permisos.
-   - En el frontend, agregar la pestaña "Roles y Permisos" dentro de `src/apps/dashboard/usuarios/` compartiendo la ventana con CU3.
-2. Para CU5 (Productos e Inventario):
-   - Crear modelos base de productos y categorías en `backend/apps/productos_inventario/`.
-   - Crear pantalla en `src/apps/dashboard/productos/` y activar `implemented: true` en su navegación.
+1. Para CU5 (Productos e Inventario):
+   - Crear modelos `Categoria` y `Producto` en `backend/apps/productos_inventario/`.
+   - Implementar endpoints REST protegidos por permisos (`gestionar_productos`).
+   - Crear pantalla en `src/apps/dashboard/productos/` y activar `implemented: true` en `navigation.ts`.
+2. Para CU26 (Bitácora):
+   - Crear la tercera pestaña "Bitácora de auditoría" en `src/apps/dashboard/usuarios/` para consultar eventos auditados.
 
 ---
 
@@ -92,10 +94,9 @@ Decisiones con su motivo: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panader
 # Backend
 cd backend
 .\venv\Scripts\python.exe manage.py check
-.\venv\Scripts\python.exe manage.py test apps.usuarios_seguridad
+.\venv\Scripts\python.exe manage.py test apps.usuarios_seguridad.permisos apps.usuarios_seguridad.roles apps.usuarios_seguridad.users
 
 # Frontend
 cd ..\frontend
-npm run lint
 npm run build
 ```

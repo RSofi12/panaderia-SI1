@@ -44,14 +44,15 @@ interface ModalProps {
   children: React.ReactNode;
   /** Pie con los botones. Pega a abajo y no tapa lo que hay encima. */
   pie?: React.ReactNode;
-  /** Ancho máximo. `md` para formularios, `sm` para confirmaciones. */
-  ancho?: 'sm' | 'md' | 'lg';
+  /** Ancho máximo. `md` para formularios, `sm` para confirmaciones, `xl` para matrices. */
+  ancho?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 const ANCHOS = {
   sm: 'max-w-md',
   md: 'max-w-lg',
   lg: 'max-w-2xl',
+  xl: 'max-w-4xl',
 } as const;
 
 export const Modal: React.FC<ModalProps> = ({

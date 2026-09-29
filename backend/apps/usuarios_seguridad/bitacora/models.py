@@ -48,6 +48,13 @@ class AccionBitacora(models.TextChoices):
     CAMBIAR_ESTADO_USUARIO = 'CAMBIAR_ESTADO_USUARIO', 'Activación o inactivación de usuario'
     RESTABLECER_CONTRASENA = 'RESTABLECER_CONTRASENA', 'Restablecimiento administrativo de contraseña'
 
+    # --- CU4: Asignar roles y permisos ---
+    ALTA_ROL = 'ALTA_ROL', 'Alta de rol'
+    EDICION_ROL = 'EDICION_ROL', 'Modificación de rol'
+    ASIGNAR_PERMISO_ROL = 'ASIGNAR_PERMISO_ROL', 'Asignación de permiso a rol'
+    REVOCAR_PERMISO_ROL = 'REVOCAR_PERMISO_ROL', 'Revocación de permiso de rol'
+    ACTUALIZACION_MATRIZ_PERMISOS = 'ACTUALIZACION_MATRIZ_PERMISOS', 'Reemplazo masivo de matriz de permisos'
+
     # --- CU5: Gestión de productos ---
     # Un cambio de precio de venta es una EDICION_PRODUCTO: el precio anterior y
     # el nuevo van en la descripción y el detalle fino queda en

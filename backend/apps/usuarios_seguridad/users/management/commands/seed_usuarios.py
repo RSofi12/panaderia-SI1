@@ -1,4 +1,4 @@
-﻿from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand
 from django.db import transaction
 from apps.usuarios_seguridad.permisos.models import Permiso
 from apps.usuarios_seguridad.roles.models import Rol, RolPermiso
@@ -14,24 +14,25 @@ class Command(BaseCommand):
         with transaction.atomic():
             # 1. Permisos
             permisos_data = [
-                (1, 'gestionar_usuarios', 'Crear, editar, activar o inactivar usuarios del sistema'),
-                (2, 'gestionar_productos', 'Registrar, editar y consultar productos y categorías'),
-                (3, 'registrar_ventas', 'Registrar ventas directas por unidad'),
-                (4, 'registrar_pedidos', 'Registrar pedidos y actualizar el estado de pedidos'),
-                (5, 'registrar_produccion', 'Registrar cantidades producidas por jornada'),
-                (6, 'gestionar_inventario', 'Consultar y ajustar existencias de materia prima y producto terminado'),
-                (7, 'registrar_compras', 'Registrar compras a proveedores'),
-                (8, 'gestionar_proveedores', 'Registrar y editar datos de proveedores'),
-                (9, 'gestionar_gastos', 'Registrar gastos e inversiones del negocio'),
-                (10, 'generar_reportes', 'Consultar y generar reportes administrativos y operativos'),
-                (11, 'consultar_bitacora', 'Consultar el historial de acciones registradas en el sistema'),
+                (1, 'gestionar_usuarios', 'usuarios_seguridad', 'Crear, editar, activar o inactivar usuarios del sistema'),
+                (2, 'gestionar_productos', 'productos_inventario', 'Registrar, editar y consultar productos y categorías'),
+                (3, 'registrar_ventas', 'comercializacion', 'Registrar ventas directas por unidad'),
+                (4, 'registrar_pedidos', 'comercializacion', 'Registrar pedidos y actualizar el estado de pedidos'),
+                (5, 'registrar_produccion', 'productos_inventario', 'Registrar cantidades producidas por jornada'),
+                (6, 'gestionar_inventario', 'productos_inventario', 'Consultar y ajustar existencias de materia prima y producto terminado'),
+                (7, 'registrar_compras', 'compras', 'Registrar compras a proveedores'),
+                (8, 'gestionar_proveedores', 'compras', 'Registrar y editar datos de proveedores'),
+                (9, 'gestionar_gastos', 'compras', 'Registrar gastos e inversiones del negocio'),
+                (10, 'generar_reportes', 'reportes', 'Consultar y generar reportes administrativos y operativos'),
+                (11, 'consultar_bitacora', 'usuarios_seguridad', 'Consultar el historial de acciones registradas en el sistema'),
+                (12, 'asignar_permisos', 'usuarios_seguridad', 'Asignar roles y definir permisos del sistema (matriz de acceso)'),
             ]
 
             permisos_dict = {}
-            for id_p, nombre, desc in permisos_data:
+            for id_p, nombre, modulo, desc in permisos_data:
                 permiso, _ = Permiso.objects.update_or_create(
                     id_permiso=id_p,
-                    defaults={'nombre': nombre, 'descripcion': desc}
+                    defaults={'nombre': nombre, 'modulo': modulo, 'descripcion': desc}
                 )
                 permisos_dict[id_p] = permiso
 
@@ -64,10 +65,10 @@ class Command(BaseCommand):
 
             # 3. Rol - Permiso
             rol_permisos_map = {
-                1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],  # Admin: Todos
-                2: [2, 3, 4, 6, 7, 8, 9, 10, 11],        # Propietario: Todo menos gestionar usuarios
-                3: [3, 4, 6, 10],                        # Ventas
-                4: [5, 6],                               # Producción
+                1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],  # Admin: Todos
+                2: [2, 3, 4, 6, 7, 8, 9, 10, 11],            # Propietario: Todo menos gestionar usuarios y roles
+                3: [3, 4, 6, 10],                            # Ventas
+                4: [5, 6],                                   # Producción
             }
 
             for id_r, perm_ids in rol_permisos_map.items():

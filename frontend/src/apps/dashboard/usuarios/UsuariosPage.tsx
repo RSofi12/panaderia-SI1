@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Search, ShieldCheck, Users, X } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import usuariosService from '../../../services/usuariosService';
 import { normalizarErrorApi } from '../../../services/erroresApi';
@@ -7,6 +8,7 @@ import UsuariosTabla from './components/UsuariosTabla';
 import ModalUsuario from './components/ModalUsuario';
 import ModalEstado from './components/ModalEstado';
 import ModalRestablecerContrasena from './components/ModalRestablecerContrasena';
+import { RolesTab } from './roles';
 import type { EditarUsuario, RolSimple, UsuarioFila } from '../../../types/usuarios';
 
 /**
@@ -44,7 +46,44 @@ type ModalAbierto =
   | null;
 
 export const UsuariosPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+
+  const puedeGestionarUsuarios = hasPermission('gestionar_usuarios');
+  const puedeAsignarPermisos = hasPermission('asignar_permisos');
+
+  const pestanaInicial: 'usuarios' | 'roles' =
+    tabParam === 'roles' && puedeAsignarPermisos
+      ? 'roles'
+      : puedeGestionarUsuarios
+      ? 'usuarios'
+      : 'roles';
+
+  const [pestanaActiva, setPestanaActiva] = useState<'usuarios' | 'roles'>(pestanaInicial);
+
+  const cambiarPestana = useCallback(
+    (nueva: 'usuarios' | 'roles') => {
+      setPestanaActiva(nueva);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('tab', nueva);
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [setSearchParams]
+  );
+
+  useEffect(() => {
+    if (tabParam === 'roles' && puedeAsignarPermisos && pestanaActiva !== 'roles') {
+      setPestanaActiva('roles');
+    } else if (tabParam === 'usuarios' && puedeGestionarUsuarios && pestanaActiva !== 'usuarios') {
+      setPestanaActiva('usuarios');
+    }
+  }, [tabParam, puedeAsignarPermisos, puedeGestionarUsuarios, pestanaActiva]);
 
   const [filas, setFilas] = useState<UsuarioFila[]>([]);
   const [roles, setRoles] = useState<RolSimple[]>([]);
@@ -262,141 +301,195 @@ export const UsuariosPage: React.FC = () => {
     <div className="mx-auto max-w-7xl space-y-5">
       <header>
         <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-          Gestión de usuarios
+          Usuarios y Seguridad
         </h1>
         <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-          CU3 · Crear cuentas, editarlas y activarlas o inactivarlas. Las cuentas no se borran: se
-          inactivan para conservar el historial de ventas y producción.
+          {pestanaActiva === 'usuarios'
+            ? 'CU3 · Crear cuentas, editarlas y activarlas o inactivarlas. Las cuentas no se borran: se inactivan para conservar el historial de ventas y producción.'
+            : 'CU4 · Administrar perfiles de acceso y matriz de permisos para los roles del personal.'}
         </p>
+
+        {/* Selector de pestañas */}
+        <div
+          role="tablist"
+          aria-label="Secciones del módulo de usuarios y seguridad"
+          className="flex border-b border-slate-200 mt-5 gap-6"
+        >
+          {puedeGestionarUsuarios && (
+            <button
+              type="button"
+              role="tab"
+              id="tab-usuarios"
+              aria-controls="panel-usuarios"
+              aria-selected={pestanaActiva === 'usuarios'}
+              onClick={() => cambiarPestana('usuarios')}
+              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+                pestanaActiva === 'usuarios'
+                  ? 'border-amber-600 text-amber-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <Users className="h-4 w-4" aria-hidden="true" />
+              <span>Cuentas de usuarios</span>
+            </button>
+          )}
+
+          {puedeAsignarPermisos && (
+            <button
+              type="button"
+              role="tab"
+              id="tab-roles"
+              aria-controls="panel-roles"
+              aria-selected={pestanaActiva === 'roles'}
+              onClick={() => cambiarPestana('roles')}
+              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+                pestanaActiva === 'roles'
+                  ? 'border-amber-600 text-amber-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+              <span>Roles y permisos</span>
+            </button>
+          )}
+        </div>
       </header>
 
-      {aviso && (
-        <div
-          role="status"
-          className={`rounded-xl border px-4 py-3 text-xs font-medium ${
-            aviso.tono === 'ok'
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-              : 'border-red-200 bg-red-50 text-red-800'
-          }`}
-        >
-          {aviso.texto}
+      {pestanaActiva === 'roles' ? (
+        <div id="panel-roles" role="tabpanel" aria-labelledby="tab-roles">
+          <RolesTab />
         </div>
-      )}
-
-      <Filtros
-        busqueda={busqueda}
-        onBusqueda={setBusqueda}
-        filtroActivo={filtroActivo}
-        onFiltroActivo={(valor) => {
-          setFiltroActivo(valor);
-          setPagina(1);
-        }}
-        filtroRol={filtroRol}
-        onFiltroRol={(valor) => {
-          setFiltroRol(valor);
-          setPagina(1);
-        }}
-        roles={roles}
-        hayFiltros={hayFiltros}
-        onLimpiar={limpiarFiltros}
-      />
-
-      <UsuariosTabla
-        filas={filas}
-        cargando={cargando}
-        procesandoId={procesandoId}
-        onNuevo={() => setModal({ tipo: 'usuario', fila: null })}
-        onEditar={(fila) => setModal({ tipo: 'usuario', fila })}
-        onCambiarEstado={(fila) => setModal({ tipo: 'estado', fila })}
-        onRestablecer={(fila) => setModal({ tipo: 'reset', fila })}
-        onDesbloquear={async (fila) => {
-          try {
-            const mensaje = await desbloquear(fila);
-            setAviso({ texto: mensaje, tono: 'ok' });
-          } catch (fallo) {
-            setAviso({
-              texto: normalizarErrorApi(fallo).mensaje ?? 'No se pudo desbloquear la cuenta.',
-              tono: 'error',
-            });
-          }
-        }}
-        esUsuarioActual={esUsuarioActual}
-      />
-
-      {totalPaginas > 1 && (
-        <nav
-          aria-label="Paginación del listado"
-          className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3"
-        >
-          <p className="text-[11px] text-slate-500">
-            Página <span className="font-semibold text-slate-700">{pagina}</span> de{' '}
-            <span className="font-semibold text-slate-700">{totalPaginas}</span> · {total}{' '}
-            {total === 1 ? 'cuenta' : 'cuentas'} en total
-          </p>
-
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setPagina((p) => Math.max(1, p - 1))}
-              disabled={pagina === 1 || cargando}
-              className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+      ) : (
+        <div id="panel-usuarios" role="tabpanel" aria-labelledby="tab-usuarios" className="space-y-5">
+          {aviso && (
+            <div
+              role="status"
+              className={`rounded-xl border px-4 py-3 text-xs font-medium ${
+                aviso.tono === 'ok'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                  : 'border-red-200 bg-red-50 text-red-800'
+              }`}
             >
-              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-              Anterior
-            </button>
-            <button
-              type="button"
-              onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-              disabled={pagina === totalPaginas || cargando}
-              className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+              {aviso.texto}
+            </div>
+          )}
+
+          <Filtros
+            busqueda={busqueda}
+            onBusqueda={setBusqueda}
+            filtroActivo={filtroActivo}
+            onFiltroActivo={(valor) => {
+              setFiltroActivo(valor);
+              setPagina(1);
+            }}
+            filtroRol={filtroRol}
+            onFiltroRol={(valor) => {
+              setFiltroRol(valor);
+              setPagina(1);
+            }}
+            roles={roles}
+            hayFiltros={hayFiltros}
+            onLimpiar={limpiarFiltros}
+          />
+
+          <UsuariosTabla
+            filas={filas}
+            cargando={cargando}
+            procesandoId={procesandoId}
+            onNuevo={() => setModal({ tipo: 'usuario', fila: null })}
+            onEditar={(fila) => setModal({ tipo: 'usuario', fila })}
+            onCambiarEstado={(fila) => setModal({ tipo: 'estado', fila })}
+            onRestablecer={(fila) => setModal({ tipo: 'reset', fila })}
+            onDesbloquear={async (fila) => {
+              try {
+                const mensaje = await desbloquear(fila);
+                setAviso({ texto: mensaje, tono: 'ok' });
+              } catch (fallo) {
+                setAviso({
+                  texto: normalizarErrorApi(fallo).mensaje ?? 'No se pudo desbloquear la cuenta.',
+                  tono: 'error',
+                });
+              }
+            }}
+            esUsuarioActual={esUsuarioActual}
+          />
+
+          {totalPaginas > 1 && (
+            <nav
+              aria-label="Paginación del listado"
+              className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3"
             >
-              Siguiente
-              <ChevronRight className="h-4 w-4" aria-hidden="true" />
-            </button>
-          </div>
-        </nav>
-      )}
+              <p className="text-[11px] text-slate-500">
+                Página <span className="font-semibold text-slate-700">{pagina}</span> de{' '}
+                <span className="font-semibold text-slate-700">{totalPaginas}</span> · {total}{' '}
+                {total === 1 ? 'cuenta' : 'cuentas'} en total
+              </p>
 
-      {modal?.tipo === 'usuario' && (
-        <ModalUsuario
-          key={`usuario-${modal.fila?.id_usuario ?? 'nuevo'}`}
-          usuario={modal.fila}
-          roles={roles}
-          onCerrar={() => setModal(null)}
-          onGuardado={() => (modal.fila ? trasEdicion() : trasAlta())}
-          onExito={(texto) => setAviso({ texto, tono: 'ok' })}
-          onError={(texto) => setAviso({ texto, tono: 'error' })}
-          crear={(datos) => usuariosService.crear(datos)}
-          editar={(id, datos: EditarUsuario) => usuariosService.editar(id, datos)}
-        />
-      )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPagina((p) => Math.max(1, p - 1))}
+                  disabled={pagina === 1 || cargando}
+                  className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                >
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+                  disabled={pagina === totalPaginas || cargando}
+                  className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                >
+                  Siguiente
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+            </nav>
+          )}
 
-      {modal?.tipo === 'estado' && (
-        <ModalEstado
-          key={`estado-${modal.fila.id_usuario}`}
-          usuario={modal.fila}
-          onCerrar={() => setModal(null)}
-          onConfirmar={(motivo) => cambiarEstado(modal.fila, motivo)}
-          onExito={(texto) => setAviso({ texto, tono: 'ok' })}
-          onError={(texto) => setAviso({ texto, tono: 'error' })}
-        />
-      )}
+          {modal?.tipo === 'usuario' && (
+            <ModalUsuario
+              key={`usuario-${modal.fila?.id_usuario ?? 'nuevo'}`}
+              usuario={modal.fila}
+              roles={roles}
+              onCerrar={() => setModal(null)}
+              onGuardado={() => (modal.fila ? trasEdicion() : trasAlta())}
+              onExito={(texto) => setAviso({ texto, tono: 'ok' })}
+              onError={(texto) => setAviso({ texto, tono: 'error' })}
+              crear={(datos) => usuariosService.crear(datos)}
+              editar={(id, datos: EditarUsuario) => usuariosService.editar(id, datos)}
+            />
+          )}
 
-      {modal?.tipo === 'reset' && (
-        <ModalRestablecerContrasena
-          key={`reset-${modal.fila.id_usuario}`}
-          usuario={modal.fila}
-          onCerrar={() => setModal(null)}
-          onConfirmar={async (nueva, confirmacion) => {
-            const respuesta = await usuariosService.restablecerContrasena(modal.fila.id_usuario, {
-              nueva_contrasena: nueva,
-              confirmar_contrasena: confirmacion,
-            });
-            return respuesta.message;
-          }}
-          onExito={(texto) => setAviso({ texto, tono: 'ok' })}
-          onError={(texto) => setAviso({ texto, tono: 'error' })}
-        />
+          {modal?.tipo === 'estado' && (
+            <ModalEstado
+              key={`estado-${modal.fila.id_usuario}`}
+              usuario={modal.fila}
+              onCerrar={() => setModal(null)}
+              onConfirmar={(motivo) => cambiarEstado(modal.fila, motivo)}
+              onExito={(texto) => setAviso({ texto, tono: 'ok' })}
+              onError={(texto) => setAviso({ texto, tono: 'error' })}
+            />
+          )}
+
+          {modal?.tipo === 'reset' && (
+            <ModalRestablecerContrasena
+              key={`reset-${modal.fila.id_usuario}`}
+              usuario={modal.fila}
+              onCerrar={() => setModal(null)}
+              onConfirmar={async (nueva, confirmacion) => {
+                const respuesta = await usuariosService.restablecerContrasena(modal.fila.id_usuario, {
+                  nueva_contrasena: nueva,
+                  confirmar_contrasena: confirmacion,
+                });
+                return respuesta.message;
+              }}
+              onExito={(texto) => setAviso({ texto, tono: 'ok' })}
+              onError={(texto) => setAviso({ texto, tono: 'error' })}
+            />
+          )}
+        </div>
       )}
     </div>
   );
