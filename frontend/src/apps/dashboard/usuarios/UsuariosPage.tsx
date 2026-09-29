@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Search, ShieldCheck, Users, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, History, Search, ShieldCheck, Users, X } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import usuariosService from '../../../services/usuariosService';
 import { normalizarErrorApi } from '../../../services/erroresApi';
@@ -9,6 +9,7 @@ import ModalUsuario from './components/ModalUsuario';
 import ModalEstado from './components/ModalEstado';
 import ModalRestablecerContrasena from './components/ModalRestablecerContrasena';
 import { RolesTab } from './roles';
+import BitacoraTab from './bitacora/BitacoraTab';
 import type { EditarUsuario, RolSimple, UsuarioFila } from '../../../types/usuarios';
 
 /**
@@ -39,6 +40,8 @@ import type { EditarUsuario, RolSimple, UsuarioFila } from '../../../types/usuar
 /** Retraso del buscador, en ms. */
 const RETRASO_BUSQUEDA = 300;
 
+type Pestana = 'usuarios' | 'roles' | 'bitacora';
+
 type ModalAbierto =
   | { tipo: 'usuario'; fila: UsuarioFila | null }
   | { tipo: 'estado'; fila: UsuarioFila }
@@ -52,19 +55,21 @@ export const UsuariosPage: React.FC = () => {
 
   const puedeGestionarUsuarios = hasPermission('gestionar_usuarios');
   const puedeAsignarPermisos = hasPermission('asignar_permisos');
+  const puedeConsultarBitacora = hasPermission('consultar_bitacora');
 
-  const pestanaInicial: 'usuarios' | 'roles' =
-    tabParam === 'roles' && puedeAsignarPermisos
-      ? 'roles'
-      : puedeGestionarUsuarios
-      ? 'usuarios'
-      : 'roles';
-
-  const [pestanaActiva, setPestanaActiva] = useState<'usuarios' | 'roles'>(pestanaInicial);
+  // La pestaña activa se deriva de la URL y de los permisos en cada render, sin
+  // copiarla a un estado: así `?tab=` y la pantalla nunca pueden contradecirse.
+  // El Propietario solo tiene `consultar_bitacora` y entra directo a la bitácora.
+  const permitidas: Pestana[] = [];
+  if (puedeGestionarUsuarios) permitidas.push('usuarios');
+  if (puedeAsignarPermisos) permitidas.push('roles');
+  if (puedeConsultarBitacora) permitidas.push('bitacora');
+  const pestanaActiva: Pestana = permitidas.includes(tabParam as Pestana)
+    ? (tabParam as Pestana)
+    : permitidas[0] ?? 'usuarios';
 
   const cambiarPestana = useCallback(
-    (nueva: 'usuarios' | 'roles') => {
-      setPestanaActiva(nueva);
+    (nueva: Pestana) => {
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
@@ -76,14 +81,6 @@ export const UsuariosPage: React.FC = () => {
     },
     [setSearchParams]
   );
-
-  useEffect(() => {
-    if (tabParam === 'roles' && puedeAsignarPermisos && pestanaActiva !== 'roles') {
-      setPestanaActiva('roles');
-    } else if (tabParam === 'usuarios' && puedeGestionarUsuarios && pestanaActiva !== 'usuarios') {
-      setPestanaActiva('usuarios');
-    }
-  }, [tabParam, puedeAsignarPermisos, puedeGestionarUsuarios, pestanaActiva]);
 
   const [filas, setFilas] = useState<UsuarioFila[]>([]);
   const [roles, setRoles] = useState<RolSimple[]>([]);
@@ -141,6 +138,9 @@ export const UsuariosPage: React.FC = () => {
    * pisa la tabla con resultados viejos.
    */
   useEffect(() => {
+    // Quien solo consulta la bitácora (Propietario) no puede listar cuentas:
+    // pedirlas igual sería un 403 en cada visita.
+    if (!puedeGestionarUsuarios) return;
     let vigente = true;
     const numeroPeticion = ++peticionRef.current;
 
@@ -179,16 +179,17 @@ export const UsuariosPage: React.FC = () => {
     return () => {
       vigente = false;
     };
-  }, [busquedaAplicada, filtroActivo, filtroRol, pagina, refresco]);
+  }, [puedeGestionarUsuarios, busquedaAplicada, filtroActivo, filtroRol, pagina, refresco]);
 
   // Los roles se piden una vez y no en cada cambio de filtro: son
   // cuatro filas y no cambian mientras la pantalla esté abierta.
   useEffect(() => {
+    if (!puedeGestionarUsuarios) return;
     usuariosService
       .listarRoles()
       .then(setRoles)
       .catch(() => setRoles([]));
-  }, []);
+  }, [puedeGestionarUsuarios]);
 
   // El aviso de éxito se va solo. El de error no: un error que desaparece
   // solo deja a la persona creyendo que la operación sí se hizo.
@@ -306,7 +307,9 @@ export const UsuariosPage: React.FC = () => {
         <p className="mt-1 text-xs text-slate-500 sm:text-sm">
           {pestanaActiva === 'usuarios'
             ? 'CU3 · Crear cuentas, editarlas y activarlas o inactivarlas. Las cuentas no se borran: se inactivan para conservar el historial de ventas y producción.'
-            : 'CU4 · Administrar perfiles de acceso y matriz de permisos para los roles del personal.'}
+            : pestanaActiva === 'roles'
+            ? 'CU4 · Administrar perfiles de acceso y matriz de permisos para los roles del personal.'
+            : 'CU26 · Historial de auditoría: quién hizo qué, en qué módulo y cuándo. Los registros los genera el sistema y no se pueden modificar.'}
         </p>
 
         {/* Selector de pestañas */}
@@ -352,10 +355,33 @@ export const UsuariosPage: React.FC = () => {
               <span>Roles y permisos</span>
             </button>
           )}
+
+          {puedeConsultarBitacora && (
+            <button
+              type="button"
+              role="tab"
+              id="tab-bitacora"
+              aria-controls="panel-bitacora"
+              aria-selected={pestanaActiva === 'bitacora'}
+              onClick={() => cambiarPestana('bitacora')}
+              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+                pestanaActiva === 'bitacora'
+                  ? 'border-amber-600 text-amber-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <History className="h-4 w-4" aria-hidden="true" />
+              <span>Bitácora</span>
+            </button>
+          )}
         </div>
       </header>
 
-      {pestanaActiva === 'roles' ? (
+      {pestanaActiva === 'bitacora' ? (
+        <div id="panel-bitacora" role="tabpanel" aria-labelledby="tab-bitacora">
+          <BitacoraTab />
+        </div>
+      ) : pestanaActiva === 'roles' ? (
         <div id="panel-roles" role="tabpanel" aria-labelledby="tab-roles">
           <RolesTab />
         </div>

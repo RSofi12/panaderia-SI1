@@ -30,6 +30,7 @@ urlpatterns = [
     path('api/', include('apps.usuarios_seguridad.users.urls')),
     path('api/', include('apps.usuarios_seguridad.roles.urls')),
     path('api/', include('apps.usuarios_seguridad.permisos.urls')),
+    path('api/', include('apps.usuarios_seguridad.bitacora.urls')),
     path('api/', include('apps.productos_inventario.urls')),
     path('api/', include('apps.compras.urls')),
 ]
