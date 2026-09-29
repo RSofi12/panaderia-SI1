@@ -63,7 +63,9 @@ export const AppRoutes: React.FC = () => {
             <Route
               path="usuarios"
               element={
-                <ProtectedRoute requiredPermission={['gestionar_usuarios', 'asignar_permisos']}>
+                <ProtectedRoute
+                  requiredPermission={['gestionar_usuarios', 'asignar_permisos', 'consultar_bitacora']}
+                >
                   <UsuariosPage />
                 </ProtectedRoute>
               }
