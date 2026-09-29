@@ -412,3 +412,18 @@
 - **Motivo:** Cumplir al 100% con la especificación de métodos del diagrama de clases UML `database_panaderia_con_funciones.puml`.
 - **Impacto:** Cada mutación registra su diff exacto en `Bitacora` (`ALTA_ROL`, `EDICION_ROL`, `ASIGNAR_PERMISO_ROL`, `REVOCAR_PERMISO_ROL`, `ACTUALIZACION_MATRIZ_PERMISOS`).
 
+---
+
+# 📅 2026-09-28 — CU4: Asignar roles y permisos (frontend)
+
+### 34. Navegación en pestañas bajo `/dashboard/usuarios`, sincronización con URL y matriz de permisos por módulos
+- **Decisión:** 
+  1. CU4 no crea una nueva ruta de primer nivel en el menú principal; se integra como pestaña "Roles y permisos" dentro del módulo unificado de *Usuarios y Seguridad* (`/dashboard/usuarios`).
+  2. `ProtectedRoute` y `AppRoutes.tsx` se ampliaron para aceptar `requiredPermission?: string | string[]` con semántica *any-of*, permitiendo el acceso tanto con `gestionar_usuarios` como con `asignar_permisos`.
+  3. La pestaña activa se sincroniza bidireccionalmente con la URL mediante `useSearchParams` (`?tab=roles` vs `?tab=usuarios`), preservando el estado en recargas, historial y navegación directa.
+  4. La edición de la matriz (`MatrizPermisosModal`) se diseñó sin scrollbars anidadas dobles, agrupando los 12 permisos por los 5 módulos funcionales del sistema con acciones por lote ("Marcar/Desmarcar módulo"), buscador de permisos reactivo y contador de cambios pendientes.
+  5. La guarda contra auto-bloqueo del Administrador se refleja visualmente en el cliente: el checkbox de `asignar_permisos` permanece bloqueado, deshabilitado y acompañado de un callout explicativo de seguridad.
+  6. Tarjetas de roles (`TarjetaRol`) con identidad visual del personal de panadería (Administrador, Cajero, Panadero, Pastelero), barras de cobertura con `role="progressbar"` y KPI summary bar en `RolesTab`.
+- **Motivo:** Evitar fragmentar el menú lateral con ventanas redundantes para el mismo dominio de seguridad, permitir deep linking directo a roles, y garantizar accesibilidad WCAG 2.2 AA sin romper *Fast Refresh* de Vite.
+- **Impacto:** Experiencia de usuario coherente y fluida; verificación de tipos y bundling con `tsc -b && vite build` completada con 0 errores y 0 warnings.
+
