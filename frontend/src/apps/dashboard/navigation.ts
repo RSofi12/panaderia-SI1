@@ -42,9 +42,9 @@ export const NAV_MODULES: NavModule[] = [
     icon: ShieldCheck,
     casosDeUso: 'CU3, CU4, CU26',
     permisos: ['gestionar_usuarios', 'asignar_permisos', 'consultar_bitacora'],
-    // `true` desde el 2026-09-28: existe `apps/dashboard/usuarios/UsuariosPage.tsx`
-    // con el CU3 y CU4 completos. CU26 (bitácora) agregará su propia pestaña
-    // dentro de esta misma ventana, no un módulo aparte del menú.
+    // `apps/dashboard/usuarios/UsuariosPage.tsx` reúne CU3, CU4 y CU26 como
+    // pestañas; cada una aparece solo si el rol tiene su permiso. El
+    // Propietario entra únicamente con `consultar_bitacora`.
     implemented: true,
   },
   {
@@ -60,8 +60,8 @@ export const NAV_MODULES: NavModule[] = [
     to: '/dashboard/compras',
     icon: ShoppingCart,
     casosDeUso: 'CU6, CU7, CU20',
-    permisos: ['gestionar_proveedores', 'registrar_compras', 'registrar_gastos'],
-    implemented: false,
+    permisos: ['gestionar_proveedores', 'registrar_compras'],
+    implemented: true,
   },
   {
     label: 'Ventas y Pedidos',

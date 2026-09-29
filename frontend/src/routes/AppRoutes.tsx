@@ -9,6 +9,7 @@ import DashboardLayout from '../apps/dashboard/DashboardLayout';
 import DashboardHome from '../apps/dashboard/DashboardHome';
 import UsuariosPage from '../apps/dashboard/usuarios/UsuariosPage';
 import ProductosPage from '../apps/dashboard/productos/ProductosPage';
+import ProveedoresPage from '../apps/dashboard/proveedores/ProveedoresPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -62,7 +63,9 @@ export const AppRoutes: React.FC = () => {
             <Route
               path="usuarios"
               element={
-                <ProtectedRoute requiredPermission={['gestionar_usuarios', 'asignar_permisos']}>
+                <ProtectedRoute
+                  requiredPermission={['gestionar_usuarios', 'asignar_permisos', 'consultar_bitacora']}
+                >
                   <UsuariosPage />
                 </ProtectedRoute>
               }
@@ -73,6 +76,14 @@ export const AppRoutes: React.FC = () => {
                 permite el backend a cualquier autenticado; la escritura exige
                 `gestionar_productos` y la controla la propia pantalla + API. */}
             <Route path="productos" element={<ProductosPage />} />
+
+            {/* CU6 - Gestión de proveedores. Ocupa /dashboard/compras porque
+                es la primera sección del módulo "Compras y Proveedores";
+                CU7 y CU20 se sumarán a esta misma ventana. Sin ProtectedRoute
+                de un solo permiso: la consulta la admiten dos permisos
+                (gestionar_proveedores o registrar_compras) y el backend
+                responde 403 al resto. */}
+            <Route path="compras" element={<ProveedoresPage />} />
           </Route>
 
           {/* Redirecciones por defecto */}
