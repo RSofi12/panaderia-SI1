@@ -8,6 +8,7 @@ import ResetPasswordPage from '../apps/auth/ResetPasswordPage';
 import DashboardLayout from '../apps/dashboard/DashboardLayout';
 import DashboardHome from '../apps/dashboard/DashboardHome';
 import UsuariosPage from '../apps/dashboard/usuarios/UsuariosPage';
+import ProductosPage from '../apps/dashboard/productos/ProductosPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -66,6 +67,12 @@ export const AppRoutes: React.FC = () => {
                 </ProtectedRoute>
               }
             />
+
+            {/* CU5 - Gestión de productos. Misma lógica que usuarios: vive
+                dentro de /dashboard para compartir el shell. La lectura la
+                permite el backend a cualquier autenticado; la escritura exige
+                `gestionar_productos` y la controla la propia pantalla + API. */}
+            <Route path="productos" element={<ProductosPage />} />
           </Route>
 
           {/* Redirecciones por defecto */}
