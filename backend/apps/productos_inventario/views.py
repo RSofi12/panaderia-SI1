@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.usuarios_seguridad.bitacora.models import Bitacora
+from apps.usuarios_seguridad.bitacora.models import AccionBitacora, Bitacora
 
 from .models import CategoriaProducto, HistorialPrecioProducto, Producto
 from .permissions import PuedeGestionarProductos
@@ -55,9 +55,10 @@ class ProductoListCreateView(APIView):
             )
             Bitacora.registrar(
                 usuario=request.user,
-                accion='CREACION',
+                accion=AccionBitacora.ALTA_PRODUCTO,
                 tabla_afectada='producto',
                 descripcion=f'Alta del producto {producto.nombre} con precio de venta Bs {producto.precio_venta}',
+                agente_usuario=request.META.get('HTTP_USER_AGENT'),
             )
 
         return Response(ProductoSerializer(producto).data, status=status.HTTP_201_CREATED)
@@ -104,9 +105,10 @@ class ProductoDetailView(APIView):
 
             Bitacora.registrar(
                 usuario=request.user,
-                accion='MODIFICACION',
+                accion=AccionBitacora.EDICION_PRODUCTO,
                 tabla_afectada='producto',
                 descripcion=descripcion,
+                agente_usuario=request.META.get('HTTP_USER_AGENT'),
             )
 
         return Response(ProductoSerializer(producto).data)
@@ -125,9 +127,10 @@ class ProductoToggleActivoView(APIView):
             estado = 'activado' if producto.activo else 'inactivado'
             Bitacora.registrar(
                 usuario=request.user,
-                accion='CAMBIO_ESTADO',
+                accion=AccionBitacora.CAMBIAR_ESTADO_PRODUCTO,
                 tabla_afectada='producto',
                 descripcion=f'Producto {producto.nombre} {estado}',
+                agente_usuario=request.META.get('HTTP_USER_AGENT'),
             )
 
         return Response(ProductoSerializer(producto).data)
