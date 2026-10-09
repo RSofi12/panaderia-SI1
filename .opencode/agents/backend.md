@@ -36,7 +36,7 @@ Backend specialist for the Panadería Santiago MRP: Django 5.1 + DRF 3.15 + Simp
 - Do not change `AUTH_USER_MODEL` or the `id_usuario` JWT claim without a data migration plan; that contract is shared by SimpleJWT (`USER_ID_FIELD`).
 - DRF defaults are `JWTAuthentication` + `IsAuthenticated`; any public endpoint must override both explicitly instead of relying on implicit behavior.
 - If model contracts change, ship the migration, keep backward compatibility where reasonable, and state the rollout impact.
-- Environment is local only: `backend/venv` with a local PostgreSQL service. No Docker, no container or cloud deployment steps.
+- Environment is dual: official containerized workflow with Docker Compose (`docker compose exec backend python manage.py ...`) as recommended, maintaining full compatibility with direct local `backend/venv` with PostgreSQL. Container and Docker infrastructure tasks are delegated to `devops`.
 - Follow existing naming: domain entities, roles, and errors are in Spanish (the project is `es-bo`); do not introduce a second naming language in the same module.
 - Validate with the Django test runner (`manage.py test`), not pytest — pytest is not in `backend/requirements.txt`.
 

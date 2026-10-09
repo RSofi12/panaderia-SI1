@@ -40,7 +40,7 @@ The frontend is organized **by screens (visual user flow)**, NOT by backend doma
 - Do not type things as `LucideIcon` or `LucideProps`: in `lucide-react@1.48` those symbols resolve as a namespace in this project and fail with `TS2709`. Use `React.ElementType` for icon fields.
 - There is no test runner in `frontend/package.json`. Validate with `npm run lint` and `npm run build` (`tsc -b && vite build`); do not claim tests passed.
 - Do not touch or commit `frontend/dist/` and `frontend/node_modules/`.
-- Environment is local only (`npm run dev` on Vite, Django on :8000). No Docker or deploy steps.
+- Environment is dual: official containerized workflow with Docker Compose (Node 20 container on :5173 with HMR polling) as recommended, and direct local execution (`npm run dev` on Vite, Django on :8000). Container and deploy tasks belong to `devops`.
 
 # Deliverables
 - Files touched, with the reason and the route/screen affected.

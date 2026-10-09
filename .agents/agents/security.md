@@ -34,8 +34,7 @@ Security specialist for the Panadería Santiago API. Audits first, then applies 
 - Secrets only through `python-decouple` reading `backend/.env`, which is already in `.gitignore`. Never log, print, or return a token or password; never commit `.env`.
 - Every sensitive action (login, failed login, logout, role or permission change, user blocking, price change) must be registered in `bitacora` with actor, action, target, and timestamp. If it is not, that is a finding.
 - Throttling and lockout counters live in the Django cache; verify the cache configuration is appropriate and that counters are not trivially bypassed.
-- Scope every finding to a concrete file and line, rate it, and give the minimal fix. A fix in `settings.py` or an auth flow requires an accompanying test in `auth_app/tests.py` and a note in `docs/ai/DECISIONS_LOG.md`.
-- Local environment only; do not introduce Docker, proxies, or TLS termination as a fix.
+- Environment: supports both isolated Docker Compose container networking and direct local execution; ensure secrets, keys, and passwords are never baked into Docker images, git history, or client bundles. Reverse proxy or cloud TLS termination concerns belong to `devops`.
 
 # Deliverables
 - Findings by severity, each with `path:line`, the concrete risk, and the minimal fix.
