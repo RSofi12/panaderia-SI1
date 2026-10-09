@@ -1,0 +1,26 @@
+# Entornos virtuales locales
+venv/
+.venv/
+env/
+
+# Caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Bases de datos y archivos de prueba locales
+*.sqlite3
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Configuración y secretos locales
+.env
+*.log
+
+# Git y editores
+.git/
+.gitignore
+.vscode/
+.idea/

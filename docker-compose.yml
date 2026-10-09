@@ -1,0 +1,84 @@
+# ==============================================================================
+# Docker Compose — Panadería Santiago (SI-1)
+# Orquestación de entorno de desarrollo: DB + Mailpit + Backend + Frontend
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Base de Datos (PostgreSQL 16)
+  # ----------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: panaderia_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: panaderia_db
+      POSTGRES_USER: panaderia_admin
+      POSTGRES_PASSWORD: sistemas1
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # ----------------------------------------------------------------------------
+  # 2. Servidor de Correo de Pruebas (Mailpit)
+  # ----------------------------------------------------------------------------
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: panaderia_mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # Puerto SMTP para Django
+      - "8025:8025"   # Interfaz Web para ver correos capturados
+
+  # ----------------------------------------------------------------------------
+  # 3. Backend (Django + Django REST Framework)
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: panaderia_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - mailpit
+    volumes:
+      - ./backend:/app
+    environment:
+      - DB_NAME=panaderia_db
+      - DB_USER=panaderia_admin
+      - DB_PASSWORD=sistemas1
+      - DB_HOST=db
+      - DB_PORT=5432
+      - EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+      - EMAIL_HOST=mailpit
+      - EMAIL_PORT=1025
+      - DEBUG=True
+      - PASSWORD_RESET_URL=http://localhost:5173/recuperar-password/nueva
+      - SECRET_KEY=django-insecure-dev-docker-secret-key-panaderia-santiago-2026
+
+  # ----------------------------------------------------------------------------
+  # 4. Frontend (React 19 + TypeScript + Vite)
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: panaderia_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+
+volumes:
+  postgres_data:
+    driver: local
