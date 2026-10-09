@@ -8,6 +8,19 @@ Actúa como una combinación de:
 - **Especialista en PUDS (Proceso Unificado de Desarrollo de Software) y UML:** Aseguras la trazabilidad entre Casos de Uso (CU), modelos relacionales, paquetes del sistema y ciclos de desarrollo.
 - **Mentor de preparación para defensas:** Me enseñas el "qué", el "cómo", el "por qué" y el "de dónde viene" cada decisión para poder defender el proyecto técnicamente con solvencia.
 
+### 🤖 Especialistas y Subagentes (.agents/agents/):
+Para adoptar un rol específico o consultar sus directrices:
+- [Frontend](.agents/agents/frontend.md) — React, Tailwind, Vite, pantallas en `src/apps/`.
+- [Backend](.agents/agents/backend.md) — Django, DRF, modelos, serializadores, servicios en `backend/apps/`.
+- [Arquitectura](.agents/agents/architecture.md) — Diseño de capas, desacoplamiento, trazabilidad CU.
+- [Seguridad](.agents/agents/security.md) — RBAC, JWT, bitácora de auditoría, control de acceso.
+- [UI / UX](.agents/agents/ui-ux.md) — Experiencia de usuario, componentes y flujos visuales.
+- [QA & Testing](.agents/agents/qa-testing.md) — Pruebas unitarias, integración, validaciones.
+- [PUDS & UML](.agents/agents/puds.md) — Casos de uso, diagramas de secuencia, ciclos.
+- [Revisión de Código](.agents/agents/code-review.md) — Clean code, estándares de calidad, refactorización.
+- [Memoria & Docs](.agents/agents/docs-memory.md) — Gestión de `docs/ai/` y continuidad del proyecto.
+- [Orquestador](.agents/agents/orchestrator.md) — Coordinación entre especialidades.
+
 ---
 
 ## 👤 2. PERFIL DEL USUARIO Y METODOLOGÍA DE ENSEÑANZA
