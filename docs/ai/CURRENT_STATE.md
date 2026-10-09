@@ -1,7 +1,7 @@
 # Estado Actual del Proyecto (CURRENT STATE)
 
 ## 📌 Proyecto: Sistema de Información Web — Panadería Santiago (SI-1)
-**Fecha de última actualización:** 2026-09-28  
+**Fecha de última actualización:** 2026-10-09  
 **Fase PUDS actual:** Fase de Construcción — **Ciclo 1**
 
 ---
@@ -9,6 +9,7 @@
 ## 📊 1. Resumen Ejecutivo de Avance
 
 - **Arquitectura Base:** 100% Definida (Backend modular en 5 Django apps, Frontend React/TypeScript en Vite organizado por pantallas, Base de datos PostgreSQL normalizada).
+- **Infraestructura y DevOps:** 100% Dockerizado y verificado. Orquestación completa con Docker Compose (`docker-compose.yml`), imágenes independientes para backend (`backend/Dockerfile`) y frontend (`frontend/Dockerfile`), volumen persistente para PostgreSQL 16 y servidor de correos Mailpit. Unificado para ejecutarse con 1 solo comando (`docker compose up -d`). Compatibilidad de dependencias de base de datos (`psycopg2-binary>=2.9.9`) adaptada para soporte directo de Python 3.14 y 3.12 en Windows.
 - **Documentación de Ingeniería:** 100% Actualizada (Perfil, DDL de base de datos, memoria de IA en `docs/ai/`, bitácora de sesiones).
 - **Backend:** Estructura de carpetas creada para los 5 paquetes en `backend/apps/`. **CU1 (login con JWT) y CU2 (recuperación de contraseña) completos, probados y verificados end-to-end contra PostgreSQL.** Preparado para la implementación de modelos ORM y endpoints del Ciclo 1.
 - **Frontend:** Estructura base inicializada con Vite + React 19 + TypeScript + Tailwind CSS v4, **organizada por ventanas/pantallas** en `frontend/src/apps/`. Contiene la pantalla de Login (CU1), el **shell del dashboard** (`DashboardLayout` + `Sidebar` + `Topbar` + `DashboardHome`) con menú único filtrado por permisos RBAC, las dos pantallas del CU2 (`ForgotPasswordPage` y `ResetPasswordPage`) con `AuthCard` como envoltorio visual compartido, y la SPA completa de Gestión de Usuarios (CU3) en `src/apps/dashboard/usuarios/` con modales accesibles y CRUD completo. Cliente Axios con interceptores JWT, `AuthContext`/`AuthProvider` y rutas protegidas. `npm run lint` y `npm run build` verificados **en verde al 100% (0 errores, 0 advertencias)**.

@@ -8,8 +8,9 @@ Sistema de información web para la gestión de ventas, producción, inventario 
 
 - **Backend:** Python 3.12+ · Django 5.x + Django REST Framework + SimpleJWT
 - **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS v4 + Lucide Icons
-- **Base de datos:** PostgreSQL 14+
+- **Base de datos:** PostgreSQL 16+ (Docker) / 14+ (Local)
 - **Servidor de correo de desarrollo:** Mailpit (servidor SMTP local y visor web)
+- **Contenedores y Orquestación:** Docker + Docker Compose (entorno integrado)
 - **Metodología:** PUDS (Proceso Unificado de Desarrollo de Software) iterativo-incremental
 
 ---
@@ -18,23 +19,26 @@ Sistema de información web para la gestión de ventas, producción, inventario 
 
 ```
 panaderia-SI1/
-├── backend/          # API Django + Django REST Framework
-│   ├── apps/         # 5 paquetes por dominio:
-│   │                 #   - usuarios_seguridad (CU1-CU4, CU26)
-│   │                 #   - productos_inventario (CU5, CU8-CU12, CU18, CU19)
-│   │                 #   - compras (CU6, CU7, CU20)
-│   │                 #   - comercializacion (CU13-CU17)
-│   │                 #   - reportes (CU21-CU25)
-│   │   config/       # Configuración global Django (settings, urls)
+├── docker-compose.yml   # Orquestador global (DB + Mailpit + Backend + Frontend)
+├── backend/             # API Django + Django REST Framework
+│   ├── Dockerfile       # Imagen Docker de desarrollo (Python 3.12-slim)
+│   ├── apps/            # 5 paquetes por dominio:
+│   │                    #   - usuarios_seguridad (CU1-CU4, CU26)
+│   │                    #   - productos_inventario (CU5, CU8-CU12, CU18, CU19)
+│   │                    #   - compras (CU6, CU7, CU20)
+│   │                    #   - comercializacion (CU13-CU17)
+│   │                    #   - reportes (CU21-CU25)
+│   ├── config/          # Configuración global Django (settings, urls)
 │   └── requirements.txt
-├── frontend/         # SPA React + TypeScript (Vite)
+├── frontend/            # SPA React + TypeScript (Vite)
+│   ├── Dockerfile       # Imagen Docker de desarrollo (Node 20-alpine)
 │   └── src/
-│       ├── apps/     # Pantallas por ventana del flujo visual (auth/, dashboard/*)
-│       ├── contexts/ # Contexto de autenticación y sesión (AuthContext)
-│       ├── routes/   # Enrutador y guardias RBAC (AppRoutes, ProtectedRoute)
-│       ├── services/ # Clientes API Axios (authService, usuariosService, etc.)
-│       └── types/    # Contratos e interfaces TypeScript
-├── docs/             # Perfil del proyecto, DDL de base de datos, memoria de IA
+│       ├── apps/        # Pantallas por ventana del flujo visual (auth/, dashboard/*)
+│       ├── contexts/    # Contexto de autenticación y sesión (AuthContext)
+│       ├── routes/      # Enrutador y guardias RBAC (AppRoutes, ProtectedRoute)
+│       ├── services/    # Clientes API Axios (authService, usuariosService, etc.)
+│       └── types/       # Contratos e interfaces TypeScript
+├── docs/                # Perfil del proyecto, DDL de base de datos, memoria de IA
 └── README.md
 ```
 
@@ -44,93 +48,94 @@ panaderia-SI1/
 
 ## 📋 Requisitos previos
 
-- **Python 3.12+**
-- **Node.js 18+ LTS** y `npm`
-- **PostgreSQL 14+** (con una base de datos creada, e.g. `panaderia_db`)
-- **Git**
-- **Mailpit** (para pruebas de correos transaccionales y recuperación de contraseña)
+- **Opción recomendada (Docker):**
+  - **Docker Desktop** (con motor WSL2 en Windows) y Git.
+- **Opción alternativa (Local directo sin Docker):**
+  - **Python 3.12+** y `pip`
+  - **Node.js 18+ LTS** y `npm`
+  - **PostgreSQL 14+** (con base de datos creada, e.g. `panaderia_db`)
+  - **Mailpit** (binario para captura de correos SMTP)
+  - Git
 
 ---
 
-## 🛠️ Cómo levantar el proyecto localmente
+## 🛠️ Cómo levantar el proyecto
 
-Para ejecutar el sistema completo en entorno local, se recomienda abrir **3 terminales**:
+### 🐳 Opción 1: Con Docker Compose (Recomendada — 1 sola terminal)
 
-### 1. Servidor de Correo de Pruebas (Mailpit)
+Esta opción levanta automáticamente la base de datos PostgreSQL, el servidor Mailpit, el backend Django y el frontend React en una red interna coordinada.
 
-Mailpit captura los correos emitidos por el sistema (como los enlaces de recuperación de contraseña del CU2) sin enviarlos a servidores externos reales.
-
-En una terminal dedicada:
+#### 1. Iniciar todos los servicios
+Con Docker Desktop abierto, ejecuta en la raíz del proyecto (`panaderia-SI1`):
 
 ```powershell
-# Si ya tienes el ejecutable en tu equipo (ej. en tools\mailpit):
-C:\Users\PERSONAL\tools\mailpit\mailpit.exe --smtp 0.0.0.0:1025 --listen 0.0.0.0:8025
+docker compose up -d
+```
+*(O usa `docker compose up --build` si deseas ver los logs de los contenedores en tiempo real).*
 
-# O si utilizas Docker:
-# docker run -d -p 1025:1025 -p 8025:8025 axllent/mailpit
+#### 2. Migrar y cargar datos de prueba (solo la primera vez)
+```powershell
+# Aplicar migraciones a PostgreSQL
+docker compose exec backend python manage.py migrate
+
+# Poblar datos iniciales
+docker compose exec backend python manage.py seed_usuarios      # CU1-CU4: roles, permisos y usuarios de prueba
+docker compose exec backend python manage.py seed_productos     # CU5: categorías y catálogo base de productos
+docker compose exec backend python manage.py seed_proveedores   # CU6: catálogo maestro de proveedores
 ```
 
-- **Bandeja de entrada Web:** [http://localhost:8025](http://localhost:8025)
-- **Servidor SMTP:** `localhost:1025`
+#### 3. URLs de acceso
+- **Aplicación Web (Frontend):** [http://localhost:5173](http://localhost:5173)
+- **API REST (Backend):** [http://localhost:8000/api/](http://localhost:8000/api/)
+- **Bandeja de correos (Mailpit):** [http://localhost:8025](http://localhost:8025)
+
+#### 4. Detener el sistema
+```powershell
+docker compose down
+```
+*(Tus datos de base de datos se conservan intactos en el volumen persistente `postgres_data`).*
 
 ---
 
-### 2. Backend (Django REST Framework)
+### 💻 Opción 2: Entorno Local Directo (Alternativa — 3 terminales)
 
-En una segunda terminal:
+Si prefieres ejecutar el sistema directamente en tu sistema operativo sin Docker, abre **3 terminales**:
 
+#### Terminal 1: Servidor de Correo (Mailpit)
+```powershell
+C:\Users\PERSONAL\tools\mailpit\mailpit.exe --smtp 0.0.0.0:1025 --listen 0.0.0.0:8025
+```
+- **Web:** [http://localhost:8025](http://localhost:8025) | **SMTP:** `localhost:1025`
+
+#### Terminal 2: Backend (Django REST Framework)
 ```powershell
 cd backend
 
-# 1. Crear y activar entorno virtual (Windows)
+# Crear y activar entorno virtual
 python -m venv venv
 .\venv\Scripts\Activate.ps1
-# En Linux/Mac: source venv/bin/activate
 
-# 2. Instalar dependencias
+# Instalar dependencias
 pip install -r requirements.txt
 
-# 3. Configurar variables de entorno
-# Copia .env.example a .env y ajusta tus credenciales de PostgreSQL
+# Configurar variables de entorno y migrar
 copy .env.example .env
-
-# 4. Aplicar migraciones a PostgreSQL
 python manage.py migrate
-
-# 5. Poblar datos iniciales (roles, permisos y usuarios de prueba)
 python manage.py seed_usuarios
+python manage.py seed_productos
+python manage.py seed_proveedores
 
-# 6. Iniciar el servidor API
+# Iniciar servidor API
 python manage.py runserver
 ```
-
 - **API Backend:** [http://localhost:8000](http://localhost:8000)
 
-> [!TIP]
-> **Configuración en `backend/.env` para Mailpit:**
-> ```env
-> EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-> EMAIL_HOST=localhost
-> EMAIL_PORT=1025
-> ```
-> *Si dejas `EMAIL_BACKEND` sin configurar, Django imprimirá los correos directamente en la consola de `runserver`.*
-
----
-
-### 3. Frontend (React + Vite)
-
-En una tercera terminal:
-
+#### Terminal 3: Frontend (React + Vite)
 ```powershell
 cd frontend
-
-# 1. Instalar dependencias
 npm install
-
-# 2. Iniciar servidor de desarrollo
 npm run dev
 ```
-
 - **Aplicación Web:** [http://localhost:5173](http://localhost:5173)
 
 ---
@@ -169,7 +174,7 @@ npm run build                                       # Chequeo TypeScript y bundl
 - [x] **CU1: Iniciar sesión** — 🟢 Completo end-to-end (JWT, refresco automático, bloqueo de fuerza bruta 429 con cuenta regresiva, auditoría en bitácora).
 - [x] **CU2: Recuperar contraseña** — 🟢 Completo end-to-end (Tokens SHA-256 de un solo uso, anti-enumeración, expiración de 15 min, envío SMTP con Mailpit, UI reactiva).
 - [x] **CU3: Gestionar usuarios** — 🟢 Completo end-to-end (Listado paginado con debounce 300 ms, alta/edición, activación/inactivación con motivo en bitácora, reseteo administrativo de contraseña, desbloqueo de cuentas, modales accesibles WCAG 2.2 AA).
-- [ ] **CU4: Asignar roles y permisos** — 🟡 Modelos listos (`Rol`, `Permiso`, `RolPermiso`), endpoints y vistas frontend pendientes.
-- [x] **CU26: Gestionar bitácora (versión simple)** — 🟢 Auditoría activa en backend para eventos de seguridad y cambios de usuario; pantalla pendiente.
-- [ ] **CU5: Gestionar productos (catálogo base)** — ⚪ Planificado para Ciclo 1.
-- [ ] **CU6: Gestionar proveedores (catálogo base)** — ⚪ Planificado para Ciclo 1.
+- [x] **CU4: Asignar roles y permisos** — 🟢 Completo end-to-end (Matriz interactiva por módulos, guardas anti-autobloqueo, pestañas sincronizadas con URL, auditoría con diff).
+- [x] **CU26: Gestionar bitácora** — 🟢 Completo end-to-end (Pestaña dedicada en /dashboard/usuarios, filtros por fecha, usuario, módulo y acción, vista de detalle).
+- [x] **CU5: Gestionar productos (catálogo base)** — 🟢 Completo end-to-end (Categorías, productos, historial de precios, seed de datos base).
+- [x] **CU6: Gestionar proveedores (catálogo base)** — 🟢 Completo end-to-end (Maestro de proveedores, bajas lógicas, seed de datos base).

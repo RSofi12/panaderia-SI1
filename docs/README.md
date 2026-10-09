@@ -48,62 +48,79 @@ El backend se organiza en **5 paquetes (Django apps)** ubicados en `backend/apps
 
 ---
 
-## 🚀 3. Guía de Puesta en Marcha en Entorno Local
+## 🚀 3. Guía de Puesta en Marcha del Proyecto
 
-> ⚠️ **Nota:** El proyecto se ejecuta en entorno local directo (sin Docker durante el Ciclo 1). La contenedorización se evaluará en ciclos posteriores.
+### 🐳 Opción 1: Con Docker Compose (Recomendada — 1 sola terminal)
 
-### 🐍 Backend (Django & DRF)
+El proyecto cuenta con un entorno dockerizado oficial que orquesta en una red interna la base de datos PostgreSQL, el servidor Mailpit, la API Django y el frontend React.
 
-1. **Crear y activar entorno virtual:**
+1. **Iniciar todos los servicios:**
+   Con Docker Desktop en ejecución, situarse en la raíz del proyecto (`panaderia-SI1`):
    ```bash
-   cd backend
-   python -m venv venv
-   # En Windows PowerShell:
-   .\venv\Scripts\Activate.ps1
-   # En Windows CMD:
-   .\venv\Scripts\activate.bat
+   docker compose up -d
+   ```
+   *(O `docker compose up --build` para ver la salida de logs en tiempo real).*
+
+2. **Aplicar migraciones y poblar datos iniciales (solo la primera vez):**
+   ```bash
+   # Aplicar migraciones en PostgreSQL
+   docker compose exec backend python manage.py migrate
+
+   # Cargar catálogo de datos iniciales
+   docker compose exec backend python manage.py seed_usuarios      # CU1-CU4: roles, permisos y usuarios base
+   docker compose exec backend python manage.py seed_productos     # CU5: categorías y productos base
+   docker compose exec backend python manage.py seed_proveedores   # CU6: catálogo maestro de proveedores
    ```
 
-2. **Instalar dependencias:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+3. **URLs de acceso:**
+   - **Frontend (Web):** `http://localhost:5173/`
+   - **Backend API:** `http://localhost:8000/api/`
+   - **Bandeja Mailpit:** `http://localhost:8025/`
 
-3. **Configurar variables de entorno:**
-   - Crear archivo `.env` en la carpeta `backend/` a partir de `.env.example` con los datos de conexión a PostgreSQL:
-     ```env
-     SECRET_KEY=tu_secret_key_aqui
-     DEBUG=True
-     DB_NAME=panaderia_santiago
-     DB_USER=postgres
-     DB_PASSWORD=tu_password
-     DB_HOST=localhost
-     DB_PORT=5432
-     ```
-
-4. **Ejecutar migraciones y servidor de desarrollo:**
+4. **Detener contenedores:**
    ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   python manage.py runserver
+   docker compose down
    ```
-   El backend quedará disponible en `http://localhost:8000/api/`.
+   *(Los datos persisten en el volumen `postgres_data`).*
 
 ---
 
-### ⚛️ Frontend (React + Vite + TypeScript)
+### 💻 Opción 2: Entorno Local Directo (Alternativa sin Docker — 3 terminales)
 
-1. **Instalar paquetes:**
-   ```bash
-   cd frontend
-   npm install
-   ```
+Si se desea ejecutar directamente sobre el sistema operativo:
 
-2. **Iniciar servidor de desarrollo:**
-   ```bash
-   npm run dev
-   ```
-   La aplicación web estará disponible en `http://localhost:5173/`.
+#### 1. Servidor de Correo (Mailpit)
+En una terminal:
+```bash
+mailpit.exe --smtp 0.0.0.0:1025 --listen 0.0.0.0:8025
+```
+
+#### 2. Backend (Django & DRF)
+En una segunda terminal:
+```bash
+cd backend
+python -m venv venv
+# En Windows PowerShell:
+.\venv\Scripts\Activate.ps1
+
+pip install -r requirements.txt
+copy .env.example .env
+python manage.py migrate
+python manage.py seed_usuarios
+python manage.py seed_productos
+python manage.py seed_proveedores
+python manage.py runserver
+```
+Disponible en `http://localhost:8000/api/`.
+
+#### 3. Frontend (React + Vite + TypeScript)
+En una tercera terminal:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Disponible en `http://localhost:5173/`.
 
 ---
 

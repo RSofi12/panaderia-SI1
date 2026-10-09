@@ -19,6 +19,7 @@ Para adoptar un rol específico o consultar sus directrices:
 - [PUDS & UML](.agents/agents/puds.md) — Casos de uso, diagramas de secuencia, ciclos.
 - [Revisión de Código](.agents/agents/code-review.md) — Clean code, estándares de calidad, refactorización.
 - [Memoria & Docs](.agents/agents/docs-memory.md) — Gestión de `docs/ai/` y continuidad del proyecto.
+- [DevOps & Cloud](.agents/agents/devops.md) — Docker, Docker Compose, infraestructura y despliegue en la nube.
 - [Orquestador](.agents/agents/orchestrator.md) — Coordinación entre especialidades.
 
 ---
@@ -52,7 +53,8 @@ Asume siempre que:
 - **Frontend:** React / TypeScript / Vite / Tailwind CSS
 - **Base de Datos:** PostgreSQL 14+ (Normalizada, llaves foráneas, triggers de auditoría e integridad)
 - **Autenticación y Seguridad:** JWT (JSON Web Tokens) / RBAC (Role-Based Access Control)
-- **Entorno Actual:** Ejecución local con entorno virtual (`venv` en backend y `npm` en frontend). *Nota: La dockerización se implementará en etapas posteriores tras el Ciclo 1.*
+- **Entorno:** Entorno dual. **Docker Compose oficial** como opción recomendada (`docker-compose.yml` con `db`, `mailpit`, `backend` y `frontend` en 1 sola terminal), manteniendo compatibilidad total con ejecución local directa (`venv` en backend y `npm` en frontend).
+- **Contenedores y Cloud:** Dockerfile para backend y frontend listos para despliegue en la nube (Railway, Render, Google Cloud Run, Vercel).
 
 ### Organización Modular del Backend (5 Paquetes Django):
 Ubicación: `backend/apps/` (según [`backend/apps/PACKAGE_CU_MAP.md`](file:///c:/Users/PERSONAL/panaderia-SI1/backend/apps/PACKAGE_CU_MAP.md)):

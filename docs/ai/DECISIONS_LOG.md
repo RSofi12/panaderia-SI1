@@ -427,3 +427,22 @@
 - **Motivo:** Evitar fragmentar el menú lateral con ventanas redundantes para el mismo dominio de seguridad, permitir deep linking directo a roles, y garantizar accesibilidad WCAG 2.2 AA sin romper *Fast Refresh* de Vite.
 - **Impacto:** Experiencia de usuario coherente y fluida; verificación de tipos y bundling con `tsc -b && vite build` completada con 0 errores y 0 warnings.
 
+---
+
+# 📅 2026-10-09 — Dockerización del Entorno y Compatibilidad de Dependencias
+
+### 35. Compatibilidad de `psycopg2-binary` con Python 3.14 en Windows
+- **Decisión:** Modificar la restricción en `backend/requirements.txt` de `psycopg2-binary==2.9.9` a `psycopg2-binary>=2.9.9`.
+- **Motivo:** La versión 2.9.9 carece de ruedas precompiladas (`.whl`) para Python 3.14 en Windows, lo que provocaba un fallo de compilación exigiendo *Microsoft Visual C++ 14.0 Build Tools*. Versiones recientes (>=2.9.10 / 2.9.13) incluyen binarios oficiales precompilados.
+- **Impacto:** El backend se instala limpiamente sin exigir herramientas de compilación C++ en la máquina anfitriona y mantiene retrocompatibilidad total con Python 3.12+.
+
+### 36. Dockerización Completa con Docker Compose (Backend, Frontend, DB y Mailpit)
+- **Decisión:** Implementar orquestación mediante `docker-compose.yml`, `backend/Dockerfile` (Python 3.12-slim) y `frontend/Dockerfile` (Node 20-alpine), unificando los 4 servicios en una sola red virtual interna y volúmenes de persistencia.
+- **Motivo:** Reducir la fricción operativa de tener que abrir y coordinar 3 a 4 terminales locales para levantar el sistema (Mailpit, Django, Vite y PostgreSQL local), eliminando inconsistencias entre sistemas operativos de los miembros del equipo y preparando el proyecto para despliegue en la nube (Railway, Render, Google Cloud Run o Vercel).
+- **Impacto:** Un único comando (`docker compose up`) levanta todo el ecosistema con recarga en caliente (hot reload) tanto en Python como en Vite.
+
+### 37. Hot Module Replacement (HMR) de Vite con Polling en Docker
+- **Decisión:** Configurar `server: { host: '0.0.0.0', port: 5173, watch: { usePolling: true } }` en `frontend/vite.config.ts`.
+- **Motivo:** Las notificaciones del sistema de archivos entre Windows (NTFS) y el subsistema de contenedores Linux (WSL2/Docker) a menudo no propagan eventos de *inotify*, lo que impediría la actualización automática en el navegador al modificar código en VS Code.
+- **Impacto:** Los cambios en archivos `.tsx`, `.ts` y `.css` se reflejan instantáneamente en el navegador sin necesidad de reiniciar el contenedor ni recargar manualmente la página.
+

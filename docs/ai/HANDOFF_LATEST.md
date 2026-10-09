@@ -1,9 +1,9 @@
 # Resumen de Entrega y Continuidad (HANDOFF LATEST)
 
 ## 📌 Proyecto: Sistema de Información Web - Panadería Santiago (SI-1)
-- **Fecha:** 2026-09-28
-- **Estado del Ciclo:** Ciclo 1 - CU1, CU2, CU3 y CU4 (backend + frontend) terminados al 100%
-- **Entorno:** Local directo (Python Virtualenv + Vite/React + PostgreSQL)
+- **Fecha:** 2026-10-09
+- **Estado del Ciclo:** Ciclo 1 consolidado (CU1–CU6, CU26) + **Entorno Dockerizado Operativo**
+- **Entorno:** Docker Compose (Recomendado: 1 comando para db, mailpit, backend y frontend) o Local directo
 
 ---
 
@@ -88,8 +88,24 @@ Decisiones con su motivo: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panader
 
 ---
 
-## ⚙️ 5. Comandos de verificación local
+## ⚙️ 5. Comandos de verificación y ejecución
 
+### Opción 1: Docker Compose (Recomendado — 1 sola terminal)
+```powershell
+# Iniciar los 4 servicios (db, mailpit, backend, frontend)
+docker compose up -d
+
+# Migrar y sembrar datos iniciales en la base de datos de Docker
+docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py seed_usuarios
+docker compose exec backend python manage.py seed_productos
+docker compose exec backend python manage.py seed_proveedores
+
+# Ver estado de los contenedores
+docker compose ps
+```
+
+### Opción 2: Local directo
 ```powershell
 # Backend
 cd backend

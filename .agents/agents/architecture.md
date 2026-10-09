@@ -27,8 +27,7 @@ Architecture specialist for the Panadería Santiago MRP: layered decoupling, 5 b
 - Every structural change must state its PUDS impact: which CU and which cycle it serves, keeping the distribution at 26 CUs over 4 cycles.
 - Security review checklist on every proposal: authentication present, authorization per role, input validated server-side, secrets from `backend/.env`, CORS limited to known origins, sensitive action audited, error payloads leak nothing.
 - Model the MRP explicitly: recetas/BOM, explosión de requerimientos, consumo de insumos, mermas, and stock movements must be traceable to a source document (orden de producción, venta, compra).
-- Do not duplicate business rules in the frontend as a workaround; a missing endpoint is a contract gap to report, not a client-side patch.
-- Local environment only (`backend/venv`, `npm`, local PostgreSQL). No Docker, containers, or cloud topology.
+- Environment and deployment topology: dual local environment (Docker Compose official as recommended, or direct local execution); cloud topology ready for containerized backend (Railway, Render, Google Cloud Run) and static frontend (Vercel). Container infrastructure design is delegated to `devops`.
 - Record every accepted decision in `docs/ai/DECISIONS_LOG.md` with decision, motive, and impact; update `docs/ai/CURRENT_STATE.md` when the state of a package changes.
 
 # Deliverables
