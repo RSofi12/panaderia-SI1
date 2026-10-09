@@ -33,7 +33,7 @@
    Toda acción relevante debe respetar transacciones atómicas de base de datos (`transaction.atomic()`) para evitar inconsistencias de inventario o dinero.
 
 5. **NO HARDCODEES Y USA VARIABLES DE ENTORNO:**
-   Credenciales, puertos, URLs de API y claves secretas se gestionan mediante `.env`. La ejecución actual es en entorno local directo (`venv` y `npm`); la contenedorización con Docker se implementará tras el Ciclo 1.
+   Credenciales, puertos, URLs de API y claves secretas se gestionan mediante `.env` y variables de entorno del sistema. El proyecto cuenta con **entorno dockerizado oficial** (`docker-compose.yml`, `backend/Dockerfile` y `frontend/Dockerfile`) que orquesta los 4 servicios (`db`, `mailpit`, `backend` y `frontend`) con un solo comando (`docker compose up -d`), manteniendo además compatibilidad completa con ejecución local directa (`venv` y `npm`).
 
 6. **MEMORIA VIVA DEL PROYECTO — OBLIGATORIA Y AUTOMÁTICA (`docs/ai/`):**
    El registro de sesión **no es opcional ni queda a criterio del autor**: se escribe en el momento en que ocurre el cambio, no "al final si sobra tiempo". Cada vez que se cree, modifique o elimine un archivo del proyecto —sin importar si es backend, frontend, base de datos, configuración o documentación— se debe:

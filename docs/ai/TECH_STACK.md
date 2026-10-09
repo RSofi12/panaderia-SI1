@@ -80,7 +80,18 @@ El frontend se organiza **por ventanas / flujo visual del usuario** en `frontend
 
 ## 🚀 5. Entorno y Despliegue
 
-- **Fase Actual (Ciclo 1):** Ejecución en entorno local directo:
+- **Entorno Unificado (Docker Compose - Recomendado):**
+  - Orquestación con `docker-compose.yml` en la raíz.
+  - **Base de datos:** `postgres:16-alpine` con volumen persistente `postgres_data`.
+  - **Servidor SMTP / Captura de correo:** `axllent/mailpit:latest` (puertos 1025 y 8025).
+  - **Backend:** `backend/Dockerfile` basado en `python:3.12-slim` con recarga automática por volumen.
+  - **Frontend:** `frontend/Dockerfile` basado en `node:20-alpine` con Vite dev server y HMR vía polling.
+  - Comando único de arranque: `docker compose up -d`
+- **Entorno Local Directo (Alternativo):**
   - Backend: `python -m venv venv` $\rightarrow$ `python manage.py runserver`
   - Frontend: `npm install` $\rightarrow$ `npm run dev`
-- **Fase Futura (Post Ciclo 1):** Dockerización con `Dockerfile` y `docker-compose.yml` para empaquetado y despliegue a servidor en nube.
+  - Mailpit: binario independiente en puerto 1025/8025.
+- **Preparación para la Nube (Producción):**
+  - **Backend:** Compatible directamente con Railway, Render y Google Cloud Run mediante `backend/Dockerfile`.
+  - **Frontend:** Compatible con Vercel (compilación estática vía `npm run build`), Render o Railway.
+  - **Base de datos:** PostgreSQL gestionado en la nube (Render Postgres, Railway Postgres, Neon, Supabase o Cloud SQL).
