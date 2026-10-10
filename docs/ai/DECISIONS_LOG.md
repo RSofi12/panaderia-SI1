@@ -446,3 +446,21 @@
 - **Motivo:** Las notificaciones del sistema de archivos entre Windows (NTFS) y el subsistema de contenedores Linux (WSL2/Docker) a menudo no propagan eventos de *inotify*, lo que impediría la actualización automática en el navegador al modificar código en VS Code.
 - **Impacto:** Los cambios en archivos `.tsx`, `.ts` y `.css` se reflejan instantáneamente en el navegador sin necesidad de reiniciar el contenedor ni recargar manualmente la página.
 
+---
+
+# 📅 2026-10-10 — Rediseño Institucional de Autenticación y Frontend de Producción
+
+### 38. Tipografía Sugo, Layout Split-Screen y Tarjeta Centrada en Flujos de Autenticación
+- **Decisión:**
+  1. Integrar localmente la tipografía corporativa `Sugo Regular` (`sugo.regular.otf`) en `src/assets/fonts/` y registrarla mediante `@font-face` en `src/index.css` (`.font-sugo`), asegurando carga inmediata offline y consistencia visual con la identidad de marca de Panadería Santiago.
+  2. Implementar layout *Split-Screen* (50% fotografía editorial `photo-bakery.jpg` con gradiente oscuro y 50% formulario) en `LoginPage` y `ForgotPasswordPage`, con adaptación responsive que oculta la foto en pantallas móviles (`hidden lg:flex`) y contención vertical para evitar barras de desplazamiento en resolución estándar (100% viewport fit).
+  3. Reemplazar emojis de demostración por iconos vectoriales Lucide temáticos (`ShieldCheck`, `Briefcase`, `ShoppingBag`, `ChefHat`) y estandarizar el logo circular oficial en formato SVG sin ornamentos externos.
+  4. Preservar intencionalmente el formato de tarjeta centrada en `ResetPasswordPage` (sin foto de panadería), focalizando la atención del usuario en los requisitos de complejidad de su nueva contraseña (`PasswordRequirements`) y el borrado seguro del token de la URL mediante `replaceState`.
+- **Motivo:** Alinear el portal con el prototipo visual de Figma aprobado, transmitir seriedad institucional y mejorar la ergonomía y accesibilidad para todos los perfiles de usuario.
+- **Impacto:** Experiencia visual de alta gama, libre de desbordamientos visuales, con compilación y tipos 100% en verde.
+
+### 39. Arquitectura Frontend de Producción Diaria (CU10/CU11) con Fallback Mock
+- **Decisión:** Desarrollar los contratos tipados de producción (`LoteProduccion`, `DetalleProduccionInsumo`, etc.) y conectar `produccionService.ts` con una arquitectura híbrida de fallback automático a datos simulados realistas ante respuestas 404 o indisponibilidad del servidor.
+- **Motivo:** Desacoplar el avance de la interfaz de usuario respecto al desarrollo de los modelos ORM en el backend, permitiendo validar flujos de interacción, cálculo de balance de materia prima y tablas de lotes de forma inmediata.
+- **Impacto:** Pestaña "Producción diaria" lista y operativa en `ProductosPage.tsx?tab=produccion` para pruebas de usuario y revisión de diseño antes del backend definitivo.
+
