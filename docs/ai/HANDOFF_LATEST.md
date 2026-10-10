@@ -1,8 +1,8 @@
 # Resumen de Entrega y Continuidad (HANDOFF LATEST)
 
 ## 📌 Proyecto: Sistema de Información Web - Panadería Santiago (SI-1)
-- **Fecha:** 2026-10-09
-- **Estado del Ciclo:** Ciclo 1 consolidado (CU1–CU6, CU26) + **Entorno Dockerizado Operativo**
+- **Fecha:** 2026-10-10
+- **Estado del Ciclo:** Ciclo 1 consolidado (CU1–CU6, CU26) + **Rediseño Corporativo Auth (CU1, CU2)** + **Frontend Producción Diaria (CU10, CU11)**
 - **Entorno:** Docker Compose (Recomendado: 1 comando para db, mailpit, backend y frontend) o Local directo
 
 ---
@@ -10,57 +10,45 @@
 ## 📊 1. Estado real por caso de uso
 
 | CU | Nombre | Estado | Dónde está |
-|---|---|---|---|
-| CU1 | Iniciar sesión | 🟢 Completo end-to-end | `auth_app/` + `LoginPage.tsx` |
-| CU2 | Recuperar contraseña | 🟢 Completo end-to-end | `recuperacion/` + `/recuperar-password` |
-| CU3 | Gestionar usuarios | 🟢 **Completo end-to-end** | `users/` + `src/apps/dashboard/usuarios/` |
-| CU4 | Asignar roles y permisos | 🟢 **Completo end-to-end** | `roles/` + `permisos/` + `src/apps/dashboard/usuarios/roles/` |
-| CU26 | Gestionar bitácora | 🟡 Registros ya se escriben, falta la pantalla | `bitacora/` |
-| CU5 | Gestionar productos | ⚪ Pendiente | `productos_inventario/` vacío |
-| CU6 | Gestionar proveedores | ⚪ Pendiente | `compras/` vacío |
+|---|---|:---:|---|
+| CU1 | Iniciar sesión | 🟢 Completo end-to-end | `auth_app/` + `LoginPage.tsx` (Split-Screen, Sugo font, iconos Lucide) |
+| CU2 | Recuperar contraseña | 🟢 Completo end-to-end | `recuperacion/` + `ForgotPasswordPage.tsx` + `ResetPasswordPage.tsx` |
+| CU3 | Gestionar usuarios | 🟢 Completo end-to-end | `users/` + `src/apps/dashboard/usuarios/` |
+| CU4 | Asignar roles y permisos | 🟢 Completo end-to-end | `roles/` + `permisos/` + `src/apps/dashboard/usuarios/roles/` |
+| CU5 | Gestionar productos (catálogo) | 🟢 Completo end-to-end | `productos_inventario/` + `src/apps/dashboard/productos/` |
+| CU6 | Gestionar proveedores | 🟢 Completo end-to-end | `compras/` + `src/apps/dashboard/proveedores/` |
+| CU26 | Gestionar bitácora | 🟢 Completo end-to-end | `bitacora/` + `src/apps/dashboard/usuarios/bitacora/` |
+| CU10 | Registrar producción diaria | 🟡 Frontend listo / Backend pend. | `src/apps/dashboard/productos/produccion/RegistrarProduccionModal.tsx` |
+| CU11 | Consultar historial de producción | 🟡 Frontend listo / Backend pend. | `src/apps/dashboard/productos/produccion/TablaLoteProduccion.tsx` |
+| CU7 | Registrar compra de materia prima | ⚪ Pendiente | Planificado en Ciclo 2 (`apps.compras`) |
 
-Detalle por caso de uso: [`CURRENT_STATE.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/CURRENT_STATE.md)
-Decisiones con su motivo: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/DECISIONS_LOG.md)
+Detalle completo por caso de uso: [`CURRENT_STATE.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/CURRENT_STATE.md)  
+Registro de decisiones: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/DECISIONS_LOG.md)  
+Última sesión: [`2026-10-10-rediseno-auth-y-frontend-produccion-cu10-cu11.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/sessions/2026-10-10-rediseno-auth-y-frontend-produccion-cu10-cu11.md)
 
 ---
 
-## 📦 2. Lo entregado en esta sesión (CU4: Backend + Frontend)
+## 📦 2. Lo entregado en esta sesión
 
-### Backend implementado (CU4)
-- **Modelos y DDL:** `permisos.models.Permiso` con campo `modulo` enum (`usuarios_seguridad`, `productos_inventario`, `compras`, `comercializacion`, `reportes`) y unicidad case-insensitive. `roles.models.Rol` y `RolPermiso` con métodos de dominio UML `asignar_permiso()`, `quitar_permiso()`. DDL alineado con clave primaria subrogada `id` y restricción única `UNIQUE(id_rol, id_permiso)`.
-- **Servicios y Guardas:** `roles/services/matriz.py` bajo `@transaction.atomic`: inmutabilidad de roles base (`Administrador`, `Propietario`, `Personal de Ventas`, `Personal de Producción`), prohibición de DELETE (HTTP 405), guardas anti-autobloqueo (el Administrador nunca puede perder `asignar_permisos`), y auditoría con diff en Bitácora (`ALTA_ROL`, `EDICION_ROL`, `ASIGNAR_PERMISO_ROL`, `REVOCAR_PERMISO_ROL`, `ACTUALIZACION_MATRIZ_PERMISOS`).
-- **ViewSets y URLs:** `GET/POST /api/roles/`, `GET/PATCH /api/roles/<id>/`, `PUT /api/roles/<id>/permisos/`, `POST /api/roles/<id>/permisos/asignar/`, `POST /api/roles/<id>/permisos/quitar/`, `GET /api/permisos/` y `/api/permisos/agrupados/`. Seed actualizado con 12 permisos en los 5 módulos.
-- **Tests Backend:** 18 pruebas específicas de roles/permisos + 52 pruebas de regresión de usuarios = **70 pruebas en verde (100% OK)**.
+### Rediseño Institucional de Autenticación (CU1, CU2)
+- **Tipografía corporativa:** Instalación de `sugo.regular.otf` en `src/assets/fonts/` y registro de clase `.font-sugo`.
+- **`LoginPage.tsx`:** Layout Split-Screen con fotografía editorial (`photo-bakery.jpg`) oculta automáticamente en móviles (`hidden lg:flex`), logo circular SVG limpio, reemplazo de emojis por iconos Lucide acordes (`ShieldCheck`, `Briefcase`, `ShoppingBag`, `ChefHat`), checkbox "Recordarme" en frontend y ajuste vertical para eliminar barras de scroll en resolución estándar.
+- **`ForgotPasswordPage.tsx`:** Diseño Split-Screen emparejado con Login, tipografía Sugo y feedback anti-enumeración.
+- **`ResetPasswordPage.tsx`:** Diseño de tarjeta centrada (sin foto lateral de panadería), título en Sugo, inputs de contraseña con alternancia de visibilidad y checklist reactivo de complejidad.
+- **`AuthCard.tsx`:** Contenedor común actualizado con logo SVG y cabecera en Sugo.
 
-### Frontend implementado (CU4)
-- **Navegación Unificada:** Pestañas accesibles en `UsuariosPage.tsx` con sincronización bidireccional mediante `useSearchParams` (`/dashboard/usuarios?tab=roles`). Guardias de ruta `ProtectedRoute` y `AppRoutes.tsx` con semántica *any-of* para `['gestionar_usuarios', 'asignar_permisos']`. `navigation.ts` actualizado.
-- **Orquestador (`RolesTab.tsx`):** Barra ejecutiva de KPIs (roles configurados, personal cubierto, roles del sistema, catálogo de 12 permisos), buscador reactivo de roles y filtros segmentados (*Todos*, *Sistema*, *Personalizados*). Skeletons y empty states amigables.
-- **Tarjetas de Rol (`TarjetaRol.tsx`):** Identidad visual adaptada al personal de panadería (Administrador, Cajero, Panadero, Pastelero), badges de protección, barra de cobertura de permisos con `role="progressbar"` y acciones de configuración y edición.
-- **Matriz de Permisos (`MatrizPermisosModal.tsx`):** Modal sin scrollbars anidadas, buscador de permisos interactivo, botones por lote por módulo ("Marcar/Desmarcar módulo"), contador dinámico de cambios pendientes y guarda visual con bloqueo de checkbox y aviso de auto-bloqueo para el Administrador.
-- **Modal de Rol (`ModalRol.tsx`):** Formulario con validación reactiva, contadores de caracteres (50/255) y bloqueo asistido del nombre en roles del sistema.
-- **Estilos (`estilosRoles.ts`):** Tokenización Tailwind v4 desacoplada compatible con Fast Refresh de Vite.
+### Frontend de Producción Diaria (CU10, CU11)
+- **Tipos y Servicios:** `src/types/produccion.ts` y `src/services/produccionService.ts` con arquitectura híbrida de fallback mock automático.
+- **Componentes:**
+  - `BalanceInsumosCard.tsx` (consumo de insumos en tiempo real y alertas de stock).
+  - `TablaLoteProduccion.tsx` (historial de lotes con filtros y paginación).
+  - `ModalDetalleProduccion.tsx` (auditoría de materias primas consumidas vs unidades producidas).
+  - `RegistrarProduccionModal.tsx` (alta de lotes con cálculo de receta dinámico).
+  - `ProduccionTab.tsx` (vista orquestadora en `/dashboard/productos?tab=produccion`).
+- **Pestañas integradas:** Doble pestaña en `ProductosPage.tsx` ("Catálogo de productos" y "Producción diaria").
 
-### Archivos creados en el Frontend (CU4)
-- `frontend/src/types/roles.ts` — Contratos de TypeScript para roles, permisos, grupos de módulos y payloads.
-- `frontend/src/services/rolesService.ts` — Cliente Axios tipado para endpoints de roles y catálogo de permisos agrupados.
-- `frontend/src/apps/dashboard/usuarios/roles/estilosRoles.ts` — Clases de diseño y tokens visuales.
-- `frontend/src/apps/dashboard/usuarios/roles/TarjetaRol.tsx` — Card visual de cada rol con métricas y barra de progreso.
-- `frontend/src/apps/dashboard/usuarios/roles/MatrizPermisosModal.tsx` — Modal editor de permisos con buscador y toggles por módulo.
-- `frontend/src/apps/dashboard/usuarios/roles/ModalRol.tsx` — Modal accesible de alta y edición de rol.
-- `frontend/src/apps/dashboard/usuarios/roles/RolesTab.tsx` — Vista orquestadora con KPIs y filtros.
-- `frontend/src/apps/dashboard/usuarios/roles/index.ts` — Barrel export.
-
-### Archivos modificados
-- `backend/apps/usuarios_seguridad/permisos/` y `roles/` (modelos, migraciones, vistas, serializers, servicios).
-- `backend/apps/usuarios_seguridad/bitacora/models.py` (acciones de auditoría).
-- `docs/informes/Database_Panaderia_Santiago.sql` (DDL de BD sincronizado).
-- `seed_usuarios.py` (12 permisos y clasificación modular).
-- `frontend/src/apps/dashboard/components/Modal.tsx` (soporte de ancho `xl` para matriz).
-- `frontend/src/apps/dashboard/usuarios/UsuariosPage.tsx` (pestañas con sincronización de URL).
-- `frontend/src/apps/dashboard/navigation.ts` (permiso `asignar_permisos`).
-- `frontend/src/routes/ProtectedRoute.tsx` (soporte `requiredPermission` como array).
-- `frontend/src/routes/AppRoutes.tsx` (permiso compuesto para `/dashboard/usuarios`).
-- `frontend/src/contexts/AuthProvider.tsx` (permisos evaluados dinámicamente desde el token).
+### Mantenimiento Backend / Git
+- Corrección de conflicto de merge en `backend/requirements.txt` preservando `psycopg2-binary>=2.9.9`.
 
 ---
 
@@ -68,23 +56,19 @@ Decisiones con su motivo: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panader
 
 | Verificación | Comando / Entorno | Resultado |
 |---|---|---|
-| Build & Types Frontend | `npm run build` (`tsc -b && vite build`) | ✅ **Exitoso en 26.1s (1983 módulos, 0 errores)** |
-| Backend Django check | `python manage.py check` | ✅ **0 problemas** |
-| Migraciones Backend | `python manage.py makemigrations --check --dry-run` | ✅ **0 migraciones pendientes** |
-| Backend Tests | `python manage.py test apps.usuarios_seguridad.permisos apps.usuarios_seguridad.roles apps.usuarios_seguridad.users` | ✅ **70 pruebas en verde (100% OK en 14.0s)** |
+| Build & Types Frontend | `npm run build` (`tsc -b && vite build`) | ✅ **Exitoso (2004 módulos, 0 errores)** |
+| Git Status | `git status -s` | ✅ **Limpio y consistente** |
 
 ---
 
 ## 🔜 4. Punto exacto de reanudación
 
-**Siguiente paso: CU5 (Gestionar productos - catálogo base) o CU6 (Gestionar proveedores).**
-
-1. Para CU5 (Productos e Inventario):
-   - Crear modelos `Categoria` y `Producto` en `backend/apps/productos_inventario/`.
-   - Implementar endpoints REST protegidos por permisos (`gestionar_productos`).
-   - Crear pantalla en `src/apps/dashboard/productos/` y activar `implemented: true` en `navigation.ts`.
-2. Para CU26 (Bitácora):
-   - Crear la tercera pestaña "Bitácora de auditoría" en `src/apps/dashboard/usuarios/` para consultar eventos auditados.
+**Siguiente paso recomendado:**
+1. **Backend de Producción (Ciclo 2 - CU10/CU11):**
+   - Crear modelos `Receta`, `DetalleReceta`, `Produccion` (Lote), `DetalleProduccionInsumos` y `DetalleProduccionProductos` en `backend/apps/productos_inventario/`.
+   - Implementar endpoints transaccionales con descuento automático de insumos e incremento de inventario terminado.
+2. **O avanzar con CU7 (Registrar compra de materia prima):**
+   - En `backend/apps/compras/` para alimentar el stock de insumos que la producción consume.
 
 ---
 
@@ -107,12 +91,12 @@ docker compose ps
 
 ### Opción 2: Local directo
 ```powershell
-# Backend
-cd backend
-.\venv\Scripts\python.exe manage.py check
-.\venv\Scripts\python.exe manage.py test apps.usuarios_seguridad.permisos apps.usuarios_seguridad.roles apps.usuarios_seguridad.users
-
 # Frontend
-cd ..\frontend
+cd frontend
 npm run build
+npm run dev
+
+# Backend
+cd ..\backend
+.\venv\Scripts\python.exe manage.py check
 ```
