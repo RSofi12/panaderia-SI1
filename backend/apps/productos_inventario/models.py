@@ -175,3 +175,46 @@ class HistorialPrecioMateriaPrima(models.Model):
 
     def __str__(self):
         return f'{self.id_materia_prima.nombre}: Bs {self.precio} ({self.fecha_inicio:%Y-%m-%d})'
+
+
+class TipoMovimientoMateriaPrima(models.TextChoices):
+    ENTRADA = 'entrada', 'Entrada'
+    SALIDA = 'salida', 'Salida'
+
+
+class MovimientoMateriaPrima(models.Model):
+    """Trazabilidad de entradas/salidas de insumos (tabla movimiento_materia_prima)."""
+    id_movimiento = models.BigAutoField(primary_key=True)
+    id_inventario = models.ForeignKey(
+        InventarioMateriaPrima,
+        on_delete=models.PROTECT,
+        db_column='id_inventario',
+        related_name='movimientos',
+        verbose_name='Inventario',
+    )
+    id_compra = models.ForeignKey(
+        'compras.Compra',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        db_column='id_compra',
+        related_name='movimientos_materia',
+        verbose_name='Compra',
+    )
+    fecha_hora = models.DateTimeField(default=timezone.now, verbose_name='Fecha y hora')
+    tipo = models.CharField(
+        max_length=10,
+        choices=TipoMovimientoMateriaPrima.choices,
+        verbose_name='Tipo de movimiento',
+    )
+    cantidad = models.DecimalField(max_digits=10, decimal_places=3, verbose_name='Cantidad')
+
+    class Meta:
+        db_table = 'movimiento_materia_prima'
+        verbose_name = 'Movimiento de materia prima'
+        verbose_name_plural = 'Movimientos de materia prima'
+        ordering = ['-fecha_hora', '-id_movimiento']
+
+    def __str__(self):
+        inv = self.id_inventario
+        return f'{self.tipo} {self.cantidad} — {inv.id_materia_prima.nombre}'

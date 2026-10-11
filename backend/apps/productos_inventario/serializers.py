@@ -86,3 +86,4 @@ class MateriaPrimaSerializer(serializers.ModelSerializer):
         return ultimo.precio if ultimo else None
 
    
+   
