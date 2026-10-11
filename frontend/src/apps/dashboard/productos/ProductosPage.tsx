@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
   CheckCircle2,
@@ -7,6 +8,7 @@ import {
   Plus,
   Power,
   Search,
+  Wheat,
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import productoService from '../../../services/productoService';
@@ -14,8 +16,10 @@ import type { CategoriaProducto, Producto, ProductoFiltros } from '../../../type
 import ProductoFormModal from './components/ProductoFormModal';
 import ConfirmarEstadoDialog from './components/ConfirmarEstadoDialog';
 import { formatearBs } from './precios';
+import ProduccionTab from './produccion/ProduccionTab';
 
 type EstadoFiltro = '' | 'true' | 'false';
+type PestanaProducto = 'catalogo' | 'produccion';
 
 type ModalAbierto =
   | { tipo: 'formulario'; producto: Producto | null }
@@ -31,6 +35,27 @@ interface Resultado {
 export const ProductosPage: React.FC = () => {
   const { hasPermission } = useAuth();
   const puedeGestionar = hasPermission('gestionar_productos');
+  const puedeRegistrarProduccion = hasPermission('registrar_produccion');
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') as PestanaProducto | null;
+
+  // Deriva la pestaña activa: si el rol es de producción (no tiene gestión de catálogo), abre producción directamente
+  const pestanaActiva: PestanaProducto =
+    tabParam === 'produccion' || (!puedeGestionar && puedeRegistrarProduccion)
+      ? 'produccion'
+      : 'catalogo';
+
+  const cambiarPestana = (nueva: PestanaProducto) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('tab', nueva);
+        return next;
+      },
+      { replace: true }
+    );
+  };
 
   const [categorias, setCategorias] = useState<CategoriaProducto[]>([]);
   const [busqueda, setBusqueda] = useState('');
@@ -127,41 +152,91 @@ export const ProductosPage: React.FC = () => {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
-            Productos e Inventario · CU5
-          </p>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">Catálogo de productos</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Panes que elabora la panadería, con su costo, margen y precio de venta.
-          </p>
+      {/* Encabezado General del Módulo */}
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
+          Productos e Inventario · {pestanaActiva === 'catalogo' ? 'CU5' : 'CU10 & CU11'}
+        </p>
+        <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+              {pestanaActiva === 'catalogo' ? 'Catálogo de productos' : 'Producción diaria'}
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {pestanaActiva === 'catalogo'
+                ? 'Panes que elabora la panadería, con su costo, margen y precio de venta.'
+                : 'Registro de horneado diario, cálculo MRP de recetas y consumo automático de insumos.'}
+            </p>
+          </div>
+
+          {pestanaActiva === 'catalogo' && puedeGestionar && (
+            <button
+              type="button"
+              onClick={() => setModal({ tipo: 'formulario', producto: null })}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-amber-600/20 hover:from-amber-700 hover:to-amber-800 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              Nuevo producto
+            </button>
+          )}
         </div>
-        {puedeGestionar && (
+
+        {/* Selector de pestañas */}
+        <div
+          role="tablist"
+          aria-label="Secciones de productos e inventario"
+          className="flex border-b border-slate-200 mt-5 gap-6"
+        >
           <button
             type="button"
-            onClick={() => setModal({ tipo: 'formulario', producto: null })}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-amber-600/20 hover:from-amber-700 hover:to-amber-800 cursor-pointer"
+            role="tab"
+            aria-selected={pestanaActiva === 'catalogo'}
+            onClick={() => cambiarPestana('catalogo')}
+            className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+              pestanaActiva === 'catalogo'
+                ? 'border-amber-600 text-amber-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
           >
-            <Plus className="w-4 h-4" />
-            Nuevo producto
+            <Package className="h-4 w-4" />
+            <span>Catálogo de panes</span>
           </button>
-        )}
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected={pestanaActiva === 'produccion'}
+            onClick={() => cambiarPestana('produccion')}
+            className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+              pestanaActiva === 'produccion'
+                ? 'border-amber-600 text-amber-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            <Wheat className="h-4 w-4" />
+            <span>Producción diaria</span>
+          </button>
+        </div>
       </div>
 
-      {aviso && (
-        <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          {aviso}
-        </div>
-      )}
+      {/* Contenido según pestaña activa */}
+      {pestanaActiva === 'produccion' ? (
+        <ProduccionTab />
+      ) : (
+        <>
+          {aviso && (
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              {aviso}
+            </div>
+          )}
 
-      {!puedeGestionar && (
-        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
-          Tu rol puede consultar el catálogo. Crear o modificar productos requiere el permiso{' '}
-          <code className="rounded bg-slate-100 px-1 py-0.5 text-slate-700">gestionar_productos</code>.
-        </div>
-      )}
+          {!puedeGestionar && (
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+              Tu rol puede consultar el catálogo. Crear o modificar productos requiere el permiso{' '}
+              <code className="rounded bg-slate-100 px-1 py-0.5 text-slate-700">gestionar_productos</code>.
+            </div>
+          )}
 
       <section className="rounded-2xl border border-slate-200 bg-white">
         <div className="flex flex-col gap-3 border-b border-slate-100 p-4 md:flex-row">
@@ -299,6 +374,8 @@ export const ProductosPage: React.FC = () => {
             : `Mostrando ${productos.length} productos · ${activos} activos · ${productos.length - activos} inactivos`}
         </div>
       </section>
+        </>
+      )}
 
       {modal?.tipo === 'formulario' && (
         <ProductoFormModal

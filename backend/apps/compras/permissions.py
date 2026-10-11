@@ -5,6 +5,17 @@ from rest_framework.permissions import SAFE_METHODS, BasePermission
 PERMISOS_LECTURA = {'gestionar_proveedores', 'registrar_compras'}
 
 
+class PuedeRegistrarCompras(BasePermission):
+    """RBAC del CU7: registrar y consultar compras."""
+    message = 'Tu rol no cuenta con el permiso registrar_compras.'
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        return 'registrar_compras' in set(user.get_permisos_nombres())
+
+
 class PuedeGestionarProveedores(BasePermission):
     """
     RBAC del CU6 (actores: Administrador y Propietario).

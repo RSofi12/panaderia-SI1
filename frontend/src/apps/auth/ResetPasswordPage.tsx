@@ -156,33 +156,33 @@ export const ResetPasswordPage: React.FC = () => {
     return (
       <AuthCard
         titulo="Contraseña restablecida"
-        subtitulo="Sistema de Información Web • SI-1"
+        subtitulo="Tu cuenta ya está lista y protegida"
       >
-        <div className="mb-5 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm rounded-xl flex items-start gap-3">
+        <div className="mb-5 p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs sm:text-sm rounded-2xl flex items-start gap-3 shadow-2xs">
           <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600 mt-0.5" />
           <div>
-            <p>{exito.mensaje}</p>
-            <p className="mt-2 text-emerald-700/80 text-[11px] leading-relaxed">
+            <p className="font-semibold text-emerald-950">{exito.mensaje}</p>
+            <p className="mt-1.5 text-emerald-800 text-[11px] leading-relaxed">
               Por seguridad, las sesiones que estaban abiertas en otros
-              dispositivos se cerraron con este cambio.
+              dispositivos se cerraron automáticamente con este cambio.
             </p>
           </div>
         </div>
 
-        <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
+        <div className="mb-5 p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-center">
           <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
-            Tu usuario
+            Usuario verificado
           </p>
-          <p className="text-sm font-mono font-semibold text-slate-800 mt-0.5">
+          <p className="text-sm font-semibold text-slate-800 mt-0.5">
             {exito.nombreUsuario}
           </p>
         </div>
 
         <Link
           to="/login"
-          className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold text-sm rounded-xl shadow-md shadow-amber-600/20 hover:shadow-lg hover:shadow-amber-600/30 transition-all duration-200 flex items-center justify-center gap-2"
+          className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md shadow-amber-600/20 hover:shadow-lg hover:shadow-amber-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
         >
-          <span>Iniciar sesión</span>
+          <span>Iniciar sesión ahora</span>
           <CheckCircle2 className="w-4 h-4" />
         </Link>
       </AuthCard>
@@ -196,32 +196,30 @@ export const ResetPasswordPage: React.FC = () => {
     return (
       <AuthCard
         titulo="Enlace incompleto"
-        subtitulo="Sistema de Información Web • SI-1"
+        subtitulo="No se encontró un código de recuperación válido"
       >
-        <div className="mb-5 p-4 bg-amber-50 border border-amber-200 text-amber-800 text-xs sm:text-sm rounded-xl flex items-start gap-3">
+        <div className="mb-5 p-4 bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm rounded-2xl flex items-start gap-3 shadow-2xs">
           <ShieldAlert className="w-5 h-5 flex-shrink-0 text-amber-600 mt-0.5" />
           <div>
-            <p>Este enlace no trae un código de recuperación.</p>
-            <p className="mt-2 text-amber-700/80 text-[11px] leading-relaxed">
+            <p className="font-semibold text-amber-950">Este enlace no trae un código de recuperación válido.</p>
+            <p className="mt-1.5 text-amber-800 text-[11px] leading-relaxed">
               Suele pasar si se recargó la página después de usar el enlace: el
-              código se borra de la barra de direcciones a propósito, para que no
-              quede guardado en el historial. Pedí uno nuevo y abrilo directo
-              desde el correo.
+              código se borra de la barra de direcciones por seguridad. Pedí uno nuevo y abrilo directo desde el correo.
             </p>
           </div>
         </div>
 
         <Link
           to="/recuperar-password"
-          className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold text-sm rounded-xl shadow-md shadow-amber-600/20 transition-all duration-200 flex items-center justify-center gap-2"
+          className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md shadow-amber-600/20 hover:shadow-lg hover:shadow-amber-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
         >
           <KeyRound className="w-4 h-4" />
-          Pedir un enlace nuevo
+          <span>Pedir un enlace nuevo</span>
         </Link>
 
         <Link
           to="/login"
-          className="mt-3 block text-center text-[11px] text-amber-700 hover:text-amber-800 font-medium transition-colors"
+          className="mt-3.5 block text-center text-xs text-amber-800 hover:text-amber-900 font-medium transition-colors"
         >
           Volver al inicio de sesión
         </Link>
@@ -234,18 +232,17 @@ export const ResetPasswordPage: React.FC = () => {
    * ---------------------------------------------------------------- */
   return (
     <AuthCard
-      titulo="Elegí tu nueva contraseña"
-      subtitulo="Sistema de Información Web • SI-1"
+      titulo="Restablecer contraseña"
+      subtitulo="Elegí tu nueva clave de acceso para continuar"
     >
-      <p className="mb-5 text-xs sm:text-sm text-slate-600 leading-relaxed">
-        Estás a un paso de volver a entrar. La contraseña nueva tiene que cumplir
-        la política de seguridad.
+      <p className="mb-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
+        Estás a un paso de volver a ingresar. La nueva contraseña debe cumplir con la política de seguridad corporativa.
       </p>
 
       {error && (
-        <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm rounded-xl flex items-start gap-2.5">
+        <div className="mb-4 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm rounded-xl flex items-start gap-2.5 animate-in fade-in">
           <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-500 mt-0.5" />
-          <span>{error}</span>
+          <span className="leading-tight">{error}</span>
         </div>
       )}
 
@@ -256,7 +253,7 @@ export const ResetPasswordPage: React.FC = () => {
             htmlFor="nueva_contrasena"
             className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5"
           >
-            Contraseña nueva
+            Nueva contraseña
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -278,14 +275,14 @@ export const ResetPasswordPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setVerNueva(!verNueva)}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
               aria-label={verNueva ? 'Ocultar contraseña' : 'Ver contraseña'}
             >
               {verNueva ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
           {erroresCampos.nueva_contrasena && (
-            <p className="mt-1 text-[11px] text-red-600">
+            <p className="mt-1 text-[11px] text-red-600 font-medium">
               {erroresCampos.nueva_contrasena}
             </p>
           )}
@@ -298,7 +295,7 @@ export const ResetPasswordPage: React.FC = () => {
             htmlFor="confirmar_contrasena"
             className="block text-xs sm:text-sm font-semibold text-slate-700 mb-1.5"
           >
-            Repetir contraseña
+            Confirmar nueva contraseña
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -317,7 +314,7 @@ export const ResetPasswordPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setVerConfirmacion(!verConfirmacion)}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
               aria-label={
                 verConfirmacion ? 'Ocultar confirmación' : 'Ver confirmación'
               }
@@ -330,14 +327,14 @@ export const ResetPasswordPage: React.FC = () => {
             </button>
           </div>
           {erroresCampos.confirmar_contrasena && (
-            <p className="mt-1 text-[11px] text-red-600">
+            <p className="mt-1 text-[11px] text-red-600 font-medium">
               {erroresCampos.confirmar_contrasena}
             </p>
           )}
           {/* Se avisa en caliente, sin esperar al backend. */}
           {confirmacion.length > 0 && confirmacion !== nueva && (
-            <p className="mt-1 text-[11px] text-amber-600">
-              Todavía no coinciden con la contraseña nueva.
+            <p className="mt-1 text-[11px] text-amber-600 font-medium">
+              Las contraseñas todavía no coinciden.
             </p>
           )}
         </div>
@@ -345,7 +342,7 @@ export const ResetPasswordPage: React.FC = () => {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full mt-2 py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold text-sm rounded-xl shadow-md shadow-amber-600/20 hover:shadow-lg hover:shadow-amber-600/30 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+          className="w-full mt-2 py-2.5 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md shadow-amber-600/20 hover:shadow-lg hover:shadow-amber-600/30 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
         >
           {isSubmitting ? (
             <>
@@ -354,11 +351,20 @@ export const ResetPasswordPage: React.FC = () => {
             </>
           ) : (
             <>
-              <span>Restablecer contraseña</span>
+              <span>Guardar nueva contraseña</span>
               <CheckCircle2 className="w-4 h-4" />
             </>
           )}
         </button>
+
+        <div className="text-center pt-2">
+          <Link
+            to="/login"
+            className="text-xs text-amber-800 hover:text-amber-900 font-medium transition-colors"
+          >
+            ← Cancelar y volver al inicio de sesión
+          </Link>
+        </div>
       </form>
     </AuthCard>
   );

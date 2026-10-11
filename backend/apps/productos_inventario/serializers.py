@@ -1,8 +1,9 @@
 from decimal import Decimal
 
+
 from rest_framework import serializers
 
-from .models import CategoriaProducto, Producto
+from .models import CategoriaProducto, Producto,MateriaPrima
 
 
 class CategoriaProductoSerializer(serializers.ModelSerializer):
@@ -55,3 +56,34 @@ class ProductoSerializer(serializers.ModelSerializer):
         if value <= Decimal('0'):
             raise serializers.ValidationError('El precio de venta debe ser mayor a cero.')
         return value
+
+
+class MateriaPrimaSerializer(serializers.ModelSerializer):
+    stock_actual = serializers.SerializerMethodField()
+    precio_ultima_compra = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MateriaPrima
+        fields = [
+            'id_materia_prima',
+            'nombre',
+            'unidad_medida',
+            'stock_minimo',
+            'stock_actual',
+            'precio_ultima_compra',
+            'fecha_registro',
+            'activo',
+        ]
+
+    def get_stock_actual(self, obj):
+        inventario = getattr(obj, 'inventario', None)
+        if inventario is None:
+            return Decimal('0')
+        return inventario.stock_actual
+
+    def get_precio_ultima_compra(self, obj):
+        ultimo = obj.historial_precios.first()
+        return ultimo.precio if ultimo else None
+
+   
+   

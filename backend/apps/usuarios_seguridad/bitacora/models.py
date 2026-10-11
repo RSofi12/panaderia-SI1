@@ -67,6 +67,8 @@ class AccionBitacora(models.TextChoices):
     ALTA_PROVEEDOR = 'ALTA_PROVEEDOR', 'Alta de proveedor'
     EDICION_PROVEEDOR = 'EDICION_PROVEEDOR', 'Modificación de proveedor'
     CAMBIAR_ESTADO_PROVEEDOR = 'CAMBIAR_ESTADO_PROVEEDOR', 'Activación o inactivación de proveedor'
+    # --- CU7: Registrar compra ---
+    ALTA_COMPRA = 'ALTA_COMPRA', 'Registro de compra de materia prima'
 
 
 class Bitacora(models.Model):
