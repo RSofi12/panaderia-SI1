@@ -153,7 +153,7 @@ export const ComprasPage: React.FC = () => {
           </div>
         )}
 
-        <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+        <div className="border-t border-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">
           {cargando && !resultado
             ? 'Cargando compras...'
             : `Mostrando ${compras.length} compras · total acumulado Bs ${totalGeneral.toFixed(2)}`}

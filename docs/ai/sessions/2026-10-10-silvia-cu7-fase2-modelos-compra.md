@@ -58,5 +58,14 @@ docker compose exec backend python manage.py check
 - **`ComprasPage.tsx`:** aviso de la página ahora empieza con "Compra registrada:".
 - `tsc` y `eslint` OK.
 
+## Corrección — el botón "Registrar compra" no enviaba
+- **Síntoma:** al dejar el precio autocompletado, el clic no hacía nada (ningún `POST /api/compras/` en los logs).
+- **Causa:** `MateriaPrimaSerializer.get_stock_actual` / `get_precio_ultima_compra` devolvían `Decimal`; al ser `SerializerMethodField`, DRF los serializaba como número (`35`) y no como texto. En el modal, `precio_unitario.trim()` lanzaba `TypeError` y el envío se cortaba en silencio.
+- **Fix (backend):** `productos_inventario/serializers.py` devuelve `str(...)` en ambos métodos → `"35.00"`, `"0.000"`, consistente con el resto de `DecimalField` y con `types/compra.ts`.
+- Verificado en navegador con el POST interceptado (sin crear datos): el botón pasa a "Registrando...". `manage.py test apps.compras apps.productos_inventario` OK.
+
+## Ajuste visual — pie de la tabla de compras
+- `ComprasPage.tsx`: el resumen "Mostrando N compras · total acumulado" pasa de `text-xs text-slate-500` a `text-sm font-semibold text-slate-700`. Mismo ajuste en el pie de `ProveedoresPage.tsx` ("Mostrando N proveedores · activos · inactivos").
+
 ## Pendiente
-- Commitear este ajuste visual; abrir PR hacia `main`.: modal de registro, listado de compras, integración en `/dashboard/compras` junto a proveedores.
+- Commitear la corrección; abrir PR hacia `main`.: modal de registro, listado de compras, integración en `/dashboard/compras` junto a proveedores.

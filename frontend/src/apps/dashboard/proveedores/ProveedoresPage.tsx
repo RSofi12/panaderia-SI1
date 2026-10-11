@@ -257,7 +257,7 @@ export const ProveedoresPage: React.FC = () => {
           </div>
         )}
 
-        <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+        <div className="border-t border-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">
           {cargando && !resultado
             ? 'Cargando proveedores...'
             : `Mostrando ${proveedores.length} proveedores · ${activos} activos · ${proveedores.length - activos} inactivos`}

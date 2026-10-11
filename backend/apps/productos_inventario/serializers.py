@@ -75,15 +75,18 @@ class MateriaPrimaSerializer(serializers.ModelSerializer):
             'activo',
         ]
 
+    # Los SerializerMethodField no pasan por COERCE_DECIMAL_TO_STRING: si se
+    # devolviera el Decimal, el JSON llevaría un número y no texto como el
+    # resto de los DecimalField de la API.
     def get_stock_actual(self, obj):
         inventario = getattr(obj, 'inventario', None)
         if inventario is None:
-            return Decimal('0')
-        return inventario.stock_actual
+            return '0.000'
+        return str(inventario.stock_actual)
 
     def get_precio_ultima_compra(self, obj):
         ultimo = obj.historial_precios.first()
-        return ultimo.precio if ultimo else None
+        return str(ultimo.precio) if ultimo else None
 
    
    
