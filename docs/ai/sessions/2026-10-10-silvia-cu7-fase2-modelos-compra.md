@@ -53,5 +53,10 @@ docker compose exec backend python manage.py check
 - `tsc`, `eslint` y `npm run build` OK.
 - **Prueba en navegador (csantiago):** pestañas visibles, tabla con compras #1 y #2, validación local (proveedor/insumo obligatorios), precio sugerido desde último precio, subtotal y total en vivo, detalle de compra #2 (Harina 10 kg × Bs 4.50 = Bs 45.00). El envío final del POST desde la UI queda para que lo pruebe Silvia.
 
+## Actualización — CU7 feedback visual al registrar
+- **`RegistrarCompraModal.tsx`:** botón con tres estados (normal con hover/pulsación, "Registrando..." con spinner, "¡Compra registrada!" en verde); mensaje de éxito dentro del modal con N.º, proveedor y total; campos, Cancelar y ✕ bloqueados mientras guarda; el modal se cierra solo a los 1,5 s.
+- **`ComprasPage.tsx`:** aviso de la página ahora empieza con "Compra registrada:".
+- `tsc` y `eslint` OK.
+
 ## Pendiente
-- Probar el envío desde la UI y commitear el frontend.: modal de registro, listado de compras, integración en `/dashboard/compras` junto a proveedores.
+- Commitear este ajuste visual; abrir PR hacia `main`.: modal de registro, listado de compras, integración en `/dashboard/compras` junto a proveedores.

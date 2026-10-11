@@ -63,7 +63,7 @@ export const ComprasPage: React.FC = () => {
   const handleRegistrada = (compra: Compra) => {
     setModal(null);
     setVersion((v) => v + 1);
-    mostrarAviso(`Compra #${compra.id_compra} registrada a ${compra.proveedor_nombre} por Bs ${compra.total}.`);
+    mostrarAviso(`Compra registrada: #${compra.id_compra} a ${compra.proveedor_nombre} por Bs ${compra.total}.`);
   };
 
   return (
