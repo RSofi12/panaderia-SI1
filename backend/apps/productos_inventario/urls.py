@@ -5,4 +5,5 @@ app_name = 'productos_inventario'
 urlpatterns = [
     path('', include('apps.productos_inventario.productos.urls')),
     path('', include('apps.productos_inventario.materia_prima.urls')),
+    path('', include('apps.productos_inventario.produccion.urls')),
 ]

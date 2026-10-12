@@ -41,8 +41,8 @@
 ### 📌 Ciclo 2 (6 Casos de Uso) — *En Progreso*
 | CU | Nombre del Caso de Uso | Paquete Backend | Estado | Detalle |
 |---|---|---|:---:|---|
-| **CU7** | Registrar compra de materia prima | `apps.compras` | ⚪ | Planificado para continuar el ciclo de compras. |
-| **CU8** | Consultar stock de materia prima | `apps.productos_inventario` | ⚪ | Planificado. |
+| **CU7** | Registrar compra de materia prima | `apps.compras` | 🟢 | **Completo end-to-end (13 pruebas en compras en verde).** Backend transaccional con incremento automático de stock en inventario, registro en historial de precios, movimientos de entrada, auditoría en Bitácora con detección no bloqueante de variaciones inusuales de precio (>=50%) y listado optimizado con filtros. Frontend completo en `/dashboard/compras` con KPIs de volumen, filtros por fecha/proveedor y modal con proyección de stock y advertencias. |
+| **CU8** | Gestionar materia prima (CRUD e inventario) | `apps.productos_inventario` | ⚪ | **Planificado (Alcance ampliado).** Ampliado de solo consulta de stock a gestión completa de catálogo de insumos (alta, edición de nombre/unidad/stock mínimo, baja lógica e inventario actual). Prerrequisito para CU07 (compras), CU09 (alertas) y CU10 (producción/recetas). |
 | **CU9** | Consultar alertas de bajo stock | `apps.productos_inventario` | ⚪ | Planificado. |
 | **CU10**| Registrar producción diaria | `apps.productos_inventario` | 🟡 | **Frontend completo:** Pestaña "Producción diaria" en `/dashboard/productos?tab=produccion` con `RegistrarProduccionModal.tsx`, selector de productos/recetas, cálculo dinámico de requerimiento de insumos y balance en tiempo real con fallback mock tipado (`produccionService.ts`). Backend de modelos ORM y endpoints transaccionales pendiente. |
 | **CU11**| Consultar historial de producción | `apps.productos_inventario` | 🟡 | **Frontend completo:** `TablaLoteProduccion.tsx` con filtros por rango de fechas y estado, KPIs de resumen de unidades y lotes del día, y `ModalDetalleProduccion.tsx` para auditoría de insumos consumidos vs panes terminados producidos. Backend pendiente. |

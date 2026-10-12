@@ -39,12 +39,12 @@ Alias lógico: `apps/UsuariosSeguridad/*`
 ## Gestión de Productos e Inventario (CU05, CU08, CU09, CU10, CU11, CU12, CU18, CU19)
 
 - **CU05 Gestionar productos** -> `apps.productos_inventario.productos` (Ciclo 1)
-  Registro, edición, consulta e inactivación de los productos de panadería, junto con su categoría y precio de venta.
+  Registro, edición, consulta e inactivación de los productos de panadería, junto con su categoría y precio de venta. En el Ciclo 2 se complementa con la definición de la receta (`producto_materia_prima`) para el cálculo de requerimiento y descuento de insumos en producción (CU10).
   **Actor(es):** Propietario, Administrador
 
-- **CU08 Consultar stock de materia prima** -> `apps.productos_inventario.materia_prima` (Ciclo 2)
-  Consulta de las existencias actuales de cada insumo (harina, azúcar, levadura, sal, huevos, leche, mantequilla) disponibles para producción.
-  **Actor(es):** Personal de Producción, Propietario
+- **CU08 Gestionar materia prima** -> `apps.productos_inventario.materia_prima` (Ciclo 2)
+  Registro, edición, inactivación (baja lógica) y consulta de insumos de panadería (harina, azúcar, levadura, sal, etc.), con definición de unidad de medida, ajuste de stock mínimo y visualización de existencias actuales para abastecimiento y producción.
+  **Actor(es):** Propietario, Administrador, Personal de Producción
 
 - **CU09 Consultar alertas de bajo stock** -> `apps.productos_inventario.materia_prima` (Ciclo 2)
   Identificación de las materias primas cuyo stock actual está por debajo del stock mínimo definido, para gestionar oportunamente su reposición.

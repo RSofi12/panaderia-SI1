@@ -1,5 +1,9 @@
 # Registro de Sesiones del Equipo (docs/ai/sessions/)
 
+> [!IMPORTANT]
+> **COMPORTAMIENTO PROACTIVO OBLIGATORIO PARA ASISTENTES IA (Antigravity / Claude / OpenCode):**
+> Todo asistente o agente de IA que opere en este repositorio tiene la **instrucción imperativa y obligatoria** de crear o actualizar automáticamente el archivo de bitácora de sesión en esta carpeta cada vez que codifique, refactorice o implemente casos de uso y mejoras. **NO debe esperar a que el usuario se lo pida verbalmente**. Una tarea sin su correspondiente sesión registrada se considera incompleta.
+
 Esta carpeta sirve como bitácora y memoria continua para el equipo de desarrollo y los asistentes de IA. Cada vez que un integrante del equipo trabaje en una funcionalidad, módulo o sesión de programación, debe crear o actualizar un archivo aquí.
 
 ## 📝 Formato de nombre de archivo

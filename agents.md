@@ -96,7 +96,7 @@ Para mantener la continuidad del trabajo entre sesiones y miembros del equipo:
 - `docs/ai/MASTER_AGENT_PROMPT.md` → Reglas primarias obligatorias para cualquier IA o desarrollador.
 - `docs/ai/sessions/README.md` → Guía y plantilla para el registro de sesiones.
 
-### 🚨 REGLA OBLIGATORIA: BITÁCORA DE SESIÓN AUTOMÁTICA
+### 🚨 REGLA OBLIGATORIA: BITÁCORA DE SESIÓN AUTOMÁTICA Y PROACTIVA
 Todo cambio en el repositorio —sin importar si es backend, frontend, base de datos, configuración o documentación— **debe** quedar registrado en un archivo de bitácora dentro de `docs/ai/sessions/`, usando la plantilla de `docs/ai/sessions/README.md` y el nombre obligatorio:
 
 ```
@@ -104,10 +104,12 @@ YYYY-MM-DD-[autor]-[resumen-corto].md      # ej. 2026-09-27-equipo-cu1-login-jwt
 YYYY-MM-DD-[autor]-[resumen-corto]-2.md    # segunda sesión del mismo día y autor
 ```
 
-- **Cuándo se escribe:** en el momento del cambio, no al final "si queda tiempo".
+- **PROACTIVIDAD OBLIGATORIA DE LA IA (SIN PETICIÓN VERBAL DEL USUARIO):**
+  Al empezar o culminar cualquier tarea de codificación, mejora, refactorización o implementación de Casos de Uso, la IA **DEBE CREAR O ACTUALIZAR AUTOMÁTICAMENTE** el archivo de bitácora de sesión en `docs/ai/sessions/` sin esperar a que el usuario se lo recuerde o pida verbalmente.
+- **Cuándo se escribe:** durante el desarrollo del cambio, no al final "si queda tiempo".
 - **Si el archivo del día ya existe:** se actualiza agregando entradas; el historial nunca se sobrescribe.
 - **Contenido mínimo:** objetivo, cambios por capa (backend / frontend / BD), decisiones tomadas, pendientes y cómo probar.
-- **Alcance:** aplica a Developers senior, junior, estudiantes del equipo y a los agentes de IA del proyecto (`.opencode/agents/*.md`).
+- **Alcance:** aplica a Developers senior, junior, estudiantes del equipo y a los agentes de IA del proyecto (`.opencode/agents/*.md`, Antigravity, Claude, etc.).
 - Una tarea sin bitácora en `docs/ai/sessions/` se considera **incompleta**, aunque el código compile y funcione.
 
 Detalle completo de esta regla en [`docs/ai/MASTER_AGENT_PROMPT.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/MASTER_AGENT_PROMPT.md) (regla 6).

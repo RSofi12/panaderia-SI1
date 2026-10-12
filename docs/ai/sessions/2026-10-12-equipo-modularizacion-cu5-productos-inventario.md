@@ -39,19 +39,36 @@ Se preservó estrictamente toda la lógica del equipo (cálculo automático de p
    - `management/commands/seed_materias_primas.py`: Seeder de insumos base con inventario inicial.
    - `tests.py`: Prueba de consulta de catálogo de materias primas con stock y precios.
 
-3. **Integración con otros módulos:**
-   - `config/settings.py`: Registradas `'apps.productos_inventario.productos'` y `'apps.productos_inventario.materia_prima'` en `INSTALLED_APPS`.
+3. **Creación de la sub-app `apps.productos_inventario.produccion` (CU10, CU11, CU12, CU18):**
+   - `apps.py`: Define `name = 'apps.productos_inventario.produccion'` con label `produccion`.
+   - `models.py`: Estructura ORM base según `Database_Panaderia_Santiago.sql` sin implementar aún la lógica de servicios:
+     - `Produccion` (CU10, CU11): Cabecera de producción con fecha, jornada y responsable.
+     - `DetalleProduccion` (CU10, CU11): Cantidad de pan elaborado y costo unitario.
+     - `InventarioProductoTerminado` (CU12): Existencias de pan terminado disponible para venta.
+     - `MovimientoProductoTerminado`: Trazabilidad de entradas (producción) y salidas (ventas, mermas).
+     - `NotaPerdidaProducto` (CU18): Registro de mermas de pan no vendido.
+   - `admin.py`, `serializers.py`, `views.py`, `urls.py`: Scaffolding base limpio para endpoints `/api/produccion/` y `/api/productos-terminados/existencias/`.
+   - Conectada a `config/settings.py` (`INSTALLED_APPS`) y `apps/productos_inventario/urls.py`.
+
+4. **Ampliación de alcance de CU08: «Gestionar materia prima» (CRUD + Inventario):**
+   - Se resolvió el vacío funcional del MRP donde ningún caso de uso creaba ni editaba insumos.
+   - CU08 pasa de ser solo «Consultar stock de materia prima» a **«Gestionar materia prima»** (alta, edición de nombre/unidad/stock mínimo, baja lógica e inventario actual), permitiendo configurar el `stock_minimo` del cual depende la alerta de **CU09**.
+   - Se mantiene la matriz de 26 Casos de Uso del PUDS sin alterar la planificación ni crear un CU27 artificial.
+   - Se articuló la receta (`producto_materia_prima`) entre CU05 y CU10 en el Ciclo 2.
+
+5. **Integración con otros módulos:**
+   - `config/settings.py`: Registradas `'apps.productos_inventario.productos'`, `'apps.productos_inventario.materia_prima'` y `'apps.productos_inventario.produccion'` en `INSTALLED_APPS`.
    - `apps.compras.compra_materia_prima`:
      - `models.py`: `DetalleCompra.id_materia_prima` actualizado a `'materia_prima.MateriaPrima'`.
      - `services/registrar_compra.py`: Imports actualizados a `apps.productos_inventario.materia_prima.models`.
      - `management/commands/seed_compras.py`: Import actualizado a `apps.productos_inventario.materia_prima.models`.
      - `tests.py`: Imports actualizados a `apps.productos_inventario.materia_prima.models`.
 
-4. **Depuración de la raíz `apps.productos_inventario`:**
+6. **Depuración de la raíz `apps.productos_inventario`:**
    - Se eliminaron todos los archivos sueltos y redundantes de la raíz (`models.py`, `views.py`, `serializers.py`, `permissions.py`, `admin.py`, `tests.py`, `management/`).
-   - `urls.py`: Actúa como router paraguas que incluye las rutas de `productos` y `materia_prima` sin modificar las URLs públicas de la API.
+   - `urls.py`: Actúa como router paraguas que incluye las rutas de `productos`, `materia_prima` y `produccion` sin modificar las URLs públicas de la API.
 
-5. **Migraciones con preservación física de datos:**
+7. **Migraciones con preservación física de datos:**
    - `productos/migrations/0001_initial.py`: Registra modelos en estado de Django usando `SeparateDatabaseAndState` con `database_operations=[]`.
    - `materia_prima/migrations/0001_initial.py`: Registra modelos de insumos en estado de Django usando `SeparateDatabaseAndState`.
    - `compra_materia_prima/migrations/0003_alter_detallecompra_id_materia_prima.py`: Actualiza la relación FK en estado de Django usando `SeparateDatabaseAndState`.

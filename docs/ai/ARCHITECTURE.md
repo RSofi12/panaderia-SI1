@@ -98,7 +98,7 @@ backend/
 │   │   │   ├── tests.py         # Pruebas unitarias CU05
 │   │   │   └── management/commands/seed_productos.py
 │   │   │
-│   │   ├── materia_prima/       # ⭐ Sub-app Insumos: CU08 Stock MP, CU09 Alertas y catálogo de compras
+│   │   ├── materia_prima/       # ⭐ Sub-app Insumos: CU08 Gestionar materia prima (CRUD + Stock), CU09 Alertas y compras
 │   │   │   ├── migrations/
 │   │   │   ├── __init__.py
 │   │   │   ├── apps.py          # name = 'apps.productos_inventario.materia_prima'
