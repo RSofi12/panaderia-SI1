@@ -80,7 +80,7 @@ Alias lógico: `apps/ProductosInventario/*`
   Registro y edición de los datos de los proveedores de materias primas e insumos.
   **Actor(es):** Propietario, Administrador
 
-- **CU07 Registrar compra de materia prima** -> `apps.compras` (Ciclo 2)
+- **CU07 Registrar compra de materia prima** -> `apps.compras.compra_materia_prima` (Ciclo 2)
   Registro de una compra a un proveedor; actualiza automáticamente el inventario de materia prima y el historial de precios de los insumos.
   **Actor(es):** Propietario
 

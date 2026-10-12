@@ -93,15 +93,28 @@ backend/
 │   │   └── views.py
 │   │
 │   ├── compras/                 # Módulo 3: Proveedores, Compras de Insumos y Gastos
-│   │   ├── migrations/
 │   │   ├── __init__.py
-│   │   ├── admin.py
-│   │   ├── apps.py
-│   │   ├── models.py            # Proveedor, Compra, DetalleCompra, MovimientoEconomico
-│   │   ├── serializers.py
-│   │   ├── services.py          # Lógica de compras e impacto en inventario y finanzas
-│   │   ├── urls.py              # /api/proveedores/, /api/compras/, /api/gastos/
-│   │   └── views.py
+│   │   ├── apps.py              # App base de compras
+│   │   ├── urls.py              # Router que incluye /api/proveedores/ y /api/compras/
+│   │   ├── models.py            # Proveedor (CU6) y re-exportaciones de compatibilidad
+│   │   ├── serializers.py       # Serializadores de proveedores
+│   │   ├── views.py             # Vistas de proveedores
+│   │   ├── permissions.py       # Permisos de proveedores
+│   │   │
+│   │   ├── compra_materia_prima/# ⭐ Sub-app CU7: Registro de compra de insumos
+│   │   │   ├── migrations/
+│   │   │   ├── __init__.py
+│   │   │   ├── apps.py          # name = 'apps.compras.compra_materia_prima'
+│   │   │   ├── models.py        # Compra, DetalleCompra
+│   │   │   ├── permissions.py   # PuedeRegistrarCompras
+│   │   │   ├── serializers.py   # CompraRegistroSerializer, CompraSerializer, etc.
+│   │   │   ├── services/
+│   │   │   │   └── registrar_compra.py # Transacción atómica, stock, historial y bitácora
+│   │   │   ├── urls.py          # Rutas /api/compras/
+│   │   │   ├── views.py         # CompraListCreateView, CompraDetailView
+│   │   │   └── tests.py         # Pruebas unitarias y de integración CU7
+│   │   │
+│   │   └── gastos/              # 🔮 Sub-app CU20: Ciclo 4 (Gastos e Inversiones)
 │   │
 │   ├── comercializacion/        # Módulo 4: Clientes, Ventas (Mostrador/QR) y Pedidos
 │   │   ├── migrations/
