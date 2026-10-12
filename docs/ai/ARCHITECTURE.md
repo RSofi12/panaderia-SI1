@@ -80,28 +80,82 @@ backend/
 │   │   └── views.py             # ViewSets y APIViews de seguridad
 │   │
 │   ├── productos_inventario/    # Módulo 2: Catálogo, Stock Insumos y Stock Panes
-│   │   ├── migrations/
 │   │   ├── __init__.py
-│   │   ├── admin.py
-│   │   ├── apps.py
-│   │   ├── models.py            # CategoriaProducto, Producto, MateriaPrima,
-│   │   │                        # InventarioMateriaPrima, InventarioProductoTerminado,
-│   │   │                        # Produccion, DetalleProduccion, Movimientos, etc.
-│   │   ├── serializers.py
-│   │   ├── services.py          # Lógica de producción (MRP), cálculo de costos y mermas
-│   │   ├── urls.py              # /api/productos/, /api/inventario/, /api/produccion/
-│   │   └── views.py
+│   │   ├── apps.py              # App base de productos_inventario
+│   │   ├── urls.py              # Router que centraliza /api/productos/, /api/categorias-producto/ y /api/materias-primas/
+│   │   ├── migrations/          # Historial de migraciones para PostgreSQL
+│   │   │
+│   │   ├── productos/           # ⭐ Sub-app CU05: Gestión de productos (+ CU19 Historial precios)
+│   │   │   ├── migrations/
+│   │   │   ├── __init__.py
+│   │   │   ├── apps.py          # name = 'apps.productos_inventario.productos'
+│   │   │   ├── models.py        # CategoriaProducto, Producto, HistorialPrecioProducto
+│   │   │   ├── admin.py         # CategoriaProductoAdmin, ProductoAdmin, HistorialPrecioProductoAdmin
+│   │   │   ├── permissions.py   # PuedeGestionarProductos
+│   │   │   ├── serializers.py   # CategoriaProductoSerializer, ProductoSerializer
+│   │   │   ├── urls.py          # Rutas /api/productos/ y /api/categorias-producto/
+│   │   │   ├── views.py         # CategoriaProductoListView, ProductoListCreateView, DetailView, ToggleActivoView
+│   │   │   ├── tests.py         # Pruebas unitarias CU05
+│   │   │   └── management/commands/seed_productos.py
+│   │   │
+│   │   ├── materia_prima/       # ⭐ Sub-app Insumos: CU08 Gestionar materia prima (CRUD + Stock), CU09 Alertas y compras
+│   │   │   ├── migrations/
+│   │   │   ├── __init__.py
+│   │   │   ├── apps.py          # name = 'apps.productos_inventario.materia_prima'
+│   │   │   ├── models.py        # MateriaPrima, InventarioMateriaPrima, HistorialPrecioMateriaPrima, MovimientoMateriaPrima
+│   │   │   ├── admin.py         # MateriaPrimaAdmin, InventarioMateriaPrimaAdmin, etc.
+│   │   │   ├── serializers.py   # MateriaPrimaSerializer
+│   │   │   ├── urls.py          # Rutas /api/materias-primas/
+│   │   │   ├── views.py         # MateriaPrimaListView
+│   │   │   ├── tests.py         # Pruebas unitarias de catálogo de insumos
+│   │   │   └── management/commands/seed_materias_primas.py
+│   │   ├── produccion/          # ⭐ Sub-app Fábrica / Elaboración: CU10 Producción diaria y CU11 Historial
+│   │   │   ├── apps.py          # name = 'apps.productos_inventario.produccion'
+│   │   │   ├── models.py        # Produccion, DetalleProduccion
+│   │   │   ├── serializers.py   # Serializadores de orden de producción
+│   │   │   ├── views.py         # ProduccionListCreateView (/api/produccion/)
+│   │   │   └── urls.py
+│   │   │
+│   │   └── productos_terminados/# ⭐ Sub-app Inventario y Mostrador: CU12 Existencias pan y CU18 Mermas
+│   │       ├── apps.py          # name = 'apps.productos_inventario.productos_terminados'
+│   │       ├── models.py        # InventarioProductoTerminado, MovimientoProductoTerminado, NotaPerdidaProducto
+│   │       ├── serializers.py   # Serializadores de inventario y mermas
+│   │       ├── views.py         # Existencias (/api/productos-terminados/existencias/) y Mermas (/api/productos-terminados/mermas/)
+│   │       └── urls.py
 │   │
 │   ├── compras/                 # Módulo 3: Proveedores, Compras de Insumos y Gastos
-│   │   ├── migrations/
 │   │   ├── __init__.py
-│   │   ├── admin.py
-│   │   ├── apps.py
-│   │   ├── models.py            # Proveedor, Compra, DetalleCompra, MovimientoEconomico
-│   │   ├── serializers.py
-│   │   ├── services.py          # Lógica de compras e impacto en inventario y finanzas
-│   │   ├── urls.py              # /api/proveedores/, /api/compras/, /api/gastos/
-│   │   └── views.py
+│   │   ├── apps.py              # App base de compras
+│   │   ├── urls.py              # Router que centraliza /api/proveedores/ y /api/compras/
+│   │   ├── migrations/          # Historial de migraciones para PostgreSQL
+│   │   │
+│   │   ├── proveedores/         # ⭐ Sub-app CU6: Gestión de proveedores
+│   │   │   ├── migrations/
+│   │   │   ├── __init__.py
+│   │   │   ├── apps.py          # name = 'apps.compras.proveedores'
+│   │   │   ├── models.py        # Proveedor (db_table='proveedor')
+│   │   │   ├── permissions.py   # PuedeGestionarProveedores
+│   │   │   ├── serializers.py   # ProveedorSerializer, normalizar_telefono
+│   │   │   ├── urls.py          # Rutas /api/proveedores/
+│   │   │   ├── views.py         # ProveedorListCreateView, ProveedorDetailView, ProveedorToggleActivoView
+│   │   │   ├── tests.py         # Pruebas unitarias CU6 (CRUD, permisos, soft-delete, bitácora)
+│   │   │   └── management/commands/seed_proveedores.py
+│   │   │
+│   │   ├── compra_materia_prima/# ⭐ Sub-app CU7: Registro de compra de insumos
+│   │   │   ├── migrations/
+│   │   │   ├── __init__.py
+│   │   │   ├── apps.py          # name = 'apps.compras.compra_materia_prima'
+│   │   │   ├── models.py        # Compra, DetalleCompra
+│   │   │   ├── permissions.py   # PuedeRegistrarCompras
+│   │   │   ├── serializers.py   # CompraRegistroSerializer, CompraSerializer, etc.
+│   │   │   ├── services/
+│   │   │   │   └── registrar_compra.py # Transacción atómica, stock, historial y bitácora
+│   │   │   ├── urls.py          # Rutas /api/compras/
+│   │   │   ├── views.py         # CompraListCreateView, CompraDetailView
+│   │   │   ├── tests.py         # Pruebas unitarias y de integración CU7
+│   │   │   └── management/commands/seed_compras.py
+│   │   │
+│   │   └── gastos/              # 🔮 Sub-app CU20: Ciclo 4 (Gastos e Inversiones)
 │   │
 │   ├── comercializacion/        # Módulo 4: Clientes, Ventas (Mostrador/QR) y Pedidos
 │   │   ├── migrations/

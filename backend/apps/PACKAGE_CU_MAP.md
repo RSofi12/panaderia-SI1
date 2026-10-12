@@ -38,35 +38,35 @@ Alias lógico: `apps/UsuariosSeguridad/*`
 
 ## Gestión de Productos e Inventario (CU05, CU08, CU09, CU10, CU11, CU12, CU18, CU19)
 
-- **CU05 Gestionar productos** -> `apps.productos_inventario` (Ciclo 1)
-  Registro, edición, consulta e inactivación de los productos de panadería, junto con su categoría y precio de venta.
+- **CU05 Gestionar productos** -> `apps.productos_inventario.productos` (Ciclo 1)
+  Registro, edición, consulta e inactivación de los productos de panadería, junto con su categoría y precio de venta. En el Ciclo 2 se complementa con la definición de la receta (`producto_materia_prima`) para el cálculo de requerimiento y descuento de insumos en producción (CU10).
   **Actor(es):** Propietario, Administrador
 
-- **CU08 Consultar stock de materia prima** -> `apps.productos_inventario` (Ciclo 2)
-  Consulta de las existencias actuales de cada insumo (harina, azúcar, levadura, sal, huevos, leche, mantequilla) disponibles para producción.
-  **Actor(es):** Personal de Producción, Propietario
+- **CU08 Gestionar materia prima** -> `apps.productos_inventario.materia_prima` (Ciclo 2)
+  Registro, edición, inactivación (baja lógica) y consulta de insumos de panadería (harina, azúcar, levadura, sal, etc.), con definición de unidad de medida, ajuste de stock mínimo y visualización de existencias actuales para abastecimiento y producción.
+  **Actor(es):** Propietario, Administrador, Personal de Producción
 
-- **CU09 Consultar alertas de bajo stock** -> `apps.productos_inventario` (Ciclo 2)
+- **CU09 Consultar alertas de bajo stock** -> `apps.productos_inventario.materia_prima` (Ciclo 2)
   Identificación de las materias primas cuyo stock actual está por debajo del stock mínimo definido, para gestionar oportunamente su reposición.
   **Actor(es):** Personal de Producción, Propietario
 
-- **CU10 Registrar producción diaria** -> `apps.productos_inventario` (Ciclo 2)
+- **CU10 Registrar producción diaria** -> `apps.productos_inventario.produccion` (Ciclo 2)
   Registro de las cantidades producidas de cada tipo de pan por jornada; descuenta automáticamente las materias primas consumidas e incrementa el stock de productos terminados.
   **Actor(es):** Personal de Producción
 
-- **CU11 Consultar historial de producción** -> `apps.productos_inventario` (Ciclo 2)
+- **CU11 Consultar historial de producción** -> `apps.productos_inventario.produccion` (Ciclo 2)
   Consulta de las producciones registradas por fecha o por producto, para comparar lo producido con lo vendido.
   **Actor(es):** Personal de Producción
 
-- **CU12 Consultar existencias de productos terminados** -> `apps.productos_inventario` (Ciclo 2)
-  Consulta del stock disponible de cada tipo de pan listo para la venta.
+- **CU12 Consultar existencias de productos terminados** -> `apps.productos_inventario.productos_terminados` (Ciclo 2)
+  Consulta del stock disponible de cada tipo de pan listo para la venta en mostrador.
   **Actor(es):** Propietario, Personal de Ventas
 
-- **CU18 Registrar baja de productos terminados** -> `apps.productos_inventario` (Ciclo 3)
+- **CU18 Registrar baja de productos terminados** -> `apps.productos_inventario.productos_terminados` (Ciclo 3)
   Registro de mermas o pérdidas de productos terminados que no llegaron a venderse, descontando el inventario correspondiente.
   **Actor(es):** Personal de Producción
 
-- **CU19 Consultar historial de precios** -> `apps.productos_inventario` (Ciclo 3)
+- **CU19 Consultar historial de precios** -> `apps.productos_inventario.productos` (Ciclo 3)
   Consulta de los cambios históricos en el precio de venta de un producto a lo largo del tiempo.
   **Actor(es):** Propietario
 
@@ -76,11 +76,11 @@ Alias lógico: `apps/ProductosInventario/*`
 
 ## Gestión de Compras y Proveedores (CU06, CU07, CU20)
 
-- **CU06 Gestionar proveedores** -> `apps.compras` (Ciclo 1)
+- **CU06 Gestionar proveedores** -> `apps.compras.proveedores` (Ciclo 1)
   Registro y edición de los datos de los proveedores de materias primas e insumos.
   **Actor(es):** Propietario, Administrador
 
-- **CU07 Registrar compra de materia prima** -> `apps.compras` (Ciclo 2)
+- **CU07 Registrar compra de materia prima** -> `apps.compras.compra_materia_prima` (Ciclo 2)
   Registro de una compra a un proveedor; actualiza automáticamente el inventario de materia prima y el historial de precios de los insumos.
   **Actor(es):** Propietario
 

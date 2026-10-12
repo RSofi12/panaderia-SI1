@@ -464,3 +464,21 @@
 - **Motivo:** Desacoplar el avance de la interfaz de usuario respecto al desarrollo de los modelos ORM en el backend, permitiendo validar flujos de interacción, cálculo de balance de materia prima y tablas de lotes de forma inmediata.
 - **Impacto:** Pestaña "Producción diaria" lista y operativa en `ProductosPage.tsx?tab=produccion` para pruebas de usuario y revisión de diseño antes del backend definitivo.
 
+### 40. Ampliación de CU08: «Gestionar materia prima» (CRUD + Inventario) y articulación de Recetas en Ciclo 2
+- **Decisión:**
+  1. Ampliar el alcance de **CU08** de solo «Consultar stock de materia prima» a **«Gestionar materia prima»**, incorporando operaciones completas de creación (alta), edición de atributos (nombre, unidad de medida, stock mínimo), inactivación lógica (`activo=False`) y consulta de existencias actuales con su stock mínimo.
+  2. Mantener intacta la matriz formal de 26 Casos de Uso (PUDS) y su distribución en 4 ciclos (7 + 6 + 7 + 6), evitando crear un innecesario CU27 que desestabilizaría la planificación y defensa del proyecto.
+  3. Ubicación y Actores: Permanece en `apps.productos_inventario.materia_prima` en el **Ciclo 2**. Actores principales: *Propietario* y *Administrador* para la gestión/mantenimiento, y *Personal de Producción* para la consulta de stock disponible.
+  4. Articulación con Recetas (BOM) y CU10: En el Ciclo 1, CU05 entrega el catálogo base de productos (categoría, precios). En el Ciclo 2, al disponer de materias primas dinámicas (CU08), se enlaza la tabla intermedia `producto_materia_prima` (receta) para que el MRP en CU10 (Producción diaria) descuente insumos automáticamente.
+- **Motivo:** Resolver el vacío funcional detectado (ningún CU administraba el maestro de insumos ni permitía ajustar el stock mínimo del cual depende la alerta de CU09 y la selección en compras de CU07).
+- **Impacto:** Sistema robusto y autosuficiente; evita cargas manuales directas a base de datos y unifica la UI de gestión de insumos con la supervisión de stock en una sola vista eficiente.
+
+### 41. Modularización Simétrica de `productos_inventario` en 4 Sub-apps (2 Casos de Uso por Sub-app)
+- **Decisión:** Separar las responsabilidades de producción e inventario terminado dividiendo el paquete `backend/apps/productos_inventario/` en 4 sub-apps simétricas de exactamente 2 Casos de Uso cada una:
+  1. `productos/`: CU05 (Catálogo base) y CU19 (Historial precio venta) + Recetas.
+  2. `materia_prima/`: CU08 (Gestión MP y stock) y CU09 (Alertas de bajo stock).
+  3. `produccion/`: CU10 (Registrar producción diaria) y CU11 (Consultar historial de producción). Modelos: `Produccion` y `DetalleProduccion`.
+  4. `productos_terminados/`: CU12 (Consultar existencias de pan terminado) y CU18 (Registrar baja / mermas). Modelos: `InventarioProductoTerminado`, `MovimientoProductoTerminado` y `NotaPerdidaProducto`.
+- **Motivo:** Evitar la sobrecarga de una única sub-app `produccion/` que concentraba 4 CUs dispares, separando claramente la fábrica/elaboración (responsabilidad del maestro panadero) del almacén de mostrador y mermas (responsabilidad de ventas y administración).
+- **Impacto:** Archivos concisos (< 80 líneas), desacoplamiento total de desarrollo entre compañeros del equipo y estructura simétrica en todo el backend.
+

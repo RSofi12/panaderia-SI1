@@ -1,19 +1,10 @@
-from django.urls import path
-
-from .views import (
-    CategoriaProductoListView,
-    MateriaPrimaStockListView,
-    ProductoDetailView,
-    ProductoListCreateView,
-    ProductoToggleActivoView,
-)
+from django.urls import include, path
 
 app_name = 'productos_inventario'
 
 urlpatterns = [
-    path('categorias-producto/', CategoriaProductoListView.as_view(), name='categorias_producto'),
-    path('productos/', ProductoListCreateView.as_view(), name='productos'),
-    path('productos/<int:pk>/', ProductoDetailView.as_view(), name='producto_detalle'),
-    path('productos/<int:pk>/toggle-activo/', ProductoToggleActivoView.as_view(), name='producto_toggle_activo'),
-    path('inventario/materias-primas/', MateriaPrimaStockListView.as_view(), name='materias_primas_stock'),
+    path('', include('apps.productos_inventario.productos.urls')),
+    path('', include('apps.productos_inventario.materia_prima.urls')),
+    path('', include('apps.productos_inventario.produccion.urls')),
+    path('', include('apps.productos_inventario.productos_terminados.urls')),
 ]

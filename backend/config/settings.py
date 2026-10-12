@@ -47,8 +47,17 @@ INSTALLED_APPS = [
     'apps.usuarios_seguridad.auth_app',
 
     # Paquetes restantes
+    # Paquete 2: Productos e Inventario
     'apps.productos_inventario',
+    'apps.productos_inventario.productos',
+    'apps.productos_inventario.materia_prima',
+    'apps.productos_inventario.produccion',
+    'apps.productos_inventario.productos_terminados',
+
+    # Paquete 3: Compras y Proveedores
     'apps.compras',
+    'apps.compras.proveedores',
+    'apps.compras.compra_materia_prima',
     'apps.comercializacion',
     'apps.reportes',
 ]
