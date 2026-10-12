@@ -8,6 +8,7 @@ import {
   Plus,
   Power,
   Search,
+  Store,
   Wheat,
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -17,9 +18,10 @@ import ProductoFormModal from './components/ProductoFormModal';
 import ConfirmarEstadoDialog from './components/ConfirmarEstadoDialog';
 import { formatearBs } from './precios';
 import ProduccionTab from './produccion/ProduccionTab';
+import ExistenciasTab from './existencias/ExistenciasTab';
 
 type EstadoFiltro = '' | 'true' | 'false';
-type PestanaProducto = 'catalogo' | 'produccion';
+type PestanaProducto = 'catalogo' | 'produccion' | 'existencias';
 
 type ModalAbierto =
   | { tipo: 'formulario'; producto: Producto | null }
@@ -36,15 +38,24 @@ export const ProductosPage: React.FC = () => {
   const { hasPermission } = useAuth();
   const puedeGestionar = hasPermission('gestionar_productos');
   const puedeRegistrarProduccion = hasPermission('registrar_produccion');
+  const puedeConsultarInventario = hasPermission('gestionar_inventario') || hasPermission('registrar_ventas');
 
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as PestanaProducto | null;
 
-  // Deriva la pestaña activa: si el rol es de producción (no tiene gestión de catálogo), abre producción directamente
-  const pestanaActiva: PestanaProducto =
-    tabParam === 'produccion' || (!puedeGestionar && puedeRegistrarProduccion)
-      ? 'produccion'
-      : 'catalogo';
+  // Deriva la pestaña activa: si el rol es de producción abre producción, si es de ventas abre existencias
+  const pestanaActiva: PestanaProducto = (() => {
+    if (tabParam === 'produccion' || tabParam === 'existencias' || tabParam === 'catalogo') {
+      return tabParam;
+    }
+    if (!puedeGestionar && puedeRegistrarProduccion) {
+      return 'produccion';
+    }
+    if (!puedeGestionar && puedeConsultarInventario) {
+      return 'existencias';
+    }
+    return 'catalogo';
+  })();
 
   const cambiarPestana = (nueva: PestanaProducto) => {
     setSearchParams(
@@ -155,17 +166,23 @@ export const ProductosPage: React.FC = () => {
       {/* Encabezado General del Módulo */}
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
-          Productos e Inventario · {pestanaActiva === 'catalogo' ? 'CU5' : 'CU10 & CU11'}
+          Productos e Inventario · {pestanaActiva === 'catalogo' ? 'CU5' : pestanaActiva === 'produccion' ? 'CU10 & CU11' : 'CU12'}
         </p>
         <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-              {pestanaActiva === 'catalogo' ? 'Catálogo de productos' : 'Producción diaria'}
+              {pestanaActiva === 'catalogo'
+                ? 'Catálogo de productos'
+                : pestanaActiva === 'produccion'
+                ? 'Producción diaria'
+                : 'Existencias de pan en mostrador'}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
               {pestanaActiva === 'catalogo'
                 ? 'Panes que elabora la panadería, con su costo, margen y precio de venta.'
-                : 'Registro de horneado diario, cálculo MRP de recetas y consumo automático de insumos.'}
+                : pestanaActiva === 'produccion'
+                ? 'Registro de horneado diario, cálculo MRP de recetas y consumo automático de insumos.'
+                : 'Consulta en tiempo real de unidades disponibles para la venta directa, alertas de stock y valorización.'}
             </p>
           </div>
 
@@ -205,6 +222,21 @@ export const ProductosPage: React.FC = () => {
           <button
             type="button"
             role="tab"
+            aria-selected={pestanaActiva === 'existencias'}
+            onClick={() => cambiarPestana('existencias')}
+            className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+              pestanaActiva === 'existencias'
+                ? 'border-amber-600 text-amber-900'
+                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            <Store className="h-4 w-4" />
+            <span>Existencias (CU12)</span>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
             aria-selected={pestanaActiva === 'produccion'}
             onClick={() => cambiarPestana('produccion')}
             className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
@@ -220,7 +252,9 @@ export const ProductosPage: React.FC = () => {
       </div>
 
       {/* Contenido según pestaña activa */}
-      {pestanaActiva === 'produccion' ? (
+      {pestanaActiva === 'existencias' ? (
+        <ExistenciasTab />
+      ) : pestanaActiva === 'produccion' ? (
         <ProduccionTab />
       ) : (
         <>
