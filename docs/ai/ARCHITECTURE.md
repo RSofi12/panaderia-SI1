@@ -326,8 +326,8 @@ Al implementar el CU, el flujo es: crear la carpeta en `src/apps/dashboard/venta
 
 | Actor | Permisos del seed | Módulos que ve |
 |---|---|---|
-| **Administrador** | los 11 | Todos (5 de 5) |
-| **Propietario** | 9 (sin `gestionar_usuarios`) | Productos, Compras, Ventas, Reportes (4 de 5) |
+| **Administrador** | todos, incluido `gestionar_materias_primas` | Todos (5 de 5) |
+| **Propietario** | permisos administrativos, incluido `gestionar_materias_primas` | Productos, Compras, Ventas, Reportes (4 de 5) |
 | **Personal de Ventas** | `registrar_ventas`, `registrar_pedidos`, `gestionar_inventario`, `generar_reportes` | Ventas, Reportes (2 de 5) |
 | **Personal de Producción** | `registrar_produccion`, `gestionar_inventario` | Productos (1 de 5) |
 
