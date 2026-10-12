@@ -90,6 +90,7 @@ class CompraSerializer(serializers.ModelSerializer):
     proveedor_nombre = serializers.CharField(source='id_proveedor.nombre', read_only=True)
     registrado_por = serializers.CharField(source='id_usuario.nombre_usuario', read_only=True)
     detalles = CompraDetalleLecturaSerializer(many=True, read_only=True)
+    advertencias = serializers.SerializerMethodField()
 
     class Meta:
         model = Compra
@@ -101,15 +102,19 @@ class CompraSerializer(serializers.ModelSerializer):
             'fecha_hora',
             'total',
             'detalles',
+            'advertencias',
         ]
         read_only_fields = fields
 
+    def get_advertencias(self, obj):
+        return getattr(obj, 'advertencias', [])
+
 
 class CompraListSerializer(serializers.ModelSerializer):
-    """Listado GET /api/compras/ (sin nested detalles)."""
+    """Listado GET /api/compras/ (sin nested detalles, optimizado con anotación)."""
     proveedor_nombre = serializers.CharField(source='id_proveedor.nombre', read_only=True)
     registrado_por = serializers.CharField(source='id_usuario.nombre_usuario', read_only=True)
-    cantidad_lineas = serializers.IntegerField(source='detalles.count', read_only=True)
+    cantidad_lineas = serializers.SerializerMethodField()
 
     class Meta:
         model = Compra
@@ -122,3 +127,9 @@ class CompraListSerializer(serializers.ModelSerializer):
             'total',
             'cantidad_lineas',
         ]
+
+    def get_cantidad_lineas(self, obj):
+        annotated = getattr(obj, 'cantidad_lineas', None)
+        if annotated is not None:
+            return annotated
+        return obj.detalles.count()

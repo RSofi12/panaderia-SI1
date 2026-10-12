@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AlertCircle, CheckCircle2, Loader2, Plus, Trash2, X } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, Plus, Trash2, X } from 'lucide-react';
 import compraService from '../../../../services/compraService';
 import proveedorService from '../../../../services/proveedorService';
 import normalizarErrorApi from '../../../../services/erroresApi';
@@ -91,7 +91,9 @@ export const RegistrarCompraModal: React.FC<RegistrarCompraModalProps> = ({ onCl
   // Se deja ver la confirmación un momento antes de cerrar el modal.
   useEffect(() => {
     if (!registrada) return;
-    const temporizador = window.setTimeout(() => onSaved(registrada), 1500);
+    const tieneAdvertencias = Boolean(registrada.advertencias && registrada.advertencias.length > 0);
+    const tiempo = tieneAdvertencias ? 4500 : 1500;
+    const temporizador = window.setTimeout(() => onSaved(registrada), tiempo);
     return () => window.clearTimeout(temporizador);
   }, [registrada, onSaved]);
 
@@ -210,15 +212,44 @@ export const RegistrarCompraModal: React.FC<RegistrarCompraModalProps> = ({ onCl
             {registrada && (
               <div
                 role="status"
-                className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-800 animate-pulse"
+                className={`flex flex-col gap-2 rounded-xl border p-4 shadow-xs ${
+                  registrada.advertencias && registrada.advertencias.length > 0
+                    ? 'border-amber-200 bg-amber-50 text-amber-900'
+                    : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                }`}
               >
-                <CheckCircle2 className="w-5 h-5 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-sm font-bold">¡Compra registrada!</p>
-                  <p className="text-xs">
-                    Compra #{registrada.id_compra} a {registrada.proveedor_nombre} por Bs {registrada.total}. El
-                    stock ya fue actualizado.
-                  </p>
+                <div className="flex items-start gap-3">
+                  {registrada.advertencias && registrada.advertencias.length > 0 ? (
+                    <AlertTriangle className="w-5 h-5 mt-0.5 text-amber-600 shrink-0" />
+                  ) : (
+                    <CheckCircle2 className="w-5 h-5 mt-0.5 text-emerald-600 shrink-0" />
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm font-bold">¡Compra registrada exitosamente!</p>
+                    <p className="text-xs mt-0.5">
+                      Compra #{registrada.id_compra} a {registrada.proveedor_nombre} por Bs {registrada.total}. El
+                      stock ya fue actualizado.
+                    </p>
+                    {registrada.advertencias && registrada.advertencias.length > 0 && (
+                      <div className="mt-2.5 rounded-lg border border-amber-200 bg-white/90 p-2.5 text-xs text-amber-900">
+                        <p className="font-semibold text-amber-800">
+                          Advertencia de variación inusual registrada en bitácora:
+                        </p>
+                        <ul className="mt-1 list-disc list-inside space-y-1 text-[11px] text-amber-800">
+                          {registrada.advertencias.map((adv, idx) => (
+                            <li key={idx}>{adv}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onSaved(registrada)}
+                    className="text-xs font-semibold underline text-amber-900 hover:text-amber-700 cursor-pointer self-start"
+                  >
+                    Aceptar
+                  </button>
                 </div>
               </div>
             )}
@@ -269,8 +300,21 @@ export const RegistrarCompraModal: React.FC<RegistrarCompraModalProps> = ({ onCl
               {lineas.map((linea, indice) => {
                 const materia = materiaPorId.get(linea.id_materia_prima);
                 const error = errores.lineas[linea.clave];
+                const cantidadNum = aNumero(linea.cantidad);
+                const precioNum = aNumero(linea.precio_unitario);
+                const ultimoPrecioNum = materia?.precio_ultima_compra
+                  ? Number(materia.precio_ultima_compra)
+                  : null;
+
+                // Variación porcentual en tiempo real
+                let variacionPorcentual: number | null = null;
+                if (ultimoPrecioNum && ultimoPrecioNum > 0 && precioNum > 0) {
+                  const diff = precioNum - ultimoPrecioNum;
+                  variacionPorcentual = (diff / ultimoPrecioNum) * 100;
+                }
+
                 return (
-                  <div key={linea.clave} className="rounded-xl border border-slate-100 p-3">
+                  <div key={linea.clave} className="rounded-xl border border-slate-100 p-3 bg-white">
                     <div className="grid grid-cols-12 gap-2 items-end">
                       <div className="col-span-12 sm:col-span-5">
                         <label htmlFor={`insumo-${linea.clave}`} className="block text-[11px] text-slate-500 mb-1">
@@ -338,11 +382,33 @@ export const RegistrarCompraModal: React.FC<RegistrarCompraModalProps> = ({ onCl
                         </button>
                       </div>
                     </div>
+
+                    {/* Badges de Información de Stock y Alertas */}
                     {materia && (
-                      <p className="mt-1.5 text-[11px] text-slate-500">
-                        Stock actual: {materia.stock_actual} {materia.unidad_medida}
-                        {materia.precio_ultima_compra ? ` · Último precio: Bs ${materia.precio_ultima_compra}` : ''}
-                      </p>
+                      <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700">
+                          Stock actual: <strong className="font-semibold">{materia.stock_actual} {materia.unidad_medida}</strong>
+                        </span>
+
+                        {cantidadNum > 0 && (
+                          <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-medium text-emerald-800">
+                            Nuevo stock proyectado: <strong className="font-semibold">{(Number(materia.stock_actual || 0) + cantidadNum).toFixed(3)} {materia.unidad_medida}</strong>
+                          </span>
+                        )}
+
+                        {materia.precio_ultima_compra && (
+                          <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+                            Último precio: Bs {materia.precio_ultima_compra}
+                          </span>
+                        )}
+
+                        {variacionPorcentual !== null && Math.abs(variacionPorcentual) >= 50 && (
+                          <span className="inline-flex items-center gap-1 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-1 text-[11px] font-medium text-amber-800">
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                            Aviso: Variación de precio {variacionPorcentual > 0 ? '+' : ''}{variacionPorcentual.toFixed(1)}% vs anterior
+                          </span>
+                        )}
+                      </div>
                     )}
                     {error && <p className="mt-1 text-[11px] text-red-600">{error}</p>}
                   </div>

@@ -1,6 +1,7 @@
 import api from './api';
 import type {
   Compra,
+  CompraFiltros,
   CompraPayload,
   CompraResumen,
   MateriaPrima,
@@ -13,8 +14,8 @@ export interface MateriaPrimaFiltros {
 
 export const compraService = {
   /** GET /api/compras/ — listado de compras registradas (CU7) */
-  async listar(): Promise<CompraResumen[]> {
-    const response = await api.get<CompraResumen[]>('/compras/');
+  async listar(filtros?: CompraFiltros): Promise<CompraResumen[]> {
+    const response = await api.get<CompraResumen[]>('/compras/', { params: filtros });
     return response.data;
   },
 

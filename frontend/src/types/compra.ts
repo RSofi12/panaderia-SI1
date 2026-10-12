@@ -20,6 +20,7 @@ export interface Compra {
   fecha_hora: string;
   total: string;
   detalles: CompraDetalle[];
+  advertencias?: string[];
 }
 
 export interface CompraResumen {
@@ -30,6 +31,13 @@ export interface CompraResumen {
   fecha_hora: string;
   total: string;
   cantidad_lineas: number;
+}
+
+export interface CompraFiltros {
+  id_proveedor?: number | string;
+  fecha_desde?: string;
+  fecha_hasta?: string;
+  search?: string;
 }
 
 // ---------- Entrada: lo que el formulario manda en el POST ----------

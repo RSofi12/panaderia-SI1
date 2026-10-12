@@ -143,12 +143,30 @@ def registrar_compra(*, usuario, id_proveedor, lineas, agente_usuario=None):
         total=Decimal('0'),
     )
 
+    advertencias: list[str] = []
     total = Decimal('0')
     for linea in lineas_norm:
         materia = materias[linea['id_materia_prima']]
         inventario = inventarios[materia.id_materia_prima]
         cantidad = linea['cantidad']
         precio_unitario = linea['precio_unitario']
+
+        # Detección de variación inusual con respecto al último precio registrado (>= 50%)
+        ultimo_historial = (
+            HistorialPrecioMateriaPrima.objects.filter(id_materia_prima=materia)
+            .order_by('-fecha_inicio', '-id_historial')
+            .first()
+        )
+        if ultimo_historial and ultimo_historial.precio > 0:
+            ultimo_precio = ultimo_historial.precio
+            diff = precio_unitario - ultimo_precio
+            porcentaje = (diff / ultimo_precio) * Decimal('100')
+            if abs(porcentaje) >= Decimal('50'):
+                signo = '+' if porcentaje > 0 else ''
+                advertencias.append(
+                    f'Variación inusual en «{materia.nombre}»: precio Bs {precio_unitario} '
+                    f'vs último registrado Bs {ultimo_precio} ({signo}{porcentaje:.1f}%)'
+                )
 
         subtotal = (cantidad * precio_unitario).quantize(
             Decimal('0.01'),
@@ -180,15 +198,20 @@ def registrar_compra(*, usuario, id_proveedor, lineas, agente_usuario=None):
 
     compra.total = total
     compra.save(update_fields=['total'])
+    compra.advertencias = advertencias
+
+    descripcion_bitacora = (
+        f'Compra #{compra.id_compra} — proveedor {proveedor.nombre} — '
+        f'total Bs {compra.total}'
+    )
+    if advertencias:
+        descripcion_bitacora += f' [ADVERTENCIA PRECIO: {"; ".join(advertencias)}]'
 
     Bitacora.registrar(
         usuario=usuario,
         accion=AccionBitacora.ALTA_COMPRA,
         tabla_afectada='compra',
-        descripcion=(
-            f'Compra #{compra.id_compra} — proveedor {proveedor.nombre} — '
-            f'total Bs {compra.total}'
-        ),
+        descripcion=descripcion_bitacora,
         agente_usuario=agente_usuario,
     )
 

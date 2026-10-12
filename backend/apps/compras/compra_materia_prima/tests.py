@@ -165,3 +165,74 @@ class PruebasDatosInvalidos(BasePruebaCU7):
         self.inventario.refresh_from_db()
         self.assertEqual(self.inventario.stock_actual, Decimal('0'))
         self.assertEqual(Compra.objects.count(), 0)
+
+
+class PruebasMejorasCU7(BasePruebaCU7):
+    def test_variacion_precio_retorna_advertencia_sin_bloquear_y_registra_en_bitacora(self):
+        # 1. Precio inicial registrado: 10.00
+        HistorialPrecioMateriaPrima.objects.create(
+            id_materia_prima=self.harina,
+            precio=Decimal('10.00'),
+        )
+        self.client.force_authenticate(user=self.propietario)
+
+        # 2. Compra con variación >= 50% (precio 20.00, +100%)
+        payload = self._payload(
+            detalles=[
+                {
+                    'id_materia_prima': self.harina.id_materia_prima,
+                    'cantidad': '5.000',
+                    'precio_unitario': '20.00',
+                }
+            ]
+        )
+        respuesta = self.client.post('/api/compras/', payload, format='json')
+
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertIn('advertencias', respuesta.data)
+        self.assertEqual(len(respuesta.data['advertencias']), 1)
+        self.assertIn('Variación inusual en «Harina»', respuesta.data['advertencias'][0])
+
+        # Verificar que quedó registrado en bitácora con la advertencia
+        bitacora = Bitacora.objects.filter(
+            accion=AccionBitacora.ALTA_COMPRA,
+            tabla_afectada='compra',
+        ).latest('id_bitacora')
+        self.assertIn('[ADVERTENCIA PRECIO:', bitacora.descripcion)
+
+    def test_listado_con_filtros_y_conteo_lineas(self):
+        self.client.force_authenticate(user=self.propietario)
+        # Crear compra para Molinos del Oriente
+        self.client.post('/api/compras/', self._payload(), format='json')
+
+        # Crear segundo proveedor y compra
+        otro_proveedor = Proveedor.objects.create(nombre='Distribuidora Central', activo=True)
+        payload2 = self._payload(
+            id_proveedor=otro_proveedor.id_proveedor,
+            detalles=[
+                {
+                    'id_materia_prima': self.harina.id_materia_prima,
+                    'cantidad': '2.000',
+                    'precio_unitario': '5.00',
+                }
+            ],
+        )
+        self.client.post('/api/compras/', payload2, format='json')
+
+        # Listado general sin filtros
+        res_todos = self.client.get('/api/compras/')
+        self.assertEqual(res_todos.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_todos.data), 2)
+        self.assertEqual(res_todos.data[0]['cantidad_lineas'], 1)
+
+        # Filtro por search 'Central'
+        res_search = self.client.get('/api/compras/?search=Central')
+        self.assertEqual(res_search.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_search.data), 1)
+        self.assertEqual(res_search.data[0]['proveedor_nombre'], 'Distribuidora Central')
+
+        # Filtro por id_proveedor
+        res_prov = self.client.get(f'/api/compras/?id_proveedor={self.proveedor.id_proveedor}')
+        self.assertEqual(res_prov.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_prov.data), 1)
+        self.assertEqual(res_prov.data[0]['proveedor_nombre'], 'Molinos del Oriente')
