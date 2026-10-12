@@ -39,25 +39,29 @@ Se preservó estrictamente toda la lógica del equipo (cálculo automático de p
    - `management/commands/seed_materias_primas.py`: Seeder de insumos base con inventario inicial.
    - `tests.py`: Prueba de consulta de catálogo de materias primas con stock y precios.
 
-3. **Creación de la sub-app `apps.productos_inventario.produccion` (CU10, CU11, CU12, CU18):**
+3. **Creación de la sub-app `apps.productos_inventario.produccion` (CU10, CU11):**
    - `apps.py`: Define `name = 'apps.productos_inventario.produccion'` con label `produccion`.
-   - `models.py`: Estructura ORM base según `Database_Panaderia_Santiago.sql` sin implementar aún la lógica de servicios:
-     - `Produccion` (CU10, CU11): Cabecera de producción con fecha, jornada y responsable.
-     - `DetalleProduccion` (CU10, CU11): Cantidad de pan elaborado y costo unitario.
-     - `InventarioProductoTerminado` (CU12): Existencias de pan terminado disponible para venta.
-     - `MovimientoProductoTerminado`: Trazabilidad de entradas (producción) y salidas (ventas, mermas).
-     - `NotaPerdidaProducto` (CU18): Registro de mermas de pan no vendido.
-   - `admin.py`, `serializers.py`, `views.py`, `urls.py`: Scaffolding base limpio para endpoints `/api/produccion/` y `/api/productos-terminados/existencias/`.
-   - Conectada a `config/settings.py` (`INSTALLED_APPS`) y `apps/productos_inventario/urls.py`.
+   - `models.py`: Estructura ORM base de elaboración de pan:
+     - `Produccion` (CU10, CU11): Cabecera de jornada/lote con fecha, jornada y responsable.
+     - `DetalleProduccion` (CU10, CU11): Cantidad de pan producido y costo unitario.
+   - `admin.py`, `serializers.py`, `views.py`, `urls.py`: Scaffolding base limpio para `/api/produccion/`.
 
-4. **Ampliación de alcance de CU08: «Gestionar materia prima» (CRUD + Inventario):**
+4. **Creación de la sub-app `apps.productos_inventario.productos_terminados` (CU12, CU18):**
+   - `apps.py`: Define `name = 'apps.productos_inventario.productos_terminados'` con label `productos_terminados`.
+   - `models.py`: Estructura ORM de existencias y mermas:
+     - `InventarioProductoTerminado` (CU12): Existencias de pan terminado listo para venta.
+     - `MovimientoProductoTerminado`: Kardex de entradas (producción) y salidas (ventas, mermas).
+     - `NotaPerdidaProducto` (CU18): Registro de mermas de pan no vendido.
+   - `admin.py`, `serializers.py`, `views.py`, `urls.py`: Scaffolding base limpio para `/api/productos-terminados/existencias/` y `/api/productos-terminados/mermas/`.
+
+5. **Ampliación de alcance de CU08: «Gestionar materia prima» (CRUD + Inventario):**
    - Se resolvió el vacío funcional del MRP donde ningún caso de uso creaba ni editaba insumos.
    - CU08 pasa de ser solo «Consultar stock de materia prima» a **«Gestionar materia prima»** (alta, edición de nombre/unidad/stock mínimo, baja lógica e inventario actual), permitiendo configurar el `stock_minimo` del cual depende la alerta de **CU09**.
    - Se mantiene la matriz de 26 Casos de Uso del PUDS sin alterar la planificación ni crear un CU27 artificial.
    - Se articuló la receta (`producto_materia_prima`) entre CU05 y CU10 en el Ciclo 2.
 
-5. **Integración con otros módulos:**
-   - `config/settings.py`: Registradas `'apps.productos_inventario.productos'`, `'apps.productos_inventario.materia_prima'` y `'apps.productos_inventario.produccion'` en `INSTALLED_APPS`.
+6. **Integración con otros módulos:**
+   - `config/settings.py`: Registradas `'apps.productos_inventario.productos'`, `'apps.productos_inventario.materia_prima'`, `'apps.productos_inventario.produccion'` y `'apps.productos_inventario.productos_terminados'` en `INSTALLED_APPS`.
    - `apps.compras.compra_materia_prima`:
      - `models.py`: `DetalleCompra.id_materia_prima` actualizado a `'materia_prima.MateriaPrima'`.
      - `services/registrar_compra.py`: Imports actualizados a `apps.productos_inventario.materia_prima.models`.

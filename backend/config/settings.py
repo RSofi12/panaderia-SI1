@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'apps.productos_inventario.productos',
     'apps.productos_inventario.materia_prima',
     'apps.productos_inventario.produccion',
+    'apps.productos_inventario.productos_terminados',
 
     # Paquete 3: Compras y Proveedores
     'apps.compras',

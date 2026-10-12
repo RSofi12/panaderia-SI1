@@ -109,8 +109,19 @@ backend/
 │   │   │   ├── views.py         # MateriaPrimaListView
 │   │   │   ├── tests.py         # Pruebas unitarias de catálogo de insumos
 │   │   │   └── management/commands/seed_materias_primas.py
+│   │   ├── produccion/          # ⭐ Sub-app Fábrica / Elaboración: CU10 Producción diaria y CU11 Historial
+│   │   │   ├── apps.py          # name = 'apps.productos_inventario.produccion'
+│   │   │   ├── models.py        # Produccion, DetalleProduccion
+│   │   │   ├── serializers.py   # Serializadores de orden de producción
+│   │   │   ├── views.py         # ProduccionListCreateView (/api/produccion/)
+│   │   │   └── urls.py
 │   │   │
-│   │   └── produccion/          # 🔮 Sub-app reservada: CU10, CU11, CU12, CU18 (Ciclo 2 y 3)
+│   │   └── productos_terminados/# ⭐ Sub-app Inventario y Mostrador: CU12 Existencias pan y CU18 Mermas
+│   │       ├── apps.py          # name = 'apps.productos_inventario.productos_terminados'
+│   │       ├── models.py        # InventarioProductoTerminado, MovimientoProductoTerminado, NotaPerdidaProducto
+│   │       ├── serializers.py   # Serializadores de inventario y mermas
+│   │       ├── views.py         # Existencias (/api/productos-terminados/existencias/) y Mermas (/api/productos-terminados/mermas/)
+│   │       └── urls.py
 │   │
 │   ├── compras/                 # Módulo 3: Proveedores, Compras de Insumos y Gastos
 │   │   ├── __init__.py

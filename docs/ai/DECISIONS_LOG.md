@@ -473,3 +473,12 @@
 - **Motivo:** Resolver el vacío funcional detectado (ningún CU administraba el maestro de insumos ni permitía ajustar el stock mínimo del cual depende la alerta de CU09 y la selección en compras de CU07).
 - **Impacto:** Sistema robusto y autosuficiente; evita cargas manuales directas a base de datos y unifica la UI de gestión de insumos con la supervisión de stock en una sola vista eficiente.
 
+### 41. Modularización Simétrica de `productos_inventario` en 4 Sub-apps (2 Casos de Uso por Sub-app)
+- **Decisión:** Separar las responsabilidades de producción e inventario terminado dividiendo el paquete `backend/apps/productos_inventario/` en 4 sub-apps simétricas de exactamente 2 Casos de Uso cada una:
+  1. `productos/`: CU05 (Catálogo base) y CU19 (Historial precio venta) + Recetas.
+  2. `materia_prima/`: CU08 (Gestión MP y stock) y CU09 (Alertas de bajo stock).
+  3. `produccion/`: CU10 (Registrar producción diaria) y CU11 (Consultar historial de producción). Modelos: `Produccion` y `DetalleProduccion`.
+  4. `productos_terminados/`: CU12 (Consultar existencias de pan terminado) y CU18 (Registrar baja / mermas). Modelos: `InventarioProductoTerminado`, `MovimientoProductoTerminado` y `NotaPerdidaProducto`.
+- **Motivo:** Evitar la sobrecarga de una única sub-app `produccion/` que concentraba 4 CUs dispares, separando claramente la fábrica/elaboración (responsabilidad del maestro panadero) del almacén de mostrador y mermas (responsabilidad de ventas y administración).
+- **Impacto:** Archivos concisos (< 80 líneas), desacoplamiento total de desarrollo entre compañeros del equipo y estructura simétrica en todo el backend.
+

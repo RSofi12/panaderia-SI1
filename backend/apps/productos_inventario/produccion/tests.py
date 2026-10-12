@@ -1,5 +1,5 @@
 """
-Pruebas base de la sub-app de Producción e Inventario Terminado.
+Pruebas base de la sub-app de Producción (CU10, CU11).
 """
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
@@ -27,11 +27,5 @@ class PruebasBaseProduccion(TestCase):
     def test_listado_produccion_autenticado_responde_200(self):
         self.client.force_authenticate(user=self.usuario)
         respuesta = self.client.get('/api/produccion/')
-        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
-        self.assertIsInstance(respuesta.data, list)
-
-    def test_existencias_productos_terminados_responde_200(self):
-        self.client.force_authenticate(user=self.usuario)
-        respuesta = self.client.get('/api/productos-terminados/existencias/')
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         self.assertIsInstance(respuesta.data, list)

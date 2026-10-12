@@ -50,23 +50,23 @@ Alias lógico: `apps/UsuariosSeguridad/*`
   Identificación de las materias primas cuyo stock actual está por debajo del stock mínimo definido, para gestionar oportunamente su reposición.
   **Actor(es):** Personal de Producción, Propietario
 
-- **CU10 Registrar producción diaria** -> `apps.productos_inventario` (Ciclo 2)
+- **CU10 Registrar producción diaria** -> `apps.productos_inventario.produccion` (Ciclo 2)
   Registro de las cantidades producidas de cada tipo de pan por jornada; descuenta automáticamente las materias primas consumidas e incrementa el stock de productos terminados.
   **Actor(es):** Personal de Producción
 
-- **CU11 Consultar historial de producción** -> `apps.productos_inventario` (Ciclo 2)
+- **CU11 Consultar historial de producción** -> `apps.productos_inventario.produccion` (Ciclo 2)
   Consulta de las producciones registradas por fecha o por producto, para comparar lo producido con lo vendido.
   **Actor(es):** Personal de Producción
 
-- **CU12 Consultar existencias de productos terminados** -> `apps.productos_inventario` (Ciclo 2)
-  Consulta del stock disponible de cada tipo de pan listo para la venta.
+- **CU12 Consultar existencias de productos terminados** -> `apps.productos_inventario.productos_terminados` (Ciclo 2)
+  Consulta del stock disponible de cada tipo de pan listo para la venta en mostrador.
   **Actor(es):** Propietario, Personal de Ventas
 
-- **CU18 Registrar baja de productos terminados** -> `apps.productos_inventario` (Ciclo 3)
+- **CU18 Registrar baja de productos terminados** -> `apps.productos_inventario.productos_terminados` (Ciclo 3)
   Registro de mermas o pérdidas de productos terminados que no llegaron a venderse, descontando el inventario correspondiente.
   **Actor(es):** Personal de Producción
 
-- **CU19 Consultar historial de precios** -> `apps.productos_inventario` (Ciclo 3)
+- **CU19 Consultar historial de precios** -> `apps.productos_inventario.productos` (Ciclo 3)
   Consulta de los cambios históricos en el precio de venta de un producto a lo largo del tiempo.
   **Actor(es):** Propietario
 
