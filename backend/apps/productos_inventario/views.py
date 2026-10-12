@@ -1,14 +1,20 @@
 from django.db import transaction
+from django.db.models import F
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.usuarios_seguridad.bitacora.models import AccionBitacora, Bitacora
 
-from .models import CategoriaProducto, HistorialPrecioProducto, Producto
+from .models import CategoriaProducto, HistorialPrecioProducto, MateriaPrima, Producto
 from .permissions import PuedeGestionarProductos
-from .serializers import CategoriaProductoSerializer, ProductoSerializer
+from .serializers import (
+    CategoriaProductoSerializer,
+    MateriaPrimaStockSerializer,
+    ProductoSerializer,
+)
 
 
 class CategoriaProductoListView(APIView):
@@ -134,3 +140,30 @@ class ProductoToggleActivoView(APIView):
             )
 
         return Response(ProductoSerializer(producto).data)
+
+
+class MateriaPrimaStockListView(APIView):
+    """
+    GET /api/inventario/materias-primas/ — Stock de materia prima (CU8, solo lectura).
+    Filtros: ?nombre=, ?activo=true|false (por defecto solo activas), ?bajo_minimo=true
+    """
+    # TEMPORAL: se cambia por PuedeConsultarInventario cuando creemos el permiso.
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        materias = MateriaPrima.objects.select_related('inventario')
+
+        nombre = request.query_params.get('nombre')
+        activo = request.query_params.get('activo')
+        bajo_minimo = request.query_params.get('bajo_minimo')
+
+        if nombre:
+            materias = materias.filter(nombre__icontains=nombre.strip())
+        if activo in ('true', 'false'):
+            materias = materias.filter(activo=(activo == 'true'))
+        else:
+            materias = materias.filter(activo=True)
+        if bajo_minimo == 'true':
+            materias = materias.filter(inventario__stock_actual__lte=F('stock_minimo'))
+
+        return Response(MateriaPrimaStockSerializer(materias, many=True).data)

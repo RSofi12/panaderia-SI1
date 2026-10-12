@@ -95,3 +95,44 @@ class HistorialPrecioProducto(models.Model):
 
     def __str__(self):
         return f'{self.id_producto.nombre}: Bs {self.precio} ({self.fecha_inicio:%Y-%m-%d})'
+
+
+class MateriaPrima(models.Model):
+    """Insumo del catálogo (tabla 'materia_prima')."""
+    id_materia_prima = models.BigAutoField(primary_key=True)
+    nombre = models.CharField(max_length=100, verbose_name='Nombre de la materia prima')
+    unidad_medida = models.CharField(max_length=20, verbose_name='Unidad de medida')
+    stock_minimo = models.DecimalField(
+        max_digits=10, decimal_places=3, default=0, verbose_name='Stock mínimo'
+    )
+    fecha_registro = models.DateTimeField(default=timezone.now, verbose_name='Fecha de registro')
+    activo = models.BooleanField(default=True, verbose_name='Materia prima activa')
+
+    class Meta:
+        db_table = 'materia_prima'
+        verbose_name = 'Materia prima'
+        verbose_name_plural = 'Materias primas'
+        ordering = ['nombre']
+
+    def __str__(self):
+        return self.nombre
+
+
+class InventarioMateriaPrima(models.Model):
+    """Existencias actuales de cada materia prima (tabla 'inventario_materia_prima')."""
+    id_inventario = models.BigAutoField(primary_key=True)
+    id_materia_prima = models.OneToOneField(
+        MateriaPrima,
+        on_delete=models.PROTECT,
+        db_column='id_materia_prima',
+        related_name='inventario',
+        verbose_name='Materia prima'
+    )
+    stock_actual = models.DecimalField(
+        max_digits=10, decimal_places=3, default=0, verbose_name='Stock actual'
+    )
+
+    class Meta: 
+        db_table = 'inventario_materia_prima'
+        verbose_name = 'Inventario de materia prima'
+        

@@ -55,3 +55,38 @@ class ProductoSerializer(serializers.ModelSerializer):
         if value <= Decimal('0'):
             raise serializers.ValidationError('El precio de venta debe ser mayor a cero.')
         return value
+# agregando
+
+from .models import CategoriaProducto, MateriaPrima, Producto
+class MateriaPrimaStockSerializer(serializers.ModelSerializer):
+    """Solo lectura: stock de materia prima con su estado (CU8)."""
+    stock_actual = serializers.SerializerMethodField()
+    estado = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MateriaPrima
+        fields = [
+            'id_materia_prima',
+            'nombre',
+            'unidad_medida',
+            'stock_actual',
+            'stock_minimo',
+            'estado',
+            'activo',
+        ]
+        read_only_fields = fields
+
+    def _stock(self, obj):
+        inventario = getattr(obj, 'inventario', None)
+        return inventario.stock_actual if inventario else Decimal('0')
+
+    def get_stock_actual(self, obj):
+        return self._stock(obj)
+
+    def get_estado(self, obj):
+        stock = self._stock(obj)
+        if stock <= Decimal('0'):
+            return 'agotado'
+        if stock <= obj.stock_minimo:
+            return 'bajo_minimo'
+        return 'normal'
