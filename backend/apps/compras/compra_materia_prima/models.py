@@ -55,7 +55,7 @@ class DetalleCompra(models.Model):
         verbose_name='Compra',
     )
     id_materia_prima = models.ForeignKey(
-        'productos_inventario.MateriaPrima',
+        'materia_prima.MateriaPrima',
         on_delete=models.PROTECT,
         db_column='id_materia_prima',
         related_name='detalles_compra',

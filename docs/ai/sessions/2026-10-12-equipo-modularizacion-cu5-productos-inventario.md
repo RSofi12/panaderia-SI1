@@ -1,0 +1,92 @@
+# Sesión de Desarrollo: Modularización del CU5 e Insumos en Sub-apps de `productos_inventario`
+
+- **Fecha:** 2026-10-12
+- **Autor / Integrante:** Equipo Panadería Santiago (Pair Programming con Asistente IA)
+- **Paquete / Módulo:** `apps.productos_inventario` -> `apps.productos_inventario.productos` & `apps.productos_inventario.materia_prima`
+- **Casos de Uso abordados:** CU05 (Gestionar productos), soporte de CU07 (Catálogo compras), base de CU08 / CU09 (Stock y alertas de insumos)
+- **Ciclo:** Ciclo 1 & Ciclo 2
+
+---
+
+## 1. 🎯 Objetivo de la sesión
+Reorganizar la arquitectura del paquete `backend/apps/productos_inventario/` para desacoplar el caso de uso **CU05 (Gestionar productos)** en una sub-app dedicada denominada `productos`, y el catálogo e inventario de insumos en una sub-app dedicada `materia_prima`. Esto consolida el patrón de arquitectura limpia por sub-apps en todos los módulos del backend (`usuarios_seguridad`, `compras` y ahora `productos_inventario`).
+
+Se preservó estrictamente toda la lógica del equipo (cálculo automático de precio sugerido, histórico de precios de productos, filtros de categorías, toggle de activo y registro en bitácora), asegurando la integridad física en PostgreSQL mediante migraciones con `SeparateDatabaseAndState`.
+
+---
+
+## 2. 🛠️ Cambios realizados
+
+### Backend
+1. **Creación de la sub-app `apps.productos_inventario.productos` (CU05):**
+   - `apps.py`: Define `name = 'apps.productos_inventario.productos'` con label `productos`.
+   - `models.py`: Clases `CategoriaProducto` (`db_table = 'categoria_producto'`), `Producto` (`db_table = 'producto'`) con método `calcular_precio_sugerido()`, y `HistorialPrecioProducto` (`db_table = 'historial_precio_producto'`).
+   - `permissions.py`: Clase de permiso `PuedeGestionarProductos` (RBAC con permiso `gestionar_productos`).
+   - `serializers.py`: `CategoriaProductoSerializer` y `ProductoSerializer` con validaciones de costo, porcentaje de ganancia y precio de venta.
+   - `views.py`: Vistas `CategoriaProductoListView`, `ProductoListCreateView`, `ProductoDetailView` y `ProductoToggleActivoView` con trazabilidad completa en `Bitacora`.
+   - `urls.py`: Rutas `categorias-producto/`, `productos/`, `productos/<int:pk>/`, `productos/<int:pk>/toggle-activo/`.
+   - `admin.py`: `CategoriaProductoAdmin`, `ProductoAdmin`, `HistorialPrecioProductoAdmin`.
+   - `management/commands/seed_productos.py`: Seeder idempotente de categorías y catálogo de panes.
+   - `tests.py`: Suite de 3 pruebas unitarias (listado con filtros, creación con cálculo de precio sugerido y bitácora, y toggle activo).
+
+2. **Creación de la sub-app `apps.productos_inventario.materia_prima` (Insumos / Inventario):**
+   - `apps.py`: Define `name = 'apps.productos_inventario.materia_prima'` con label `materia_prima`.
+   - `models.py`: Clases `MateriaPrima`, `InventarioMateriaPrima`, `HistorialPrecioMateriaPrima`, `MovimientoMateriaPrima` (con FK a `'compra_materia_prima.Compra'`).
+   - `serializers.py`: `MateriaPrimaSerializer` con cálculo de stock actual y precio de última compra.
+   - `views.py`: `MateriaPrimaListView` (GET `/api/materias-primas/`).
+   - `urls.py`: Ruta `materias-primas/`.
+   - `admin.py`: Registro de insumos, stock, precios y movimientos.
+   - `management/commands/seed_materias_primas.py`: Seeder de insumos base con inventario inicial.
+   - `tests.py`: Prueba de consulta de catálogo de materias primas con stock y precios.
+
+3. **Integración con otros módulos:**
+   - `config/settings.py`: Registradas `'apps.productos_inventario.productos'` y `'apps.productos_inventario.materia_prima'` en `INSTALLED_APPS`.
+   - `apps.compras.compra_materia_prima`:
+     - `models.py`: `DetalleCompra.id_materia_prima` actualizado a `'materia_prima.MateriaPrima'`.
+     - `services/registrar_compra.py`: Imports actualizados a `apps.productos_inventario.materia_prima.models`.
+     - `management/commands/seed_compras.py`: Import actualizado a `apps.productos_inventario.materia_prima.models`.
+     - `tests.py`: Imports actualizados a `apps.productos_inventario.materia_prima.models`.
+
+4. **Depuración de la raíz `apps.productos_inventario`:**
+   - Se eliminaron todos los archivos sueltos y redundantes de la raíz (`models.py`, `views.py`, `serializers.py`, `permissions.py`, `admin.py`, `tests.py`, `management/`).
+   - `urls.py`: Actúa como router paraguas que incluye las rutas de `productos` y `materia_prima` sin modificar las URLs públicas de la API.
+
+5. **Migraciones con preservación física de datos:**
+   - `productos/migrations/0001_initial.py`: Registra modelos en estado de Django usando `SeparateDatabaseAndState` con `database_operations=[]`.
+   - `materia_prima/migrations/0001_initial.py`: Registra modelos de insumos en estado de Django usando `SeparateDatabaseAndState`.
+   - `compra_materia_prima/migrations/0003_alter_detallecompra_id_materia_prima.py`: Actualiza la relación FK en estado de Django usando `SeparateDatabaseAndState`.
+   - `productos_inventario/migrations/0007_remove_producto_id_categoria_and_more.py`: Desvincula los modelos del estado de la app raíz usando `SeparateDatabaseAndState` sin emitir `DROP TABLE`.
+
+---
+
+## 3. 🧠 Decisiones técnicas tomadas
+- **Incolumidad de la Base de Datos:** Cero pérdida de datos. Las tablas físicas `categoria_producto`, `producto`, `historial_precio_producto`, `materia_prima`, `inventario_materia_prima`, `historial_precio_materia_prima` y `movimiento_materia_prima` permanecen intactas en PostgreSQL.
+- **Transparencia en el Frontend:** Las rutas `/api/productos/`, `/api/categorias-producto/` y `/api/materias-primas/` conservan exactamente los mismos contratos JSON y nombres de endpoints.
+- **Consistencia Arquitectónica:** Todos los paquetes del proyecto (`usuarios_seguridad`, `compras`, `productos_inventario`) siguen exactamente el mismo estándar de sub-apps.
+
+---
+
+## 4. 🧪 Pruebas y verificación
+```powershell
+# 1. Django check
+.\venv\Scripts\python.exe manage.py check
+# Resultado: System check identified no issues (0 silenced).
+
+# 2. Migraciones
+.\venv\Scripts\python.exe manage.py migrate
+# Resultado:
+#   Applying materia_prima.0001_initial... OK
+#   Applying compra_materia_prima.0003_alter_detallecompra_id_materia_prima... OK
+#   Applying productos.0001_initial... OK
+#   Applying productos_inventario.0007_remove_producto_id_categoria_and_more... OK
+
+# 3. Suite completa de tests unitarios (15 pruebas en total)
+.\venv\Scripts\python.exe manage.py test apps.productos_inventario.productos.tests apps.productos_inventario.materia_prima.tests apps.compras.proveedores.tests apps.compras.compra_materia_prima.tests
+# Resultado: Ran 15 tests in 4.914s — OK
+
+# 4. Seeders
+.\venv\Scripts\python.exe manage.py seed_productos
+.\venv\Scripts\python.exe manage.py seed_materias_primas
+.\venv\Scripts\python.exe manage.py seed_compras
+# Resultado: Todos ejecutados con éxito.
+```

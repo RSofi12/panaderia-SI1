@@ -80,17 +80,37 @@ backend/
 │   │   └── views.py             # ViewSets y APIViews de seguridad
 │   │
 │   ├── productos_inventario/    # Módulo 2: Catálogo, Stock Insumos y Stock Panes
-│   │   ├── migrations/
 │   │   ├── __init__.py
-│   │   ├── admin.py
-│   │   ├── apps.py
-│   │   ├── models.py            # CategoriaProducto, Producto, MateriaPrima,
-│   │   │                        # InventarioMateriaPrima, InventarioProductoTerminado,
-│   │   │                        # Produccion, DetalleProduccion, Movimientos, etc.
-│   │   ├── serializers.py
-│   │   ├── services.py          # Lógica de producción (MRP), cálculo de costos y mermas
-│   │   ├── urls.py              # /api/productos/, /api/inventario/, /api/produccion/
-│   │   └── views.py
+│   │   ├── apps.py              # App base de productos_inventario
+│   │   ├── urls.py              # Router que centraliza /api/productos/, /api/categorias-producto/ y /api/materias-primas/
+│   │   ├── migrations/          # Historial de migraciones para PostgreSQL
+│   │   │
+│   │   ├── productos/           # ⭐ Sub-app CU05: Gestión de productos (+ CU19 Historial precios)
+│   │   │   ├── migrations/
+│   │   │   ├── __init__.py
+│   │   │   ├── apps.py          # name = 'apps.productos_inventario.productos'
+│   │   │   ├── models.py        # CategoriaProducto, Producto, HistorialPrecioProducto
+│   │   │   ├── admin.py         # CategoriaProductoAdmin, ProductoAdmin, HistorialPrecioProductoAdmin
+│   │   │   ├── permissions.py   # PuedeGestionarProductos
+│   │   │   ├── serializers.py   # CategoriaProductoSerializer, ProductoSerializer
+│   │   │   ├── urls.py          # Rutas /api/productos/ y /api/categorias-producto/
+│   │   │   ├── views.py         # CategoriaProductoListView, ProductoListCreateView, DetailView, ToggleActivoView
+│   │   │   ├── tests.py         # Pruebas unitarias CU05
+│   │   │   └── management/commands/seed_productos.py
+│   │   │
+│   │   ├── materia_prima/       # ⭐ Sub-app Insumos: CU08 Stock MP, CU09 Alertas y catálogo de compras
+│   │   │   ├── migrations/
+│   │   │   ├── __init__.py
+│   │   │   ├── apps.py          # name = 'apps.productos_inventario.materia_prima'
+│   │   │   ├── models.py        # MateriaPrima, InventarioMateriaPrima, HistorialPrecioMateriaPrima, MovimientoMateriaPrima
+│   │   │   ├── admin.py         # MateriaPrimaAdmin, InventarioMateriaPrimaAdmin, etc.
+│   │   │   ├── serializers.py   # MateriaPrimaSerializer
+│   │   │   ├── urls.py          # Rutas /api/materias-primas/
+│   │   │   ├── views.py         # MateriaPrimaListView
+│   │   │   ├── tests.py         # Pruebas unitarias de catálogo de insumos
+│   │   │   └── management/commands/seed_materias_primas.py
+│   │   │
+│   │   └── produccion/          # 🔮 Sub-app reservada: CU10, CU11, CU12, CU18 (Ciclo 2 y 3)
 │   │
 │   ├── compras/                 # Módulo 3: Proveedores, Compras de Insumos y Gastos
 │   │   ├── __init__.py

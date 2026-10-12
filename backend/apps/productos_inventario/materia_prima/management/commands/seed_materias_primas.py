@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from apps.productos_inventario.models import (
+from apps.productos_inventario.materia_prima.models import (
     HistorialPrecioMateriaPrima,
     InventarioMateriaPrima,
     MateriaPrima,
@@ -59,9 +59,6 @@ class Command(BaseCommand):
                     fecha_inicio=fecha_inicial,
                 )
 
-        self.stdout.write(
-            self.style.SUCCESS(
-                f'{creados} materias primas nuevas; '
-                f'{len(INSUMOS) - creados} ya existian y no se modificaron.'
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(
+            f'{creados} materias primas creadas con inventario inicial e historial de precio.'
+        ))

@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from apps.productos_inventario.models import CategoriaProducto, HistorialPrecioProducto, Producto
+from apps.productos_inventario.productos.models import CategoriaProducto, HistorialPrecioProducto, Producto
 
 # Fuente: docs/informes/Poblacion_4_Dias_Panaderia_Santiago.sql
 CATEGORIAS = [
@@ -61,17 +61,19 @@ class Command(BaseCommand):
                         'porcentaje_ganancia': Decimal(ganancia),
                         'precio_venta': Decimal(precio),
                         'fecha_registro': fecha_inicial,
+                        'activo': True,
                     },
                 )
-                if creado:
-                    creados += 1
-                    HistorialPrecioProducto.objects.create(
-                        id_producto=producto,
-                        precio=producto.precio_venta,
-                        fecha_inicio=fecha_inicial,
-                    )
+                if not creado:
+                    continue
 
-        self.stdout.write(self.style.SUCCESS(f'{len(categorias)} categorias procesadas.'))
+                creados += 1
+                HistorialPrecioProducto.objects.create(
+                    id_producto=producto,
+                    precio=Decimal(precio),
+                    fecha_inicio=fecha_inicial,
+                )
+
         self.stdout.write(self.style.SUCCESS(
-            f'{creados} productos nuevos; {len(PRODUCTOS) - creados} ya existian y no se modificaron.'
+            f'{creados} productos nuevos creados; {len(PRODUCTOS) - creados} ya existian.'
         ))

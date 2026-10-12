@@ -15,7 +15,7 @@ from rest_framework.test import APIClient
 
 from apps.compras.proveedores.models import Proveedor
 from apps.compras.compra_materia_prima.models import Compra, DetalleCompra
-from apps.productos_inventario.models import (
+from apps.productos_inventario.materia_prima.models import (
     HistorialPrecioMateriaPrima,
     InventarioMateriaPrima,
     MateriaPrima,

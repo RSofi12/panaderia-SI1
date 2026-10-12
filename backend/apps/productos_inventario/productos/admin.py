@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CategoriaProducto, HistorialPrecioProducto, Producto
+from apps.productos_inventario.productos.models import CategoriaProducto, HistorialPrecioProducto, Producto
 
 
 @admin.register(CategoriaProducto)

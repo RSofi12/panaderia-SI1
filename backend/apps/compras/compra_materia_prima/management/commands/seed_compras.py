@@ -11,7 +11,7 @@ from django.db import transaction
 from apps.compras.proveedores.models import Proveedor
 from apps.compras.compra_materia_prima.models import Compra
 from apps.compras.compra_materia_prima.services.registrar_compra import registrar_compra
-from apps.productos_inventario.models import MateriaPrima
+from apps.productos_inventario.materia_prima.models import MateriaPrima
 
 Usuario = get_user_model()
 
