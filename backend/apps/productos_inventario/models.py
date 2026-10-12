@@ -193,7 +193,7 @@ class MovimientoMateriaPrima(models.Model):
         verbose_name='Inventario',
     )
     id_compra = models.ForeignKey(
-        'compras.Compra',
+        'compra_materia_prima.Compra',
         on_delete=models.PROTECT,
         null=True,
         blank=True,

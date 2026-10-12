@@ -1,8 +1,6 @@
-from django.urls import path
+from django.urls import include, path
 
 from .views import (
-    CompraDetailView,
-    CompraListCreateView,
     ProveedorDetailView,
     ProveedorListCreateView,
     ProveedorToggleActivoView,
@@ -18,6 +16,5 @@ urlpatterns = [
         ProveedorToggleActivoView.as_view(),
         name='proveedor_toggle_activo',
     ),
-    path('compras/', CompraListCreateView.as_view(), name='compras'),
-    path('compras/<int:pk>/', CompraDetailView.as_view(), name='compra_detalle'),
+    path('compras/', include('apps.compras.compra_materia_prima.urls')),
 ]
