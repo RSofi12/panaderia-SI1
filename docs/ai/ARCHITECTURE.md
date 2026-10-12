@@ -95,11 +95,20 @@ backend/
 │   ├── compras/                 # Módulo 3: Proveedores, Compras de Insumos y Gastos
 │   │   ├── __init__.py
 │   │   ├── apps.py              # App base de compras
-│   │   ├── urls.py              # Router que incluye /api/proveedores/ y /api/compras/
-│   │   ├── models.py            # Proveedor (CU6) y re-exportaciones de compatibilidad
-│   │   ├── serializers.py       # Serializadores de proveedores
-│   │   ├── views.py             # Vistas de proveedores
-│   │   ├── permissions.py       # Permisos de proveedores
+│   │   ├── urls.py              # Router que centraliza /api/proveedores/ y /api/compras/
+│   │   ├── migrations/          # Historial de migraciones para PostgreSQL
+│   │   │
+│   │   ├── proveedores/         # ⭐ Sub-app CU6: Gestión de proveedores
+│   │   │   ├── migrations/
+│   │   │   ├── __init__.py
+│   │   │   ├── apps.py          # name = 'apps.compras.proveedores'
+│   │   │   ├── models.py        # Proveedor (db_table='proveedor')
+│   │   │   ├── permissions.py   # PuedeGestionarProveedores
+│   │   │   ├── serializers.py   # ProveedorSerializer, normalizar_telefono
+│   │   │   ├── urls.py          # Rutas /api/proveedores/
+│   │   │   ├── views.py         # ProveedorListCreateView, ProveedorDetailView, ProveedorToggleActivoView
+│   │   │   ├── tests.py         # Pruebas unitarias CU6 (CRUD, permisos, soft-delete, bitácora)
+│   │   │   └── management/commands/seed_proveedores.py
 │   │   │
 │   │   ├── compra_materia_prima/# ⭐ Sub-app CU7: Registro de compra de insumos
 │   │   │   ├── migrations/
@@ -112,7 +121,8 @@ backend/
 │   │   │   │   └── registrar_compra.py # Transacción atómica, stock, historial y bitácora
 │   │   │   ├── urls.py          # Rutas /api/compras/
 │   │   │   ├── views.py         # CompraListCreateView, CompraDetailView
-│   │   │   └── tests.py         # Pruebas unitarias y de integración CU7
+│   │   │   ├── tests.py         # Pruebas unitarias y de integración CU7
+│   │   │   └── management/commands/seed_compras.py
 │   │   │
 │   │   └── gastos/              # 🔮 Sub-app CU20: Ciclo 4 (Gastos e Inversiones)
 │   │

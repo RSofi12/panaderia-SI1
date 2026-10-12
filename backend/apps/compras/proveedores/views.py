@@ -7,14 +7,9 @@ from rest_framework.views import APIView
 
 from apps.usuarios_seguridad.bitacora.models import AccionBitacora, Bitacora
 
-from .models import Compra, Proveedor
-from .permissions import PuedeGestionarProveedores, PuedeRegistrarCompras
-from .serializers import (
-    CompraListSerializer,
-    CompraRegistroSerializer,
-    CompraSerializer,
-    ProveedorSerializer,
-)
+from .models import Proveedor
+from .permissions import PuedeGestionarProveedores
+from .serializers import ProveedorSerializer
 
 
 class ProveedorListCreateView(APIView):
@@ -118,10 +113,3 @@ class ProveedorToggleActivoView(APIView):
             )
 
         return Response(ProveedorSerializer(proveedor).data)
-
-# Vistas del CU7 organizadas en la sub-app compra_materia_prima
-from apps.compras.compra_materia_prima.views import (  # noqa: F401
-    CompraDetailView,
-    CompraListCreateView,
-)
-

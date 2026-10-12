@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from apps.compras.models import Proveedor
+from apps.compras.proveedores.models import Proveedor
 
 # Fuente: docs/informes/Poblacion_4_Dias_Panaderia_Santiago.sql
 PROVEEDORES = [

@@ -10,7 +10,7 @@ class Compra(models.Model):
     """
     id_compra = models.BigAutoField(primary_key=True)
     id_proveedor = models.ForeignKey(
-        'compras.Proveedor',
+        'proveedores.Proveedor',
         on_delete=models.PROTECT,
         db_column='id_proveedor',
         related_name='compras',

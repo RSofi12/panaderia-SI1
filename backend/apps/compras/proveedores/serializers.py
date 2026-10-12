@@ -1,12 +1,7 @@
 import re
-from decimal import Decimal
-
-from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
-from apps.compras.services.registrar_compra import registrar_compra
-
-from .models import Compra, DetalleCompra, Proveedor
+from .models import Proveedor
 
 # Teléfono boliviano típico: 7–8 dígitos locales, o +591 + 8 dígitos.
 # Se aceptan espacios, guiones y paréntesis al escribir; se guardan solo dígitos
@@ -86,15 +81,3 @@ class ProveedorSerializer(serializers.ModelSerializer):
         if value is None or not str(value).strip():
             raise serializers.ValidationError('La dirección del proveedor es obligatoria.')
         return str(value).strip()
-
-
-# Serializadores del CU7 organizados en la sub-app compra_materia_prima
-from apps.compras.compra_materia_prima.serializers import (  # noqa: F401
-    CompraDetalleEntradaSerializer,
-    CompraDetalleLecturaSerializer,
-    CompraListSerializer,
-    CompraRegistroSerializer,
-    CompraSerializer,
-)
-
-

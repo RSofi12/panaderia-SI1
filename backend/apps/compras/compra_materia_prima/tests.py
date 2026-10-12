@@ -13,7 +13,7 @@ from django.test import TestCase, override_settings
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.compras.models import Proveedor
+from apps.compras.proveedores.models import Proveedor
 from apps.compras.compra_materia_prima.models import Compra, DetalleCompra
 from apps.productos_inventario.models import (
     HistorialPrecioMateriaPrima,

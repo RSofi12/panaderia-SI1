@@ -76,7 +76,7 @@ Alias lógico: `apps/ProductosInventario/*`
 
 ## Gestión de Compras y Proveedores (CU06, CU07, CU20)
 
-- **CU06 Gestionar proveedores** -> `apps.compras` (Ciclo 1)
+- **CU06 Gestionar proveedores** -> `apps.compras.proveedores` (Ciclo 1)
   Registro y edición de los datos de los proveedores de materias primas e insumos.
   **Actor(es):** Propietario, Administrador
 

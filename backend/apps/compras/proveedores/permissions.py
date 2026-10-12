@@ -1,13 +1,6 @@
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
-# Quien registra una compra (CU7) necesita elegir un proveedor, así que también
-# puede consultar el directorio aunque no pueda modificarlo.
 PERMISOS_LECTURA = {'gestionar_proveedores', 'registrar_compras'}
-
-
-# Permiso del CU7 organizado en la sub-app compra_materia_prima
-from apps.compras.compra_materia_prima.permissions import PuedeRegistrarCompras  # noqa: F401
-
 
 
 class PuedeGestionarProveedores(BasePermission):

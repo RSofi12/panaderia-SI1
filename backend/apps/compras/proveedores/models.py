@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.db import models
 from django.db.models.functions import Lower
 from django.utils import timezone
@@ -31,9 +30,3 @@ class Proveedor(models.Model):
 
     def __str__(self):
         return self.nombre
-
-
-# Modelos del CU7 organizados en la sub-app compra_materia_prima
-from apps.compras.compra_materia_prima.models import Compra, DetalleCompra  # noqa: F401
-
-

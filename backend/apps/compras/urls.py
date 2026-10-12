@@ -1,20 +1,8 @@
 from django.urls import include, path
 
-from .views import (
-    ProveedorDetailView,
-    ProveedorListCreateView,
-    ProveedorToggleActivoView,
-)
-
 app_name = 'compras'
 
 urlpatterns = [
-    path('proveedores/', ProveedorListCreateView.as_view(), name='proveedores'),
-    path('proveedores/<int:pk>/', ProveedorDetailView.as_view(), name='proveedor_detalle'),
-    path(
-        'proveedores/<int:pk>/toggle-activo/',
-        ProveedorToggleActivoView.as_view(),
-        name='proveedor_toggle_activo',
-    ),
+    path('proveedores/', include('apps.compras.proveedores.urls')),
     path('compras/', include('apps.compras.compra_materia_prima.urls')),
 ]

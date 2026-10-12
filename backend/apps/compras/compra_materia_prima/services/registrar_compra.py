@@ -9,7 +9,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from apps.compras.models import Proveedor
+from apps.compras.proveedores.models import Proveedor
 from apps.compras.compra_materia_prima.models import Compra, DetalleCompra
 from apps.productos_inventario.models import (
     HistorialPrecioMateriaPrima,
