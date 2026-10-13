@@ -1,7 +1,7 @@
 # Sesión de Desarrollo: Integración, Auditoría y Refinamiento del CU8 (Gestionar Materia Prima)
 
 - **Fecha:** 2026-10-12
-- **Autor / Integrante:** Roberto (Pair Programming con Asistente IA Antigravity)
+- **Autor / Integrante:** sofi (Pair Programming con Asistente IA Copilot - Antigravity)
 - **Paquete / Módulo:** `apps.productos_inventario.materia_prima` & `frontend/src/apps/dashboard/productos/inventario/`
 - **Casos de Uso abordados:** CU08 (Gestionar materia prima), CU09 (Alertas de bajo stock - base), CU12 (Existencias productos terminados - verificación)
 - **Ciclo:** Ciclo 2
