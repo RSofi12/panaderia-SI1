@@ -11,6 +11,8 @@ import UsuariosPage from '../apps/dashboard/usuarios/UsuariosPage';
 import ProductosPage from '../apps/dashboard/productos/ProductosPage';
 import ComprasModuloPage from '../apps/dashboard/compras/ComprasModuloPage';
 import AlertasBajoStockPage from '../apps/dashboard/inventario/AlertasBajoStockPage';
+import ComercializacionPage from '../apps/dashboard/comercializacion/ComercializacionPage';
+import ReportesPage from '../apps/dashboard/reportes/ReportesPage';
 import { ROLES_ALERTAS_BAJO_STOCK } from '../types/materiaPrima';
 
 export const AppRoutes: React.FC = () => {
@@ -90,6 +92,8 @@ export const AppRoutes: React.FC = () => {
                 (gestionar_proveedores o registrar_compras) y el backend
                 responde 403 al resto. */}
             <Route path="compras" element={<ComprasModuloPage />} />
+            <Route path="comercializacion" element={<ComercializacionPage />} />
+            <Route path="reportes" element={<ReportesPage />} />
           </Route>
 
           {/* Redirecciones por defecto */}
