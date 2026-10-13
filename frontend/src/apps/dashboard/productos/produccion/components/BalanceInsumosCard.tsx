@@ -68,7 +68,8 @@ export const BalanceInsumosCard: React.FC<BalanceInsumosCardProps> = ({
           <div>
             <p className="text-[11px] font-medium text-slate-500">Total unidades</p>
             <p className="text-base font-bold text-slate-900">
-              {balance.total_panes_unidades.toLocaleString('es-BO')} <span className="text-xs font-normal text-slate-500">panes</span>
+              {Number(balance.total_panes_unidades || 0).toLocaleString('es-BO')}{' '}
+              <span className="text-xs font-normal text-slate-500">panes</span>
             </p>
           </div>
         </div>
@@ -80,7 +81,7 @@ export const BalanceInsumosCard: React.FC<BalanceInsumosCardProps> = ({
           <div>
             <p className="text-[11px] font-medium text-amber-900/70">Costo estimado</p>
             <p className="text-base font-bold text-amber-950">
-              Bs {balance.costo_estimado_total.toFixed(2)}
+              Bs {Number(balance.costo_estimado_total || 0).toFixed(2)}
             </p>
           </div>
         </div>
@@ -88,14 +89,14 @@ export const BalanceInsumosCard: React.FC<BalanceInsumosCardProps> = ({
 
       {/* Alerta crítica si falta stock */}
       {!balance.es_viable && tieneProductos && (
-        <div className="mt-3.5 rounded-xl border border-rose-200 bg-rose-50/90 p-3 text-xs text-rose-900">
+        <div className="mt-3.5 rounded-xl border border-rose-200 bg-rose-50/90 p-3 text-xs text-rose-900 animate-in fade-in duration-200">
           <div className="flex items-center gap-2 font-semibold text-rose-950">
             <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" />
             No se puede completar el registro
           </div>
           <p className="mt-1 text-rose-800 leading-relaxed">
             Hay insumos requeridos que superan las existencias actuales en almacén.
-            Ajusta las cantidades producidas o registra una compra previa (CU07).
+            Ajusta las cantidades producidas o registra una compra previa de materia prima (CU07).
           </p>
         </div>
       )}
@@ -116,9 +117,12 @@ export const BalanceInsumosCard: React.FC<BalanceInsumosCardProps> = ({
           </p>
         ) : (
           balance.insumos.map((insumo) => {
+            const reqNum = Number(insumo.cantidad_requerida || 0);
+            const dispNum = Number(insumo.stock_disponible || 0);
+            const faltNum = Number(insumo.diferencia_faltante || 0);
             const porcentajeUso = Math.min(
               100,
-              Math.round((insumo.cantidad_requerida / (insumo.stock_disponible || 1)) * 100)
+              Math.round((reqNum / (dispNum || 1)) * 100)
             );
 
             return (
@@ -141,10 +145,10 @@ export const BalanceInsumosCard: React.FC<BalanceInsumosCardProps> = ({
                   </div>
                   <div className="text-right">
                     <span className="font-bold text-slate-900">
-                      {insumo.cantidad_requerida.toFixed(3)} {insumo.unidad_medida}
+                      {reqNum.toFixed(3)} {insumo.unidad_medida}
                     </span>
                     <span className="text-slate-400 text-[11px]">
-                      {' '}/ disp: {insumo.stock_disponible.toFixed(2)} {insumo.unidad_medida}
+                      {' '}/ disp: {dispNum.toFixed(2)} {insumo.unidad_medida}
                     </span>
                   </div>
                 </div>
@@ -163,7 +167,7 @@ export const BalanceInsumosCard: React.FC<BalanceInsumosCardProps> = ({
                   <div className="mt-1.5 flex items-center justify-between text-[11px] font-semibold text-rose-700">
                     <span>Falta para este lote:</span>
                     <span>
-                      -{insumo.diferencia_faltante.toFixed(3)} {insumo.unidad_medida}
+                      -{faltNum.toFixed(3)} {insumo.unidad_medida}
                     </span>
                   </div>
                 )}
