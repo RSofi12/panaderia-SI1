@@ -76,3 +76,8 @@ ciclo1Secuencia_CU
 CUsecuenciaEA
 *.log
 diagramasUML/
+
+# Archivos y herramientas locales / personales
+plantilla/
+docs/informes/*.pdf
+backend/generate_pdf_cu12.py
