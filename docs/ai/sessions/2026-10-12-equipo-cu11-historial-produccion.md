@@ -36,6 +36,9 @@ Implementar la consulta del historial de producción de la Panadería Santiago, 
 - Se confirmó que la vista del historial sigue usando el contrato de `ProduccionRegistro` y `ProduccionFiltros` del servicio de producción.
 - Se hizo explícita la identificación de los casos de uso en la pantalla: la acción de registro indica CU10 y el panel del historial indica CU11.
 - Se implementó CU11 como una pestaña de consulta independiente dentro del módulo Productos e Inventario, según el mapa de paquetes; CU10 conserva su pestaña y flujo originales.
+- Se refinó la presentación de CU11 con filtros agrupados, estados vacíos más claros y una tabla mejor jerarquizada, manteniendo la paleta del dashboard.
+- Se ajustó el resumen de jornadas/unidades, el estado de error y la acción explícita para abrir el detalle.
+- Se agregó un comando local de datos de demostración, protegido para ejecutarse solo cuando no existan producciones y sin crear movimientos de inventario.
 
 ## 3. 🧠 Decisiones técnicas tomadas
 - El acceso de consulta queda restringido exclusivamente a Personal de Producción, según la decisión del negocio.
@@ -54,6 +57,7 @@ Implementar la consulta del historial de producción de la Panadería Santiago, 
 - Ejecutar el backend en un entorno con PostgreSQL funcionando.
 - Iniciar sesión con `mrojas` (`Admin123!`), abrir Productos e Inventario y verificar los rótulos CU10 y CU11 en Producción diaria.
 - Verificar que la pestaña `CU11 · Historial` ofrezca filtros de fecha, jornada y producto, tabla de resultados y detalle; comprobar por separado que CU10 conserva su pestaña Producción diaria y modal de registro.
+- Para datos de demostración en una base local vacía, ejecutar primero `docker compose exec backend python manage.py seed_historial_demo --dry-run` y luego `docker compose exec backend python manage.py seed_historial_demo`. El comando no modifica inventarios y se detiene si ya hay producciones.
 - Ejecutar `npm run build` desde `frontend/`.
 - Comprobar:
   - `GET /api/produccion/` devuelve el historial.
