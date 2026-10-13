@@ -115,4 +115,5 @@ export interface ProduccionFiltros {
   fecha_desde?: string;
   fecha_hasta?: string;
   jornada?: JornadaProduccion | '';
+  id_producto?: number;
 }

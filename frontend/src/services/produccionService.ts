@@ -2,6 +2,7 @@ import api from './api';
 import type {
   BalanceMaterialesSimulacion,
   ConsumoInsumoCalculado,
+  JornadaProduccion,
   ProduccionFiltros,
   ProduccionRegistro,
   RecetaProducto,
@@ -9,16 +10,61 @@ import type {
 } from '../types/produccion';
 
 /**
- * Bandera para desarrollo frontend desacoplado (Ciclo 2 - CU10).
+ * CU11: historial de producción.
  *
- * Mientras el equipo de backend integra los modelos de inventario en conjunto
- * (CU07/CU08/CU10), mantenemos esta bandera en `true`. Permite probar toda
- * la interfaz de usuario, validaciones reactivas y simulación MRP en vivo.
- *
- * Una vez que el backend esté desplegado, se cambia a `false` y todo el código
- * consumirá automáticamente las rutas `/api/productos/producciones/`.
+ * El listado y detalle real ya están expuestos en `/api/produccion/` por el
+ * backend del proyecto. Por eso el historial usa API real para respetar el
+ * contrato del caso de uso. El registro de producción sigue en mock hasta que
+ * exista el endpoint definitivo de CU10 en Django.
  */
-const USAR_MOCK = true;
+const USAR_MOCK_HISTORIAL = false;
+const USAR_MOCK_REGISTRO = true;
+
+const normalizarJornadaFrontend = (valor?: string): JornadaProduccion => {
+  const normalizado = (valor || '').toLowerCase();
+
+  if (normalizado === 'mañana' || normalizado === 'manana') return 'manana';
+  if (normalizado === 'tarde') return 'tarde';
+  if (normalizado === 'noche') return 'noche';
+  return 'unica';
+};
+
+const normalizarJornadaBackend = (valor?: string): string | undefined => {
+  if (!valor) return undefined;
+  const normalizado = valor.toLowerCase();
+
+  if (normalizado === 'manana') return 'Mañana';
+  if (normalizado === 'tarde') return 'Tarde';
+  if (normalizado === 'noche') return 'Noche';
+  if (normalizado === 'unica') return 'unica';
+  return valor;
+};
+
+const mapearProduccionBackend = (item: any): ProduccionRegistro => ({
+  id_produccion: Number(item.id_produccion),
+  fecha: item.fecha,
+  jornada: normalizarJornadaFrontend(item.jornada),
+  usuario_id: Number(item.id_usuario ?? item.usuario_id ?? 0),
+  usuario_nombre: item.registrado_por ?? item.usuario_nombre ?? 'Sin responsable',
+  total_unidades: Number(item.total_unidades ?? 0),
+  total_variedades: Number(item.total_variedades ?? 0),
+  costo_total: String(item.costo_total ?? '0.00'),
+  fecha_hora_registro: item.fecha_hora_registro ?? item.fecha,
+  detalles: (item.detalles ?? []).map((detalle: any) => ({
+    id_detalle_produccion: Number(detalle.id_detalle_produccion),
+    id_producto: Number(detalle.id_producto),
+    nombre_producto: detalle.producto_nombre ?? detalle.nombre_producto ?? `Producto #${detalle.id_producto}`,
+    cantidad_producida: Number(detalle.cantidad_producida ?? 0),
+    costo_unitario: String(detalle.costo_unitario ?? '0.00'),
+    subtotal_costo: String(detalle.subtotal ?? detalle.subtotal_costo ?? '0.00'),
+  })),
+  consumos_materia_prima: (item.consumos_materia_prima ?? []).map((consumo: any) => ({
+    id_materia_prima: Number(consumo.id_materia_prima),
+    nombre_insumo: consumo.nombre_insumo ?? consumo.nombre,
+    cantidad_descontada: Number(consumo.cantidad_descontada ?? 0),
+    unidad_medida: consumo.unidad_medida ?? '',
+  })),
+});
 
 // ============================================================================
 // DATOS MOCK OFICIALES (Fuente: Poblacion_4_Dias_Panaderia_Santiago.sql)
@@ -238,7 +284,7 @@ export const produccionService = {
    * Obtiene la lista de recetas (BOM) para cálculo local inmediato.
    */
   async obtenerRecetas(): Promise<RecetaProducto[]> {
-    if (USAR_MOCK) {
+    if (USAR_MOCK_REGISTRO) {
       return [...MOCK_RECETAS];
     }
     const response = await api.get<RecetaProducto[]>('/productos/recetas/');
@@ -252,7 +298,7 @@ export const produccionService = {
   async simularConsumo(
     detalles: Array<{ id_producto: number; cantidad_producida: number }>
   ): Promise<BalanceMaterialesSimulacion> {
-    if (USAR_MOCK) {
+    if (USAR_MOCK_REGISTRO) {
       // Simula cálculo reactivo en base a las recetas locales
       const consumoPorInsumo: Record<number, number> = {};
       let totalUnidades = 0;
@@ -316,7 +362,7 @@ export const produccionService = {
   async registrarProduccion(
     payload: RegistrarProduccionPayload
   ): Promise<ProduccionRegistro> {
-    if (USAR_MOCK) {
+    if (USAR_MOCK_REGISTRO) {
       // Simula retraso de red de 600ms
       await new Promise((resolve) => setTimeout(resolve, 600));
 
@@ -392,7 +438,7 @@ export const produccionService = {
    * Consulta el historial de producciones registradas (CU11).
    */
   async listarHistorial(filtros: ProduccionFiltros = {}): Promise<ProduccionRegistro[]> {
-    if (USAR_MOCK) {
+    if (USAR_MOCK_HISTORIAL) {
       await new Promise((resolve) => setTimeout(resolve, 300));
       let lista = [...mockHistorialProducciones];
       if (filtros.jornada) {
@@ -407,10 +453,14 @@ export const produccionService = {
       return lista;
     }
 
-    const response = await api.get<ProduccionRegistro[]>('/productos/producciones/', {
-      params: filtros,
-    });
-    return response.data;
+    const params: Record<string, string> = {};
+    if (filtros.fecha_desde) params.fecha_desde = filtros.fecha_desde;
+    if (filtros.fecha_hasta) params.fecha_hasta = filtros.fecha_hasta;
+    if (filtros.jornada) params.jornada = normalizarJornadaBackend(filtros.jornada) || '';
+    if (filtros.id_producto) params.id_producto = String(filtros.id_producto);
+
+    const response = await api.get<any[]>('/produccion/', { params });
+    return response.data.map(mapearProduccionBackend);
   },
 
   /**

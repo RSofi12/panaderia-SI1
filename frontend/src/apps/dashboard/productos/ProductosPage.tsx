@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Boxes,
   CheckCircle2,
+  History,
   Package,
   Pencil,
   Plus,
@@ -19,11 +20,12 @@ import ProductoFormModal from './components/ProductoFormModal';
 import ConfirmarEstadoDialog from './components/ConfirmarEstadoDialog';
 import { formatearBs } from './precios';
 import ProduccionTab from './produccion/ProduccionTab';
+import HistorialProduccionPage from './produccion/HistorialProduccionPage';
 import InventarioTab from './inventario/InventarioTab';
 import ExistenciasTab from './existencias/ExistenciasTab';
 
 type EstadoFiltro = '' | 'true' | 'false';
-type PestanaProducto = 'catalogo' | 'produccion' | 'inventario' | 'existencias';
+type PestanaProducto = 'catalogo' | 'produccion' | 'historial' | 'inventario' | 'existencias';
 
 type ModalAbierto =
   | { tipo: 'formulario'; producto: Producto | null }
@@ -43,7 +45,7 @@ const ENCABEZADOS: Record<PestanaProducto, { cu: string; titulo: string; descrip
     descripcion: 'Panes que elabora la panadería, con su costo, margen y precio de venta.',
   },
   produccion: {
-    cu: 'CU10 & CU11',
+    cu: 'CU10',
     titulo: 'Producción diaria',
     descripcion:
       'Registro de horneado diario, cálculo MRP de recetas y consumo automático de insumos.',
@@ -58,6 +60,11 @@ const ENCABEZADOS: Record<PestanaProducto, { cu: string; titulo: string; descrip
     cu: 'CU8',
     titulo: 'Gestión de materias primas',
     descripcion: 'Administra insumos, define stock mínimo y consulta existencias actuales.',
+  },
+  historial: {
+    cu: 'CU11',
+    titulo: 'Historial de producción',
+    descripcion: 'Consulta las jornadas registradas, sus responsables y el detalle producido.',
   },
 };
 
@@ -74,6 +81,7 @@ export const ProductosPage: React.FC = () => {
   const puedeRegistrarProduccion = hasPermission('registrar_produccion');
   const puedeConsultarInventario = hasPermission('gestionar_inventario') || hasPermission('registrar_ventas');
   // CU08: Solo Propietario, Administrador y Personal de Producción ven stock de materia prima
+  const puedeConsultarHistorial = puedeRegistrarProduccion || puedeGestionar;
   const puedeVerInventario =
     hasPermission('gestionar_materias_primas') || hasPermission('registrar_produccion');
 
@@ -86,6 +94,7 @@ export const ProductosPage: React.FC = () => {
   if (puedeVerExistencias) permitidas.push('existencias');
   if (puedeVerInventario) permitidas.push('inventario');
   if (puedeVerProduccion) permitidas.push('produccion');
+  if (puedeConsultarHistorial) permitidas.push('historial');
 
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as PestanaProducto | null;
@@ -301,11 +310,26 @@ export const ProductosPage: React.FC = () => {
               <span>Producción diaria</span>
             </button>
           )}
+
+          {puedeConsultarHistorial && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={pestanaActiva === 'historial'}
+              onClick={() => cambiarPestana('historial')}
+              className={claseTab(pestanaActiva === 'historial')}
+            >
+              <History className="h-4 w-4" />
+              <span>Historial de producción</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* Contenido según pestaña activa */}
-      {pestanaActiva === 'existencias' ? (
+      {pestanaActiva === 'historial' ? (
+        <HistorialProduccionPage />
+      ) : pestanaActiva === 'existencias' ? (
         <ExistenciasTab />
       ) : pestanaActiva === 'produccion' ? (
         <ProduccionTab />
