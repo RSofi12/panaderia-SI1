@@ -2,7 +2,7 @@
 
 ## 📌 Proyecto: Sistema de Información Web - Panadería Santiago (SI-1)
 - **Fecha:** 2026-10-13
-- **Estado del Ciclo:** Ciclo 1 consolidado (CU1–CU6, CU26) + **Ciclo 2 en desarrollo** (CU7 compras 🟢, CU8 materia prima 🟢, CU11 historial producción 🟢, CU12 existencias 🟢, CU10 orden de producción 🟡)
+- **Estado del Ciclo:** Ciclo 1 consolidado (CU1–CU6, CU26) + **Ciclo 2 casi completado** (CU7 compras 🟢, CU8 materia prima 🟢, CU9 bajo stock 🟢, CU11 historial producción 🟢, CU12 existencias 🟢, CU10 orden de producción 🟡)
 - **Entorno:** Docker Compose (Recomendado: 1 comando para db, mailpit, backend y frontend) o Local directo
 
 ---
@@ -20,10 +20,10 @@
 | CU26 | Gestionar bitácora | 🟢 Completo end-to-end | `bitacora/` + `src/apps/dashboard/usuarios/bitacora/` |
 | CU7 | Registrar compra de materia prima | 🟢 Completo end-to-end | `compra_materia_prima/` + `src/apps/dashboard/compras/` |
 | CU8 | Gestionar materia prima (CRUD+Stock) | 🟢 Completo end-to-end | `materia_prima/` + `src/apps/dashboard/productos/inventario/` |
+| CU9 | Consultar alertas de bajo stock | 🟢 Completo end-to-end | `materia_prima/` + `src/apps/dashboard/inventario/AlertasBajoStockPage.tsx` |
 | CU11 | Consultar historial de producción | 🟢 Completo end-to-end | `produccion/` + `src/apps/dashboard/productos/produccion/` |
 | CU12 | Consultar existencias de pan | 🟢 Completo end-to-end | `productos_terminados/` + `src/apps/dashboard/productos/existencias/` |
 | CU10 | Registrar producción diaria | 🟡 Frontend listo / Backend pend. | `src/apps/dashboard/productos/produccion/RegistrarProduccionModal.tsx` |
-| CU9 | Consultar alertas de bajo stock | ⚪ Planificado (lógica base lista en CU8) | `materia_prima/` |
 
 Detalle completo por caso de uso: [`CURRENT_STATE.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/CURRENT_STATE.md)  
 Registro de decisiones: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/DECISIONS_LOG.md)  
@@ -33,12 +33,11 @@ Registro de decisiones: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia
 
 ## 📦 2. Lo entregado en esta sesión
 
-### Refinamiento y Consolidación de CU11 (Historial de Producción)
-- **RBAC Extendido:** Guarda `PuedeConsultarHistorialProduccion` ajustada para incluir `gestionar_productos`, `generar_reportes` y `is_superuser`, otorgando acceso a *Administrador* y *Propietario* además del *Personal de Producción*.
-- **Prevención de N+1:** Reemplazo de `obj.detalles.count()` por `len(obj.detalles.all())` en `ProduccionSerializer.get_total_variedades` aprovechando el prefetch en memoria.
-- **Validación Estricta:** Manejo defensivo en `ProduccionListView` para `fecha_desde` y `fecha_hasta` (formato ISO `AAAA-MM-DD`, validación temporal `fecha_desde <= fecha_hasta`) y casteo entero de `id_producto`, con respuesta HTTP 400 detallada.
-- **Suite de Pruebas Automatizadas:** 7 tests unitarios en `produccion/tests.py` verificando autenticación, autorización por rol (incluyendo admin con `gestionar_productos`), validaciones de fechas y casteo de ID.
-- **Seed Demostrativo:** Ejecución de `seed_historial_demo.py` cargando 3 turnos (06, 07 y 08 de septiembre 2026) con 36 detalles reales de producción en PostgreSQL.
+### Integración y Reconciliación de CU09 (Alertas de Bajo Stock)
+- **Reconciliación Limpia con CU8:** Integradas las alertas de bajo stock dentro de la sub-app `materia_prima` sin alterar el CRUD existente de CU8.
+- **Selector y Serializador:** `obtener_materias_primas_bajo_stock()` con cálculo de faltante y Coalesce de stock en 0. Serializador `AlertaBajoStockSerializer`.
+- **Doble Guarda RBAC:** Exigencia de `TienePermiso('gestionar_inventario')` y `EsRolAutorizadoCU09` (Administrador, Propietario y Personal de Producción).
+- **Ruta y Componente:** Página dedicada `/dashboard/inventario/alertas-bajo-stock` (`AlertasBajoStockPage.tsx`) con accesibilidad WCAG y enlace contextual en `ProductosPage.tsx`.
 
 ---
 
@@ -46,10 +45,10 @@ Registro de decisiones: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia
 
 | Verificación | Comando / Entorno | Resultado |
 |---|---|---|
-| Pruebas Producción + Inventario | `manage.py test apps.productos_inventario.produccion.tests ...` | ✅ **Exitoso (21/21 tests OK en 1.2s)** |
-| Build & Types Frontend | `npm run build` (`tsc -b && vite build`) | ✅ **Exitoso (2016 módulos, 0 errores)** |
-| Seed Demostrativo CU11 | `python manage.py seed_historial_demo` | ✅ **3 jornadas y 36 detalles sembrados** |
-| Git Status | `git status -s` | ✅ **Consistente** |
+| Suite completa `productos_inventario` | `manage.py test apps.productos_inventario...` | ✅ **Exitoso (33/33 tests OK en 2.5s)** |
+| Pruebas específicas CU09 | `manage.py test apps.productos_inventario.materia_prima.tests` | ✅ **Exitoso (17/17 tests OK: 5 CU8 + 12 CU09)** |
+| Build & Types Frontend | `npm run build` (`tsc -b && vite build`) | ✅ **Exitoso (2019 módulos, 0 errores)** |
+| Git Status | `git status` | ✅ **Merge concluido y árbol limpio** |
 
 ---
 

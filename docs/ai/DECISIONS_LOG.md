@@ -517,4 +517,16 @@
 - **Motivo:** Cumplir integralmente con la matriz de actores del PUDS (`PACKAGE_CU_MAP.md`), garantizar rendimiento óptimo en la serialización de lotes y blindar la API ante parámetros malformados.
 - **Impacto:** CU11 completamente operativo y consolidado con 7 pruebas unitarias backend y compilación frontend en 0 errores.
 
+---
+
+### 45. Integración de CU09 (Alertas de Bajo Stock de Materia Prima): Selector con Coalesce y Doble Guarda RBAC
+- **Decisión:**
+  1. **Ubicación y Arquitectura:** Mantener CU09 dentro de `apps.productos_inventario.materia_prima`, compartiendo modelo con CU08 y separando la consulta analítica en `selectors.py` (`obtener_materias_primas_bajo_stock`).
+  2. **Tratamiento de Insumos sin Inventario:** Aplicar `Coalesce(F('inventario__stock_actual'), Value(Decimal('0.000')))` para que materias primas recién creadas que aún no tienen movimiento sean evaluadas con stock cero si tienen un stock mínimo mayor a cero.
+  3. **Doble Guarda de Seguridad:** Exigir `TienePermiso('gestionar_inventario')` combinado con `EsRolAutorizadoCU09` (`ROLES_PERMITIDOS = {'Administrador', 'Propietario', 'Personal de Producción'}`). Esto garantiza que el Personal de Ventas (aunque cuente con `gestionar_inventario` en otros flujos de despacho) no acceda a las alertas de reposición de insumos de fábrica.
+  4. **Frontend Accesible y Coordinado:** Crear la ruta `/dashboard/inventario/alertas-bajo-stock` (`AlertasBajoStockPage.tsx`), enlazada con botón contextual desde `ProductosPage.tsx`, con tabla accesible WCAG, recarga con `AbortController` y aviso de faltante exacto.
+- **Motivo:** Evitar fragmentación de la sub-app `materia_prima`, respetar la matriz de actores de `PACKAGE_CU_MAP.md` y prevenir desabastecimiento de insumos críticos de horneado.
+- **Impacto:** CU09 integrado y verificado con 12 pruebas unitarias específicas y suite global de 33 pruebas en `productos_inventario` en verde.
+
+
 
