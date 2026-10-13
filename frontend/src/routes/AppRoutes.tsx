@@ -10,6 +10,8 @@ import DashboardHome from '../apps/dashboard/DashboardHome';
 import UsuariosPage from '../apps/dashboard/usuarios/UsuariosPage';
 import ProductosPage from '../apps/dashboard/productos/ProductosPage';
 import ComprasModuloPage from '../apps/dashboard/compras/ComprasModuloPage';
+import AlertasBajoStockPage from '../apps/dashboard/inventario/AlertasBajoStockPage';
+import { ROLES_ALERTAS_BAJO_STOCK } from '../types/materiaPrima';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -76,6 +78,11 @@ export const AppRoutes: React.FC = () => {
                 permite el backend a cualquier autenticado; la escritura exige
                 `gestionar_productos` y la controla la propia pantalla + API. */}
             <Route path="productos" element={<ProductosPage />} />
+            <Route path="inventario/alertas-bajo-stock" element={
+              <ProtectedRoute requiredPermission="gestionar_inventario" requiredRole={ROLES_ALERTAS_BAJO_STOCK}>
+                <AlertasBajoStockPage />
+              </ProtectedRoute>
+            } />
 
             {/* Módulo "Compras y Proveedores": pestañas CU7 (compras) y CU6
                 (proveedores); CU20 se sumará aquí. Sin ProtectedRoute de un

@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredPermission?: string | string[];
-  requiredRole?: string;
+  requiredRole?: string | string[];
 }
 
 const SessionLoader: React.FC = () => (
@@ -62,7 +62,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requiredRole && !hasRole(requiredRole)) {
+  const rolesPermitidos = requiredRole
+    ? (Array.isArray(requiredRole) ? requiredRole : [requiredRole])
+    : [];
+  if (rolesPermitidos.length > 0 && !rolesPermitidos.some((rol) => hasRole(rol))) {
     return <Navigate to="/dashboard" replace />;
   }
 

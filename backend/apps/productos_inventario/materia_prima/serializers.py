@@ -32,3 +32,30 @@ class MateriaPrimaSerializer(serializers.ModelSerializer):
     def get_precio_ultima_compra(self, obj):
         ultimo = obj.historial_precios.first()
         return str(ultimo.precio) if ultimo else None
+
+
+class AlertaBajoStockSerializer(serializers.ModelSerializer):
+    """Datos de una materia prima con alerta de bajo stock."""
+
+    stock_actual = serializers.DecimalField(
+        source='stock_para_alerta',
+        max_digits=10,
+        decimal_places=3,
+        read_only=True,
+    )
+    faltante = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MateriaPrima
+        fields = [
+            'id_materia_prima',
+            'nombre',
+            'unidad_medida',
+            'stock_actual',
+            'stock_minimo',
+            'faltante',
+        ]
+
+    def get_faltante(self, obj):
+        cantidad = obj.stock_minimo - obj.stock_para_alerta
+        return f'{cantidad:.3f}'
