@@ -117,11 +117,15 @@ backend/
 │   │   │   └── urls.py
 │   │   │
 │   │   └── productos_terminados/# ⭐ Sub-app Inventario y Mostrador: CU12 Existencias pan y CU18 Mermas
+│   │       ├── migrations/
 │   │       ├── apps.py          # name = 'apps.productos_inventario.productos_terminados'
 │   │       ├── models.py        # InventarioProductoTerminado, MovimientoProductoTerminado, NotaPerdidaProducto
-│   │       ├── serializers.py   # Serializadores de inventario y mermas
-│   │       ├── views.py         # Existencias (/api/productos-terminados/existencias/) y Mermas (/api/productos-terminados/mermas/)
-│   │       └── urls.py
+│   │       ├── permissions.py   # PuedeConsultarExistenciasTerminados (RBAC)
+│   │       ├── serializers.py   # InventarioProductoTerminadoSerializer, ResumenExistenciasSerializer, MovimientoSerializer
+│   │       ├── views.py         # ExistenciasListView, ResumenExistenciasView, KardexProductoTerminadoView, NotaPerdidaView
+│   │       ├── urls.py          # /api/productos-terminados/existencias/, /resumen/, /<id>/movimientos/, /mermas/
+│   │       ├── tests.py         # 9 pruebas unitarias CU12 (seguridad, cálculos, kardex, filtros)
+│   │       └── management/commands/seed_existencias.py
 │   │
 │   ├── compras/                 # Módulo 3: Proveedores, Compras de Insumos y Gastos
 │   │   ├── __init__.py
