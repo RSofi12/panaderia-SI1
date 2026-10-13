@@ -235,7 +235,7 @@
 
 ### 🟢 Ciclo 2 — Abastecimiento y Producción / MRP (6 CU)
 - [ ] **CU 7:** Registrar compra de materia prima (`apps.compras` - Propietario).
-- [ ] **CU 8:** Consultar stock de materia prima (`apps.productos_inventario` - Producción, Propietario).
+- [x] **CU 8:** Gestionar materias primas e inventario (`apps.productos_inventario.materia_prima` - Administrador, Propietario; consulta por Producción).
 - [ ] **CU 9:** Consultar alertas de bajo stock (`apps.productos_inventario` - Producción, Propietario).
 - [ ] **CU 10:** Registrar producción diaria con consumo automático de insumos (`apps.productos_inventario` - Producción).
 - [ ] **CU 11:** Consultar historial de producción (`apps.productos_inventario` - Producción).

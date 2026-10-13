@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
+  Boxes,
   CheckCircle2,
   Package,
   Pencil,
@@ -19,10 +20,11 @@ import ConfirmarEstadoDialog from './components/ConfirmarEstadoDialog';
 import { formatearBs } from './precios';
 import ProduccionTab from './produccion/ProduccionTab';
 import HistorialProduccionPage from './produccion/HistorialProduccionPage';
+import InventarioTab from './inventario/InventarioTab';
 import ExistenciasTab from './existencias/ExistenciasTab';
 
 type EstadoFiltro = '' | 'true' | 'false';
-type PestanaProducto = 'catalogo' | 'produccion' | 'historial' | 'existencias';
+type PestanaProducto = 'catalogo' | 'produccion' | 'historial' | 'inventario' | 'existencias';
 
 type ModalAbierto =
   | { tipo: 'formulario'; producto: Producto | null }
@@ -35,14 +37,52 @@ interface Resultado {
   error: string | null;
 }
 
+const ENCABEZADOS: Record<PestanaProducto, { cu: string; titulo: string; descripcion: string }> = {
+  catalogo: {
+    cu: 'CU5',
+    titulo: 'Catálogo de productos',
+    descripcion: 'Panes que elabora la panadería, con su costo, margen y precio de venta.',
+  },
+  produccion: {
+    cu: 'CU10',
+    titulo: 'Producción diaria',
+    descripcion:
+      'Registro de horneado diario, cálculo MRP de recetas y consumo automático de insumos.',
+  },
+  existencias: {
+    cu: 'CU12',
+    titulo: 'Existencias de pan en mostrador',
+    descripcion:
+      'Consulta en tiempo real de unidades disponibles para la venta directa, alertas de stock y valorización.',
+  },
+  inventario: {
+    cu: 'CU8',
+    titulo: 'Gestión de materias primas',
+    descripcion: 'Administra insumos, define stock mínimo y consulta existencias actuales.',
+  },
+  historial: {
+    cu: 'CU11',
+    titulo: 'Historial de producción',
+    descripcion: 'Consulta las jornadas registradas, sus responsables y el detalle producido.',
+  },
+};
+
+const claseTab = (activa: boolean) =>
+  `pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+    activa
+      ? 'border-amber-600 text-amber-900'
+      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+  }`;
+
 export const ProductosPage: React.FC = () => {
   const { hasPermission } = useAuth();
   const puedeGestionar = hasPermission('gestionar_productos');
   const puedeRegistrarProduccion = hasPermission('registrar_produccion');
   const puedeConsultarInventario = hasPermission('gestionar_inventario') || hasPermission('registrar_ventas');
   const puedeConsultarHistorial = puedeRegistrarProduccion;
+  const puedeVerInventario =
+    hasPermission('gestionar_inventario') || hasPermission('gestionar_materias_primas');
 
-  // Permisos por pestaña
   const puedeVerCatalogo = puedeGestionar;
   const puedeVerExistencias = puedeConsultarInventario || puedeGestionar;
   const puedeVerProduccion = puedeRegistrarProduccion || puedeGestionar;
@@ -50,6 +90,7 @@ export const ProductosPage: React.FC = () => {
   const permitidas: PestanaProducto[] = [];
   if (puedeVerCatalogo) permitidas.push('catalogo');
   if (puedeVerExistencias) permitidas.push('existencias');
+  if (puedeVerInventario) permitidas.push('inventario');
   if (puedeVerProduccion) permitidas.push('produccion');
   if (puedeConsultarHistorial) permitidas.push('historial');
 
@@ -67,6 +108,7 @@ export const ProductosPage: React.FC = () => {
   const pestanaActiva: PestanaProducto = permitidas.includes(tabParam as PestanaProducto)
     ? (tabParam as PestanaProducto)
     : tabPorDefecto;
+  const encabezado = ENCABEZADOS[pestanaActiva];
 
   const cambiarPestana = (nueva: PestanaProducto) => {
     setSearchParams(
@@ -189,34 +231,12 @@ export const ProductosPage: React.FC = () => {
       {/* Encabezado General del Módulo */}
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
-          Productos e Inventario · {pestanaActiva === 'catalogo'
-            ? 'CU5'
-            : pestanaActiva === 'historial'
-              ? 'CU11'
-              : pestanaActiva === 'existencias'
-                ? 'CU12'
-                : 'CU10'}
+          Productos e Inventario · {encabezado.cu}
         </p>
         <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-              {pestanaActiva === 'catalogo'
-                ? 'Catálogo de productos'
-                : pestanaActiva === 'historial'
-                  ? 'Historial de producción'
-                  : pestanaActiva === 'existencias'
-                    ? 'Existencias de pan en mostrador'
-                    : 'Producción diaria'}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {pestanaActiva === 'catalogo'
-                ? 'Panes que elabora la panadería, con su costo, margen y precio de venta.'
-                : pestanaActiva === 'historial'
-                  ? 'Consulta de jornadas registradas, responsables y cantidades producidas.'
-                  : pestanaActiva === 'produccion'
-                    ? 'Registro de horneado diario, cálculo MRP de recetas y consumo automático de insumos.'
-                    : 'Consulta en tiempo real de unidades disponibles para la venta directa, alertas de stock y valorización.'}
-            </p>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">{encabezado.titulo}</h2>
+            <p className="mt-1 text-sm text-slate-500">{encabezado.descripcion}</p>
           </div>
 
           {pestanaActiva === 'catalogo' && puedeGestionar && (
@@ -243,11 +263,7 @@ export const ProductosPage: React.FC = () => {
               role="tab"
               aria-selected={pestanaActiva === 'catalogo'}
               onClick={() => cambiarPestana('catalogo')}
-              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
-                pestanaActiva === 'catalogo'
-                  ? 'border-amber-600 text-amber-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-              }`}
+              className={claseTab(pestanaActiva === 'catalogo')}
             >
               <Package className="h-4 w-4" />
               <span>Catálogo de panes</span>
@@ -260,14 +276,23 @@ export const ProductosPage: React.FC = () => {
               role="tab"
               aria-selected={pestanaActiva === 'existencias'}
               onClick={() => cambiarPestana('existencias')}
-              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
-                pestanaActiva === 'existencias'
-                  ? 'border-amber-600 text-amber-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-              }`}
+              className={claseTab(pestanaActiva === 'existencias')}
             >
               <Store className="h-4 w-4" />
               <span>Existencias (CU12)</span>
+            </button>
+          )}
+
+          {puedeVerInventario && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={pestanaActiva === 'inventario'}
+              onClick={() => cambiarPestana('inventario')}
+              className={claseTab(pestanaActiva === 'inventario')}
+            >
+              <Boxes className="h-4 w-4" />
+              <span>Stock de materia prima</span>
             </button>
           )}
 
@@ -277,14 +302,22 @@ export const ProductosPage: React.FC = () => {
               role="tab"
               aria-selected={pestanaActiva === 'produccion'}
               onClick={() => cambiarPestana('produccion')}
-              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
-                pestanaActiva === 'produccion'
-                  ? 'border-amber-600 text-amber-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-              }`}
+              className={claseTab(pestanaActiva === 'produccion')}
             >
               <Wheat className="h-4 w-4" />
               <span>Producción diaria</span>
+            </button>
+          )}
+
+          {puedeConsultarHistorial && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={pestanaActiva === 'historial'}
+              onClick={() => cambiarPestana('historial')}
+              className={claseTab(pestanaActiva === 'historial')}
+            >
+              <span>CU11 · Historial</span>
             </button>
           )}
 
@@ -313,6 +346,8 @@ export const ProductosPage: React.FC = () => {
         <ExistenciasTab />
       ) : pestanaActiva === 'produccion' ? (
         <ProduccionTab />
+      ) : pestanaActiva === 'inventario' ? (
+        <InventarioTab />
       ) : (
         <>
           {aviso && (
@@ -329,142 +364,142 @@ export const ProductosPage: React.FC = () => {
             </div>
           )}
 
-      <section className="rounded-2xl border border-slate-200 bg-white">
-        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 md:flex-row">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 w-4 h-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="search"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar por nombre..."
-              aria-label="Buscar producto por nombre"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
-            />
-          </div>
-          <select
-            value={categoria}
-            onChange={(e) => setCategoria(e.target.value)}
-            aria-label="Filtrar por categoría"
-            className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-700 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 md:w-56"
-          >
-            <option value="">Todas las categorías</option>
-            {categorias.map((c) => (
-              <option key={c.id_categoria} value={c.id_categoria}>
-                {c.nombre}
-              </option>
-            ))}
-          </select>
-          <select
-            value={estado}
-            onChange={(e) => setEstado(e.target.value as EstadoFiltro)}
-            aria-label="Filtrar por estado"
-            className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-700 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 md:w-44"
-          >
-            <option value="">Todos los estados</option>
-            <option value="true">Activos</option>
-            <option value="false">Inactivos</option>
-          </select>
-        </div>
+          <section className="rounded-2xl border border-slate-200 bg-white">
+            <div className="flex flex-col gap-3 border-b border-slate-100 p-4 md:flex-row">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 w-4 h-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="search"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  placeholder="Buscar por nombre..."
+                  aria-label="Buscar producto por nombre"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+              <select
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value)}
+                aria-label="Filtrar por categoría"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-700 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 md:w-56"
+              >
+                <option value="">Todas las categorías</option>
+                {categorias.map((c) => (
+                  <option key={c.id_categoria} value={c.id_categoria}>
+                    {c.nombre}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={estado}
+                onChange={(e) => setEstado(e.target.value as EstadoFiltro)}
+                aria-label="Filtrar por estado"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-700 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 md:w-44"
+              >
+                <option value="">Todos los estados</option>
+                <option value="true">Activos</option>
+                <option value="false">Inactivos</option>
+              </select>
+            </div>
 
-        {resultado?.error ? (
-          <div className="m-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            {resultado.error}
-          </div>
-        ) : (
-          <div className={`overflow-x-auto transition-opacity ${cargando ? 'opacity-60' : ''}`}>
-            <table className="w-full min-w-[820px] text-left text-sm">
-              <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                <tr>
-                  <th className="px-4 py-3">Producto</th>
-                  <th className="px-4 py-3">Categoría</th>
-                  <th className="px-4 py-3 text-right">Costo</th>
-                  <th className="px-4 py-3 text-right">Ganancia</th>
-                  <th className="px-4 py-3 text-right">Sugerido</th>
-                  <th className="px-4 py-3 text-right">Venta</th>
-                  <th className="px-4 py-3">Estado</th>
-                  {puedeGestionar && <th className="px-4 py-3 text-right">Acciones</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {productos.map((producto) => (
-                  <tr key={producto.id_producto} className={producto.activo ? '' : 'bg-slate-50/60 text-slate-400'}>
-                    <td className="px-4 py-3">
-                      <p className={`font-semibold ${producto.activo ? 'text-slate-900' : 'text-slate-500'}`}>
-                        {producto.nombre}
-                      </p>
-                      {producto.descripcion && (
-                        <p className="max-w-xs truncate text-xs text-slate-400">{producto.descripcion}</p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{producto.categoria_nombre ?? 'Sin categoría'}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{formatearBs(producto.costo_produccion)}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{Number(producto.porcentaje_ganancia)} %</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{formatearBs(producto.precio_sugerido)}</td>
-                    <td className="px-4 py-3 text-right font-semibold tabular-nums text-amber-800">
-                      {formatearBs(producto.precio_venta)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-                          producto.activo ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
-                        }`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full ${producto.activo ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                        {producto.activo ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </td>
-                    {puedeGestionar && (
-                      <td className="px-4 py-3">
-                        <div className="flex justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setModal({ tipo: 'formulario', producto })}
-                            title="Editar"
-                            aria-label={`Editar ${producto.nombre}`}
-                            className="rounded-lg p-2 text-slate-500 hover:bg-amber-50 hover:text-amber-700 cursor-pointer"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setModal({ tipo: 'estado', producto })}
-                            title={producto.activo ? 'Inactivar' : 'Activar'}
-                            aria-label={`${producto.activo ? 'Inactivar' : 'Activar'} ${producto.nombre}`}
-                            className={`rounded-lg p-2 cursor-pointer ${
-                              producto.activo
-                                ? 'text-slate-500 hover:bg-red-50 hover:text-red-600'
-                                : 'text-slate-400 hover:bg-emerald-50 hover:text-emerald-600'
+            {resultado?.error ? (
+              <div className="m-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                {resultado.error}
+              </div>
+            ) : (
+              <div className={`overflow-x-auto transition-opacity ${cargando ? 'opacity-60' : ''}`}>
+                <table className="w-full min-w-[820px] text-left text-sm">
+                  <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3">Producto</th>
+                      <th className="px-4 py-3">Categoría</th>
+                      <th className="px-4 py-3 text-right">Costo</th>
+                      <th className="px-4 py-3 text-right">Ganancia</th>
+                      <th className="px-4 py-3 text-right">Sugerido</th>
+                      <th className="px-4 py-3 text-right">Venta</th>
+                      <th className="px-4 py-3">Estado</th>
+                      {puedeGestionar && <th className="px-4 py-3 text-right">Acciones</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {productos.map((producto) => (
+                      <tr key={producto.id_producto} className={producto.activo ? '' : 'bg-slate-50/60 text-slate-400'}>
+                        <td className="px-4 py-3">
+                          <p className={`font-semibold ${producto.activo ? 'text-slate-900' : 'text-slate-500'}`}>
+                            {producto.nombre}
+                          </p>
+                          {producto.descripcion && (
+                            <p className="max-w-xs truncate text-xs text-slate-400">{producto.descripcion}</p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-slate-600">{producto.categoria_nombre ?? 'Sin categoría'}</td>
+                        <td className="px-4 py-3 text-right tabular-nums">{formatearBs(producto.costo_produccion)}</td>
+                        <td className="px-4 py-3 text-right tabular-nums">{Number(producto.porcentaje_ganancia)} %</td>
+                        <td className="px-4 py-3 text-right tabular-nums">{formatearBs(producto.precio_sugerido)}</td>
+                        <td className="px-4 py-3 text-right font-semibold tabular-nums text-amber-800">
+                          {formatearBs(producto.precio_venta)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                              producto.activo ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
                             }`}
                           >
-                            <Power className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
+                            <span className={`w-1.5 h-1.5 rounded-full ${producto.activo ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                            {producto.activo ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </td>
+                        {puedeGestionar && (
+                          <td className="px-4 py-3">
+                            <div className="flex justify-end gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setModal({ tipo: 'formulario', producto })}
+                                title="Editar"
+                                aria-label={`Editar ${producto.nombre}`}
+                                className="rounded-lg p-2 text-slate-500 hover:bg-amber-50 hover:text-amber-700 cursor-pointer"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setModal({ tipo: 'estado', producto })}
+                                title={producto.activo ? 'Inactivar' : 'Activar'}
+                                aria-label={`${producto.activo ? 'Inactivar' : 'Activar'} ${producto.nombre}`}
+                                className={`rounded-lg p-2 cursor-pointer ${
+                                  producto.activo
+                                    ? 'text-slate-500 hover:bg-red-50 hover:text-red-600'
+                                    : 'text-slate-400 hover:bg-emerald-50 hover:text-emerald-600'
+                                }`}
+                              >
+                                <Power className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+
+                    {!cargando && productos.length === 0 && (
+                      <tr>
+                        <td colSpan={puedeGestionar ? 8 : 7} className="px-4 py-12 text-center">
+                          <Package className="mx-auto mb-2 w-8 h-8 text-slate-300" />
+                          <p className="text-sm font-medium text-slate-500">No hay productos con esos filtros.</p>
+                        </td>
+                      </tr>
                     )}
-                  </tr>
-                ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-                {!cargando && productos.length === 0 && (
-                  <tr>
-                    <td colSpan={puedeGestionar ? 8 : 7} className="px-4 py-12 text-center">
-                      <Package className="mx-auto mb-2 w-8 h-8 text-slate-300" />
-                      <p className="text-sm font-medium text-slate-500">No hay productos con esos filtros.</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
-          {cargando && !resultado
-            ? 'Cargando catálogo...'
-            : `Mostrando ${productos.length} productos · ${activos} activos · ${productos.length - activos} inactivos`}
-        </div>
-      </section>
+            <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
+              {cargando && !resultado
+                ? 'Cargando catálogo...'
+                : `Mostrando ${productos.length} productos · ${activos} activos · ${productos.length - activos} inactivos`}
+            </div>
+          </section>
         </>
       )}
 
