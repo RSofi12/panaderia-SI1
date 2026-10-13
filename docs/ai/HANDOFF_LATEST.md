@@ -23,21 +23,28 @@
 | CU9 | Consultar alertas de bajo stock | 🟢 Completo end-to-end | `materia_prima/` + `src/apps/dashboard/inventario/AlertasBajoStockPage.tsx` |
 | CU11 | Consultar historial de producción | 🟢 Completo end-to-end | `produccion/` + `src/apps/dashboard/productos/produccion/` |
 | CU12 | Consultar existencias de pan | 🟢 Completo end-to-end | `productos_terminados/` + `src/apps/dashboard/productos/existencias/` |
-| CU10 | Registrar producción diaria | 🟡 Frontend listo / Backend pend. | `src/apps/dashboard/productos/produccion/RegistrarProduccionModal.tsx` |
+| CU10 | Registrar producción diaria | 🟡 Backend listo / Frontend pend. | `produccion/` + `RegistrarProduccionModal.tsx` |
 
 Detalle completo por caso de uso: [`CURRENT_STATE.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/CURRENT_STATE.md)  
 Registro de decisiones: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/DECISIONS_LOG.md)  
-Última sesión: [`2026-10-13-pilar-cu11-historial-produccion-refinamiento.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/sessions/2026-10-13-pilar-cu11-historial-produccion-refinamiento.md)
+Última sesión: [`2026-10-13-cu10-registrar-produccion-diaria-backend.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/sessions/2026-10-13-cu10-registrar-produccion-diaria-backend.md)
 
 ---
 
 ## 📦 2. Lo entregado en esta sesión
 
-### Integración y Reconciliación de CU09 (Alertas de Bajo Stock)
-- **Reconciliación Limpia con CU8:** Integradas las alertas de bajo stock dentro de la sub-app `materia_prima` sin alterar el CRUD existente de CU8.
-- **Selector y Serializador:** `obtener_materias_primas_bajo_stock()` con cálculo de faltante y Coalesce de stock en 0. Serializador `AlertaBajoStockSerializer`.
-- **Doble Guarda RBAC:** Exigencia de `TienePermiso('gestionar_inventario')` y `EsRolAutorizadoCU09` (Administrador, Propietario y Personal de Producción).
-- **Ruta y Componente:** Página dedicada `/dashboard/inventario/alertas-bajo-stock` (`AlertasBajoStockPage.tsx`) con accesibilidad WCAG y enlace contextual en `ProductosPage.tsx`.
+### Implementación Backend de CU10 (Registrar Producción Diaria)
+- **Modelos y Esquema:** Modelo `ProductoMateriaPrima` para recetas BOM (`producto_materia_prima`), clave foránea `id_produccion` en `MovimientoMateriaPrima` y soporte a jornada única (`unica`) en `JornadaProduccion`.
+- **Capa de Servicios (`services.py`):**
+  - `simular_consumo_produccion`: Explosión de materiales en tiempo real y cálculo de viabilidad de stock.
+  - `calcular_costo_unitario_producto`: Sumatoria de insumos por precio histórico de compra con fallback a costo base de catálogo.
+  - `registrar_produccion_diaria`: Transacción atómica con `select_for_update()`, validación estricta de existencias con detalle de faltantes, descuento de insumos en `inventario_materia_prima`, incremento de pan en `inventario_producto_terminado`, doble generación de kardex de movimientos y registro de auditoría en `Bitacora`.
+- **Endpoints Expuestos en `/api/produccion/`:**
+  - `POST /api/produccion/`: Registro transaccional de producción diaria.
+  - `POST /api/produccion/simular/`: Simulación de consumo en vivo.
+  - `GET /api/produccion/recetas/` y `GET /api/productos/recetas/`: Catálogo de recetas BOM por producto.
+- **Seeder Oficial de Recetas:** `python manage.py seed_recetas` para las 12 recetas (37 relaciones de insumos) de `Poblacion_4_Dias_Panaderia_Santiago.sql`.
+- **Suite de Pruebas Automatizadas:** 16 pruebas en `produccion/tests.py` y 45 pruebas globales en `productos_inventario` pasando al 100% en verde.
 
 ---
 
@@ -45,21 +52,20 @@ Registro de decisiones: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia
 
 | Verificación | Comando / Entorno | Resultado |
 |---|---|---|
-| Suite completa `productos_inventario` | `manage.py test apps.productos_inventario...` | ✅ **Exitoso (33/33 tests OK en 2.5s)** |
-| Pruebas específicas CU09 | `manage.py test apps.productos_inventario.materia_prima.tests` | ✅ **Exitoso (17/17 tests OK: 5 CU8 + 12 CU09)** |
-| Build & Types Frontend | `npm run build` (`tsc -b && vite build`) | ✅ **Exitoso (2019 módulos, 0 errores)** |
-| Git Status | `git status` | ✅ **Merge concluido y árbol limpio** |
+| Suite completa `productos_inventario` | `$env:DB_ENGINE="sqlite3"; python manage.py test apps.productos_inventario` | ✅ **Exitoso (45/45 tests OK en 4.6s)** |
+| Pruebas específicas `produccion` (CU10 + CU11) | `python manage.py test apps.productos_inventario.produccion.tests` | ✅ **Exitoso (16/16 tests OK en 2.9s)** |
+| Check de configuración Django | `python manage.py check` | ✅ **Exitoso (0 issues)** |
+| Seeder de recetas | `python manage.py seed_recetas` | ✅ **Exitoso (37 relaciones pobladas)** |
 
 ---
 
 ## 🔜 4. Punto exacto de reanudación
 
-**Siguiente paso recomendado:**
-1. **Backend de Producción (Ciclo 2 - CU10/CU11):**
-   - Crear modelos `Receta`, `DetalleReceta`, `Produccion` (Lote), `DetalleProduccionInsumos` y `DetalleProduccionProductos` en `backend/apps/productos_inventario/`.
-   - Implementar endpoints transaccionales con descuento automático de insumos e incremento de inventario terminado.
-2. **O avanzar con CU7 (Registrar compra de materia prima):**
-   - En `backend/apps/compras/` para alimentar el stock de insumos que la producción consume.
+**Siguiente paso:**
+1. **Frontend de CU10:**
+   - Desactivar `USAR_MOCK_REGISTRO` en `frontend/src/services/produccionService.ts`.
+   - Conectar `RegistrarProduccionModal.tsx` con `/api/produccion/` y `/api/produccion/simular/`.
+   - Verificar integración completa en UI y refresco de tabla del historial de CU11.
 
 ---
 

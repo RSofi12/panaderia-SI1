@@ -108,6 +108,15 @@ class MovimientoMateriaPrima(models.Model):
         related_name='movimientos_materia',
         verbose_name='Compra',
     )
+    id_produccion = models.ForeignKey(
+        'produccion.Produccion',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        db_column='id_produccion',
+        related_name='movimientos_insumo',
+        verbose_name='Producción',
+    )
     fecha_hora = models.DateTimeField(default=timezone.now, verbose_name='Fecha y hora')
     tipo = models.CharField(
         max_length=10,
