@@ -40,22 +40,30 @@ export const ProductosPage: React.FC = () => {
   const puedeRegistrarProduccion = hasPermission('registrar_produccion');
   const puedeConsultarInventario = hasPermission('gestionar_inventario') || hasPermission('registrar_ventas');
 
+  // Permisos por pestaña
+  const puedeVerCatalogo = puedeGestionar;
+  const puedeVerExistencias = puedeConsultarInventario || puedeGestionar;
+  const puedeVerProduccion = puedeRegistrarProduccion || puedeGestionar;
+
+  const permitidas: PestanaProducto[] = [];
+  if (puedeVerCatalogo) permitidas.push('catalogo');
+  if (puedeVerExistencias) permitidas.push('existencias');
+  if (puedeVerProduccion) permitidas.push('produccion');
+
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as PestanaProducto | null;
 
-  // Deriva la pestaña activa: si el rol es de producción abre producción, si es de ventas abre existencias
-  const pestanaActiva: PestanaProducto = (() => {
-    if (tabParam === 'produccion' || tabParam === 'existencias' || tabParam === 'catalogo') {
-      return tabParam;
-    }
-    if (!puedeGestionar && puedeRegistrarProduccion) {
-      return 'produccion';
-    }
-    if (!puedeGestionar && puedeConsultarInventario) {
-      return 'existencias';
-    }
-    return 'catalogo';
+  // Pestaña por defecto según el rol del usuario
+  const tabPorDefecto = (() => {
+    if (!puedeGestionar && puedeRegistrarProduccion && puedeVerProduccion) return 'produccion';
+    if (!puedeGestionar && puedeConsultarInventario && puedeVerExistencias) return 'existencias';
+    return permitidas[0] ?? 'existencias';
   })();
+
+  // Deriva la pestaña activa: garantiza que solo se acceda a pestañas autorizadas
+  const pestanaActiva: PestanaProducto = permitidas.includes(tabParam as PestanaProducto)
+    ? (tabParam as PestanaProducto)
+    : tabPorDefecto;
 
   const cambiarPestana = (nueva: PestanaProducto) => {
     setSearchParams(
@@ -161,6 +169,18 @@ export const ProductosPage: React.FC = () => {
     }
   };
 
+  if (permitidas.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl py-12 text-center">
+        <AlertCircle className="mx-auto h-12 w-12 text-amber-600" />
+        <h3 className="mt-3 text-lg font-bold text-slate-900">Acceso no autorizado</h3>
+        <p className="mt-1 text-sm text-slate-500">
+          Tu rol actual no cuenta con permisos para consultar o gestionar productos e inventario.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Encabezado General del Módulo */}
@@ -198,56 +218,62 @@ export const ProductosPage: React.FC = () => {
           )}
         </div>
 
-        {/* Selector de pestañas */}
+        {/* Selector de pestañas: solo muestra las secciones autorizadas */}
         <div
           role="tablist"
           aria-label="Secciones de productos e inventario"
           className="flex border-b border-slate-200 mt-5 gap-6"
         >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={pestanaActiva === 'catalogo'}
-            onClick={() => cambiarPestana('catalogo')}
-            className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
-              pestanaActiva === 'catalogo'
-                ? 'border-amber-600 text-amber-900'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-            }`}
-          >
-            <Package className="h-4 w-4" />
-            <span>Catálogo de panes</span>
-          </button>
+          {puedeVerCatalogo && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={pestanaActiva === 'catalogo'}
+              onClick={() => cambiarPestana('catalogo')}
+              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+                pestanaActiva === 'catalogo'
+                  ? 'border-amber-600 text-amber-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <Package className="h-4 w-4" />
+              <span>Catálogo de panes</span>
+            </button>
+          )}
 
-          <button
-            type="button"
-            role="tab"
-            aria-selected={pestanaActiva === 'existencias'}
-            onClick={() => cambiarPestana('existencias')}
-            className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
-              pestanaActiva === 'existencias'
-                ? 'border-amber-600 text-amber-900'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-            }`}
-          >
-            <Store className="h-4 w-4" />
-            <span>Existencias (CU12)</span>
-          </button>
+          {puedeVerExistencias && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={pestanaActiva === 'existencias'}
+              onClick={() => cambiarPestana('existencias')}
+              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+                pestanaActiva === 'existencias'
+                  ? 'border-amber-600 text-amber-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <Store className="h-4 w-4" />
+              <span>Existencias (CU12)</span>
+            </button>
+          )}
 
-          <button
-            type="button"
-            role="tab"
-            aria-selected={pestanaActiva === 'produccion'}
-            onClick={() => cambiarPestana('produccion')}
-            className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
-              pestanaActiva === 'produccion'
-                ? 'border-amber-600 text-amber-900'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-            }`}
-          >
-            <Wheat className="h-4 w-4" />
-            <span>Producción diaria</span>
-          </button>
+          {puedeVerProduccion && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={pestanaActiva === 'produccion'}
+              onClick={() => cambiarPestana('produccion')}
+              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+                pestanaActiva === 'produccion'
+                  ? 'border-amber-600 text-amber-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <Wheat className="h-4 w-4" />
+              <span>Producción diaria</span>
+            </button>
+          )}
         </div>
       </div>
 

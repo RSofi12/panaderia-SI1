@@ -70,6 +70,15 @@ El objetivo incluyó:
      - Integración de la pestaña "Existencias de Pan" como tercera vista del catálogo de productos.
      - Detección automática del rol de usuario (abre directamente esta pestaña para Personal de Ventas).
 
+### Integración, Code Review y Endurecimiento de Seguridad
+1. **Corrección de fallback en `existenciasService.ts`:**
+   - Se corrigió la condición `Array.isArray(response.data) && response.data.length > 0` eliminando la comprobación de longitud mayor a cero. De este modo, cuando el backend responde legítimamente `[]` ante una búsqueda sin coincidencias, el cliente no salta al mock simulado y renderiza el estado vacío real.
+2. **Restricción estricta de visibilidad por rol en `ProductosPage.tsx`:**
+   - Se condicionó el renderizado de botones en la barra de pestañas: `puedeVerCatalogo` (CU05, solo Admin y Propietario), `puedeVerExistencias` (CU12, Ventas, Producción, Propietario y Admin) y `puedeVerProduccion` (CU10/CU11, Producción, Propietario y Admin).
+   - El *Personal de Ventas* únicamente visualiza y accede a la pestaña de **Existencias (CU12)**.
+   - Guardas ante manipulación de URL: si un actor fuerza `?tab=catalogo` o `?tab=produccion` sin permisos, la lógica lo redirige de inmediato a su pestaña autorizada.
+   - Guarda de acceso global: roles sin permisos en el módulo reciben una tarjeta accesible de *Acceso no autorizado*.
+
 ---
 
 ### Documentación y Defensa Académica

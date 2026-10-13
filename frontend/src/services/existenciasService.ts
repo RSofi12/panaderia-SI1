@@ -205,7 +205,7 @@ export const existenciasService = {
         '/productos-terminados/existencias/',
         { params: filtros }
       );
-      if (Array.isArray(response.data) && response.data.length > 0) {
+      if (Array.isArray(response.data)) {
         return response.data;
       }
     } catch {

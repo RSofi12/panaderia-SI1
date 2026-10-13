@@ -482,3 +482,17 @@
 - **Motivo:** Evitar la sobrecarga de una única sub-app `produccion/` que concentraba 4 CUs dispares, separando claramente la fábrica/elaboración (responsabilidad del maestro panadero) del almacén de mostrador y mermas (responsabilidad de ventas y administración).
 - **Impacto:** Archivos concisos (< 80 líneas), desacoplamiento total de desarrollo entre compañeros del equipo y estructura simétrica en todo el backend.
 
+---
+
+# 📅 2026-10-12 — Implementación de CU12 (Existencias de Pan) y Aislamiento por Rol
+
+### 42. Modelo de Kardex, Endurecimiento de Fallback y Control de Visibilidad por Rol en CU12
+- **Decisión:**
+  1. **Kardex y Trazabilidad:** Implementar `MovimientoProductoTerminado` como kardex físico de entradas y salidas de pan de mostrador, articulando en CU12 la consulta de existencias con el histórico cronológico auditado.
+  2. **Permisos y Seguridad:** Exigir `gestionar_inventario`, `registrar_ventas` o `gestionar_productos` en el backend, habilitando la lectura al *Personal de Ventas*, *Producción*, *Propietario* y *Administrador*.
+  3. **Aislamiento en Frontend:** En `ProductosPage.tsx`, condicionar estrictamente la visibilidad de las pestañas a los permisos del usuario. El *Personal de Ventas* únicamente ve y accede a la pestaña de "Existencias (CU12)", sin posibilidad de interactuar con la gestión de catálogo (CU5) ni con la orden de producción diaria (CU10). Si intenta forzar query params en la URL (`?tab=catalogo` o `?tab=produccion`), es redirigido automáticamente a su vista autorizada.
+  4. **Corrección de Fallback Mock:** Modificar `existenciasService.ts` para que un array vacío `[]` retornado por la API (búsqueda sin resultados) sea tratado como respuesta legítima del servidor y no dispare datos mock simulados.
+- **Motivo:** Cumplir el principio de menor privilegio (PoLP), evitar desorientación del personal de mostrador con opciones que no le corresponden y garantizar fidelidad de datos entre backend y frontend.
+- **Impacto:** Interfaz segura, limpia y 100% acorde al rol de trabajo, con suite de 9 tests unitarios pasando en verde.
+
+
