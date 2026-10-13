@@ -12,6 +12,7 @@ import ProductosPage from '../apps/dashboard/productos/ProductosPage';
 import ComprasModuloPage from '../apps/dashboard/compras/ComprasModuloPage';
 import AlertasBajoStockPage from '../apps/dashboard/inventario/AlertasBajoStockPage';
 import ComercializacionPage from '../apps/dashboard/comercializacion/ComercializacionPage';
+import RegistrarVentaPage from '../apps/dashboard/comercializacion/ventas/RegistrarVentaPage';
 import ReportesPage from '../apps/dashboard/reportes/ReportesPage';
 import { ROLES_ALERTAS_BAJO_STOCK } from '../types/materiaPrima';
 
@@ -93,6 +94,14 @@ export const AppRoutes: React.FC = () => {
                 responde 403 al resto. */}
             <Route path="compras" element={<ComprasModuloPage />} />
             <Route path="comercializacion" element={<ComercializacionPage />} />
+            <Route
+              path="comercializacion/ventas"
+              element={
+                <ProtectedRoute requiredPermission="registrar_ventas">
+                  <RegistrarVentaPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="reportes" element={<ReportesPage />} />
           </Route>
 

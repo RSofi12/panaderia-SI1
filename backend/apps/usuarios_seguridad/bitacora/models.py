@@ -70,6 +70,9 @@ class AccionBitacora(models.TextChoices):
     # --- CU7: Registrar compra ---
     ALTA_COMPRA = 'ALTA_COMPRA', 'Registro de compra de materia prima'
 
+    # --- CU13: Registrar venta ---
+    ALTA_VENTA = 'ALTA_VENTA', 'Registro de venta en mostrador'
+
     # --- CU8: Gestionar materia prima ---
     ALTA_MATERIA_PRIMA = 'ALTA_MATERIA_PRIMA', 'Alta de materia prima'
     EDICION_MATERIA_PRIMA = 'EDICION_MATERIA_PRIMA', 'Modificación de materia prima'

@@ -528,5 +528,13 @@
 - **Motivo:** Evitar fragmentación de la sub-app `materia_prima`, respetar la matriz de actores de `PACKAGE_CU_MAP.md` y prevenir desabastecimiento de insumos críticos de horneado.
 - **Impacto:** CU09 integrado y verificado con 12 pruebas unitarias específicas y suite global de 33 pruebas en `productos_inventario` en verde.
 
+---
+
+## 📅 2026-10-13 — CU13: métodos de pago efectivo y Stripe
+
+- **Decisión:** La venta de mostrador solo contempla `efectivo` y `stripe`. El id del cobro con tarjeta se guarda en `venta.id_transaccion_stripe`. En efectivo esa columna queda vacía. El descuento de stock vive en `productos_terminados/services/descontar_stock.py`. La sub-app es `apps.comercializacion.ventas` y la pantalla está en `frontend/src/apps/dashboard/comercializacion/ventas/`.
+- **Motivo:** El DDL ya tenía `id_transaccion_stripe`. El equipo fijó esos dos métodos para el CU13. El script de población usa `stripe` en las filas que antes decían `qr`.
+- **Impacto:** `pedido` y `venta` documentan un `CHECK` con esos dos valores. Una venta Stripe no se guarda si el cobro no está confirmado. Si después falta stock, el cobro se anula.
+
 
 

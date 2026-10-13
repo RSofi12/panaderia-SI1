@@ -12,6 +12,51 @@
   font-family: 'Sugo', cursive, system-ui, sans-serif;
 }
 
+@keyframes mostrador-aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mostrador-sello {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.mostrador-aparecer {
+  animation: mostrador-aparecer 320ms ease-out both;
+}
+
+.mostrador-sello {
+  animation: mostrador-sello 220ms ease-out both;
+}
+
+/* Borde inferior dentado del ticket, como papel de caja cortado. */
+.ticket-dentado {
+  --diente: 8px;
+  mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / calc(2 * var(--diente)) 100%;
+  padding-bottom: calc(var(--diente) + 1rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mostrador-aparecer,
+  .mostrador-sello {
+    animation: none;
+  }
+}
+
 @layer base {
   body {
     @apply bg-slate-50 text-slate-900 antialiased font-sans min-h-screen;

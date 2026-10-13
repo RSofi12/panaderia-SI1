@@ -50,16 +50,18 @@
 
 ---
 
-### 📌 Ciclo 3 (7 Casos de Uso) — *Planificado*
+### 📌 Ciclo 3 (7 Casos de Uso) — *CU13 en curso*
 | CU | Nombre del Caso de Uso | Paquete Backend | Estado |
 |---|---|---|:---:|
-| **CU13**| Registrar venta | `apps.comercializacion` | ⚪ |
+| **CU13**| Registrar venta | `apps.comercializacion.ventas` | 🟢 |
 | **CU14**| Registrar pedido | `apps.comercializacion` | ⚪ |
 | **CU15**| Consultar estado de pedido | `apps.comercializacion` | ⚪ |
 | **CU16**| Generar comprobante de venta | `apps.comercializacion` | ⚪ |
 | **CU17**| Consultar disponibilidad de productos | `apps.comercializacion` | ⚪ |
 | **CU18**| Registrar baja de productos terminados | `apps.productos_inventario.productos_terminados` | ⚪ |
 | **CU19**| Consultar historial de precios | `apps.productos_inventario.productos` | ⚪ |
+
+**CU13 (2026-10-13):** venta de mostrador en `apps.comercializacion.ventas`. Métodos `efectivo` y `stripe`. El efectivo deja `id_transaccion_stripe` vacío. Stripe exige un PaymentIntent confirmado y, si falta stock después del cobro, se anula. El stock se descuenta en `productos_terminados/services/descontar_stock.py`. Pantalla: `/dashboard/comercializacion/ventas`.
 
 ---
 

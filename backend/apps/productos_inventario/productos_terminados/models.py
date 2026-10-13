@@ -71,6 +71,15 @@ class MovimientoProductoTerminado(models.Model):
         related_name='movimientos_producto',
         verbose_name='Nota de pérdida',
     )
+    id_venta = models.ForeignKey(
+        'ventas.Venta',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        db_column='id_venta',
+        related_name='movimientos_producto',
+        verbose_name='Venta de origen',
+    )
     fecha_hora = models.DateTimeField(default=timezone.now, verbose_name='Fecha y hora')
     tipo = models.CharField(
         max_length=10,

@@ -98,6 +98,7 @@ class MovimientoProductoTerminadoSerializer(serializers.ModelSerializer):
             'cantidad',
             'id_produccion',
             'id_nota_perdida',
+            'id_venta',
             'origen_detalle',
         ]
 
@@ -107,9 +108,12 @@ class MovimientoProductoTerminadoSerializer(serializers.ModelSerializer):
             return f'Producción / Horneado #{obj.id_produccion_id}'
         if obj.id_nota_perdida_id:
             return f'Nota de baja / Merma #{obj.id_nota_perdida_id}'
+        if obj.id_venta_id:
+            numero = getattr(obj.id_venta, 'numero_comprobante', obj.id_venta_id)
+            return f'Venta comprobante {numero}'
         if obj.tipo == 'entrada':
             return 'Ajuste inicial de inventario'
-        return 'Venta en mostrador'
+        return 'Salida de mostrador'
 
 
 class ResumenExistenciasSerializer(serializers.Serializer):
