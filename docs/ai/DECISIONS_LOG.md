@@ -494,3 +494,13 @@
   4. **Corrección de Fallback Mock:** Modificar `existenciasService.ts` para que un array vacío `[]` retornado por la API (búsqueda sin resultados) sea tratado como respuesta legítima del servidor y no dispare datos mock simulados.
 - **Motivo:** Cumplir el principio de menor privilegio (PoLP), evitar desorientación del personal de mostrador con opciones que no le corresponden y garantizar fidelidad de datos entre backend y frontend.
 - **Impacto:** Interfaz segura, limpia y 100% acorde al rol de trabajo, con suite de 9 tests unitarios pasando en verde.
+
+### 43. Consolidación de CU08 (Gestionar Materia Prima): Aislamiento RBAC de Insumos, Modal Institucional y Serialización Estandarizada
+- **Decisión:**
+  1. **Aislamiento Estricto por Rol en Frontend:** En `ProductosPage.tsx`, restringir el acceso y visibilidad de la pestaña `inventario` ("Stock de materia prima") exclusivamente a los roles autorizados según `PACKAGE_CU_MAP.md` (*Propietario*, *Administrador* y *Personal de Producción*), condicionando `puedeVerInventario` a `hasPermission('gestionar_materias_primas') || hasPermission('registrar_produccion')`. El *Personal de Ventas* queda excluido de la visualización del almacén de materias primas.
+  2. **Diálogo Institucional Accesible:** Reemplazar `window.confirm()` nativo en `InventarioTab.tsx` por el componente `ConfirmarEstadoMateriaDialog`, con semántica accesible `alertdialog`, descripción de impacto de activación/inactivación y estados de procesamiento no bloqueantes.
+  3. **Retroalimentación Granular de Validación:** Integrar captura y mapeo de errores de campo devueltos por DRF (400 `ValidationError`), asociando los mensajes específicos directamente a los inputs de `nombre`, `unidad_medida` y `stock_minimo` con resaltado visual (`border-red-400`).
+  4. **Estandarización de Serialización de Decimales:** Homogeneizar `MateriaPrimaStockSerializer` para retornar `stock_actual` formateado como string (`str(self._stock(obj))`), previniendo posibles inconsistencias de tipo entre serializadores de catálogo e inventario.
+- **Motivo:** Garantizar el cumplimiento estricto del PUDS respecto a los actores de CU08, elevar la calidad de UX/accesibilidad y asegurar robustez en el intercambio de datos cliente-servidor.
+- **Impacto:** CU08 completado, validado con 5 pruebas unitarias backend y build frontend 100% en verde (0 errores).
+

@@ -159,3 +159,4 @@ class PruebasMateriaPrima(TestCase):
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         self.assertEqual(len(respuesta.data), 1)
         self.assertFalse(respuesta.data[0]['activo'])
+        self.assertEqual(respuesta.data[0]['stock_actual'], '50.000')

@@ -4,6 +4,7 @@ import { AlertCircle, CheckCircle2, Package, Pencil, Plus, Power, RefreshCw, Sea
 import { useAuth } from '../../../../contexts/AuthContext';
 import Modal from '../../components/Modal';
 import inventarioService from '../../../../services/inventarioService';
+import ConfirmarEstadoMateriaDialog from './components/ConfirmarEstadoMateriaDialog';
 import type {
   EstadoStock,
   MateriaPrimaFiltros,
@@ -50,8 +51,11 @@ export const InventarioTab: React.FC = () => {
   const [version, setVersion] = useState(0);
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const [materiaEditando, setMateriaEditando] = useState<MateriaPrimaStock | null>(null);
+  const [materiaCambiarEstado, setMateriaCambiarEstado] = useState<MateriaPrimaStock | null>(null);
+  const [procesandoEstado, setProcesandoEstado] = useState(false);
   const [formularioAbierto, setFormularioAbierto] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [erroresCampos, setErroresCampos] = useState<Record<string, string>>({});
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
@@ -108,6 +112,7 @@ export const InventarioTab: React.FC = () => {
     setFormularioAbierto(false);
     setMateriaEditando(null);
     setErrorAccion(null);
+    setErroresCampos({});
   };
 
   const guardarMateria = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -120,6 +125,7 @@ export const InventarioTab: React.FC = () => {
     };
     setGuardando(true);
     setErrorAccion(null);
+    setErroresCampos({});
     try {
       if (materiaEditando) {
         await inventarioService.actualizar(materiaEditando.id_materia_prima, payload);
@@ -131,25 +137,53 @@ export const InventarioTab: React.FC = () => {
       setMensaje(materiaEditando ? 'Materia prima actualizada.' : 'Materia prima agregada con stock inicial en cero.');
       setVersion((actual) => actual + 1);
     } catch (err: unknown) {
-      const detalle = isAxiosError(err) && err.response?.status === 400
-        ? 'Revisa los datos: el nombre podría estar repetido o algún valor no ser válido.'
-        : 'No se pudo guardar. Verifica tu permiso y que el backend esté disponible.';
-      setErrorAccion(detalle);
+      if (
+        isAxiosError(err) &&
+        err.response?.status === 400 &&
+        typeof err.response.data === 'object' &&
+        err.response.data !== null
+      ) {
+        const data = err.response.data as Record<string, unknown>;
+        const errores: Record<string, string> = {};
+        for (const [campo, val] of Object.entries(data)) {
+          if (Array.isArray(val)) {
+            errores[campo] = val.join(' ');
+          } else if (typeof val === 'string') {
+            errores[campo] = val;
+          }
+        }
+        setErroresCampos(errores);
+        if (errores.non_field_errors || errores.detail) {
+          setErrorAccion(errores.non_field_errors || errores.detail);
+        }
+      } else {
+        setErrorAccion('No se pudo guardar. Verifica tu permiso y que el backend esté disponible.');
+      }
     } finally {
       setGuardando(false);
     }
   };
 
-  const alternarEstado = async (materia: MateriaPrimaStock) => {
-    const accion = materia.activo ? 'inactivar' : 'activar';
-    if (!window.confirm(`¿Confirmas ${accion} "${materia.nombre}"?`)) return;
+  const alternarEstado = (materia: MateriaPrimaStock) => {
     setErrorAccion(null);
+    setMateriaCambiarEstado(materia);
+  };
+
+  const confirmarCambioEstado = async () => {
+    if (!materiaCambiarEstado) return;
+    setProcesandoEstado(true);
     try {
-      await inventarioService.alternarActivo(materia.id_materia_prima);
-      setMensaje(`${materia.nombre} ${materia.activo ? 'inactivada' : 'activada'}.`);
+      await inventarioService.alternarActivo(materiaCambiarEstado.id_materia_prima);
+      setMensaje(
+        `${materiaCambiarEstado.nombre} ${materiaCambiarEstado.activo ? 'inactivada' : 'activada'}.`
+      );
+      setMateriaCambiarEstado(null);
       setVersion((actual) => actual + 1);
     } catch {
       setErrorAccion('No se pudo cambiar el estado. Verifica tu permiso y que el backend esté disponible.');
+      setMateriaCambiarEstado(null);
+    } finally {
+      setProcesandoEstado(false);
     }
   };
 
@@ -282,7 +316,7 @@ export const InventarioTab: React.FC = () => {
                           </button>
                           <button
                             type="button"
-                            onClick={() => void alternarEstado(materia)}
+                            onClick={() => alternarEstado(materia)}
                             className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 ${materia.activo ? 'border-red-200 text-red-700 hover:bg-red-50' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'}`}
                             aria-label={`${materia.activo ? 'Inactivar' : 'Activar'} ${materia.nombre}`}
                           >
@@ -324,51 +358,90 @@ export const InventarioTab: React.FC = () => {
           onCerrar={cerrarFormulario}
           sinCerrar={guardando}
         >
-            <form className="mt-5 space-y-4" onSubmit={(event) => void guardarMateria(event)}>
-              <label className="block text-sm font-medium text-slate-700">
-                Nombre
-                <input
-                  name="nombre"
-                  required
-                  maxLength={100}
-                  defaultValue={materiaEditando?.nombre ?? ''}
-                  autoFocus
-                  className="mt-1.5 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-              </label>
-              <label className="block text-sm font-medium text-slate-700">
-                Unidad de medida
-                <input
-                  name="unidad_medida"
-                  required
-                  maxLength={20}
-                  placeholder="Ej.: kg, litro, unidad"
-                  defaultValue={materiaEditando?.unidad_medida ?? ''}
-                  className="mt-1.5 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-              </label>
-              <label className="block text-sm font-medium text-slate-700">
-                Stock mínimo
-                <input
-                  name="stock_minimo"
-                  type="number"
-                  required
-                  min="0"
-                  step="0.001"
-                  defaultValue={materiaEditando?.stock_minimo ?? '0'}
-                  className="mt-1.5 w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-              </label>
-              <div className="flex justify-end gap-3 pt-2">
-                <button type="button" disabled={guardando} onClick={cerrarFormulario} className="min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">
-                  Cancelar
-                </button>
-                <button type="submit" disabled={guardando} className="min-h-11 rounded-xl bg-amber-700 px-4 text-sm font-semibold text-white hover:bg-amber-800 disabled:cursor-wait disabled:opacity-60">
-                  {guardando ? 'Guardando…' : materiaEditando ? 'Guardar cambios' : 'Crear materia prima'}
-                </button>
-              </div>
-            </form>
+          <form className="mt-5 space-y-4" onSubmit={(event) => void guardarMateria(event)}>
+            <label className="block text-sm font-medium text-slate-700">
+              Nombre
+              <input
+                name="nombre"
+                required
+                maxLength={100}
+                defaultValue={materiaEditando?.nombre ?? ''}
+                autoFocus
+                className={`mt-1.5 w-full rounded-xl border px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 ${
+                  erroresCampos.nombre
+                    ? 'border-red-400 focus:border-red-600 focus:ring-red-500'
+                    : 'border-slate-300 focus:border-amber-600 focus:ring-amber-500'
+                }`}
+              />
+              {erroresCampos.nombre && (
+                <p className="mt-1 text-xs text-red-600">{erroresCampos.nombre}</p>
+              )}
+            </label>
+            <label className="block text-sm font-medium text-slate-700">
+              Unidad de medida
+              <input
+                name="unidad_medida"
+                required
+                maxLength={20}
+                placeholder="Ej.: kg, litro, unidad"
+                defaultValue={materiaEditando?.unidad_medida ?? ''}
+                className={`mt-1.5 w-full rounded-xl border px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 ${
+                  erroresCampos.unidad_medida
+                    ? 'border-red-400 focus:border-red-600 focus:ring-red-500'
+                    : 'border-slate-300 focus:border-amber-600 focus:ring-amber-500'
+                }`}
+              />
+              {erroresCampos.unidad_medida && (
+                <p className="mt-1 text-xs text-red-600">{erroresCampos.unidad_medida}</p>
+              )}
+            </label>
+            <label className="block text-sm font-medium text-slate-700">
+              Stock mínimo
+              <input
+                name="stock_minimo"
+                type="number"
+                required
+                min="0"
+                step="0.001"
+                defaultValue={materiaEditando?.stock_minimo ?? '0'}
+                className={`mt-1.5 w-full rounded-xl border px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 ${
+                  erroresCampos.stock_minimo
+                    ? 'border-red-400 focus:border-red-600 focus:ring-red-500'
+                    : 'border-slate-300 focus:border-amber-600 focus:ring-amber-500'
+                }`}
+              />
+              {erroresCampos.stock_minimo && (
+                <p className="mt-1 text-xs text-red-600">{erroresCampos.stock_minimo}</p>
+              )}
+            </label>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                disabled={guardando}
+                onClick={cerrarFormulario}
+                className="min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={guardando}
+                className="min-h-11 rounded-xl bg-amber-700 px-4 text-sm font-semibold text-white hover:bg-amber-800 disabled:cursor-wait disabled:opacity-60 cursor-pointer"
+              >
+                {guardando ? 'Guardando…' : materiaEditando ? 'Guardar cambios' : 'Crear materia prima'}
+              </button>
+            </div>
+          </form>
         </Modal>
+      )}
+
+      {materiaCambiarEstado && (
+        <ConfirmarEstadoMateriaDialog
+          materia={materiaCambiarEstado}
+          procesando={procesandoEstado}
+          onCancel={() => setMateriaCambiarEstado(null)}
+          onConfirm={() => void confirmarCambioEstado()}
+        />
       )}
     </section>
   );

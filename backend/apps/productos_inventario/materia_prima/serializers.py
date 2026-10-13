@@ -88,7 +88,7 @@ class MateriaPrimaStockSerializer(serializers.ModelSerializer):
         return inventario.stock_actual if inventario else Decimal('0')
 
     def get_stock_actual(self, obj):
-        return self._stock(obj)
+        return str(self._stock(obj))
 
     def get_estado(self, obj):
         stock = self._stock(obj)

@@ -2,7 +2,7 @@
 
 ## 📌 Proyecto: Sistema de Información Web - Panadería Santiago (SI-1)
 - **Fecha:** 2026-10-12
-- **Estado del Ciclo:** Ciclo 1 consolidado (CU1–CU6, CU26) + **Ciclo 2 en desarrollo** (CU7 compras 🟢, CU12 existencias 🟢, CU10/CU11 frontend 🟡)
+- **Estado del Ciclo:** Ciclo 1 consolidado (CU1–CU6, CU26) + **Ciclo 2 en desarrollo** (CU7 compras 🟢, CU8 materia prima 🟢, CU12 existencias 🟢, CU10/CU11 frontend 🟡)
 - **Entorno:** Docker Compose (Recomendado: 1 comando para db, mailpit, backend y frontend) o Local directo
 
 ---
@@ -19,15 +19,15 @@
 | CU6 | Gestionar proveedores | 🟢 Completo end-to-end | `compras/` + `src/apps/dashboard/proveedores/` |
 | CU26 | Gestionar bitácora | 🟢 Completo end-to-end | `bitacora/` + `src/apps/dashboard/usuarios/bitacora/` |
 | CU7 | Registrar compra de materia prima | 🟢 Completo end-to-end | `compra_materia_prima/` + `src/apps/dashboard/compras/` |
+| CU8 | Gestionar materia prima (CRUD+Stock) | 🟢 Completo end-to-end | `materia_prima/` + `src/apps/dashboard/productos/inventario/` |
 | CU12 | Consultar existencias de pan | 🟢 Completo end-to-end | `productos_terminados/` + `src/apps/dashboard/productos/existencias/` |
 | CU10 | Registrar producción diaria | 🟡 Frontend listo / Backend pend. | `src/apps/dashboard/productos/produccion/RegistrarProduccionModal.tsx` |
 | CU11 | Consultar historial de producción | 🟡 Frontend listo / Backend pend. | `src/apps/dashboard/productos/produccion/TablaLoteProduccion.tsx` |
-| CU8 | Gestionar materia prima (CRUD+Stock) | ⚪ Planificado (Alcance ampliado) | `materia_prima/` (Andamiaje base listo) |
-| CU9 | Consultar alertas de bajo stock | ⚪ Planificado | `materia_prima/` |
+| CU9 | Consultar alertas de bajo stock | ⚪ Planificado (lógica base lista en CU8) | `materia_prima/` |
 
 Detalle completo por caso de uso: [`CURRENT_STATE.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/CURRENT_STATE.md)  
 Registro de decisiones: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/DECISIONS_LOG.md)  
-Última sesión: [`2026-10-12-roberto-cu12-consultar-existencias-productos-terminados.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/sessions/2026-10-12-roberto-cu12-consultar-existencias-productos-terminados.md)
+Última sesión: [`2026-10-12-roberto-cu8-gestionar-materia-prima-refinamiento.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/sessions/2026-10-12-roberto-cu8-gestionar-materia-prima-refinamiento.md)
 
 ---
 

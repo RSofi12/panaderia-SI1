@@ -73,8 +73,9 @@ export const ProductosPage: React.FC = () => {
   const puedeGestionar = hasPermission('gestionar_productos');
   const puedeRegistrarProduccion = hasPermission('registrar_produccion');
   const puedeConsultarInventario = hasPermission('gestionar_inventario') || hasPermission('registrar_ventas');
+  // CU08: Solo Propietario, Administrador y Personal de Producción ven stock de materia prima
   const puedeVerInventario =
-    hasPermission('gestionar_inventario') || hasPermission('gestionar_materias_primas');
+    hasPermission('gestionar_materias_primas') || hasPermission('registrar_produccion');
 
   const puedeVerCatalogo = puedeGestionar;
   const puedeVerExistencias = puedeConsultarInventario || puedeGestionar;
