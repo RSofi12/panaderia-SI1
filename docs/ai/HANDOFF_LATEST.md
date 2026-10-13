@@ -1,8 +1,8 @@
 # Resumen de Entrega y Continuidad (HANDOFF LATEST)
 
 ## 📌 Proyecto: Sistema de Información Web - Panadería Santiago (SI-1)
-- **Fecha:** 2026-10-12
-- **Estado del Ciclo:** Ciclo 1 consolidado (CU1–CU6, CU26) + **Ciclo 2 en desarrollo** (CU7 compras 🟢, CU8 materia prima 🟢, CU12 existencias 🟢, CU10/CU11 frontend 🟡)
+- **Fecha:** 2026-10-13
+- **Estado del Ciclo:** Ciclo 1 consolidado (CU1–CU6, CU26) + **Ciclo 2 en desarrollo** (CU7 compras 🟢, CU8 materia prima 🟢, CU11 historial producción 🟢, CU12 existencias 🟢, CU10 orden de producción 🟡)
 - **Entorno:** Docker Compose (Recomendado: 1 comando para db, mailpit, backend y frontend) o Local directo
 
 ---
@@ -20,38 +20,25 @@
 | CU26 | Gestionar bitácora | 🟢 Completo end-to-end | `bitacora/` + `src/apps/dashboard/usuarios/bitacora/` |
 | CU7 | Registrar compra de materia prima | 🟢 Completo end-to-end | `compra_materia_prima/` + `src/apps/dashboard/compras/` |
 | CU8 | Gestionar materia prima (CRUD+Stock) | 🟢 Completo end-to-end | `materia_prima/` + `src/apps/dashboard/productos/inventario/` |
+| CU11 | Consultar historial de producción | 🟢 Completo end-to-end | `produccion/` + `src/apps/dashboard/productos/produccion/` |
 | CU12 | Consultar existencias de pan | 🟢 Completo end-to-end | `productos_terminados/` + `src/apps/dashboard/productos/existencias/` |
 | CU10 | Registrar producción diaria | 🟡 Frontend listo / Backend pend. | `src/apps/dashboard/productos/produccion/RegistrarProduccionModal.tsx` |
-| CU11 | Consultar historial de producción | 🟡 Frontend listo / Backend pend. | `src/apps/dashboard/productos/produccion/TablaLoteProduccion.tsx` |
 | CU9 | Consultar alertas de bajo stock | ⚪ Planificado (lógica base lista en CU8) | `materia_prima/` |
 
 Detalle completo por caso de uso: [`CURRENT_STATE.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/CURRENT_STATE.md)  
 Registro de decisiones: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/DECISIONS_LOG.md)  
-Última sesión: [`2026-10-12-roberto-cu8-gestionar-materia-prima-refinamiento.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/sessions/2026-10-12-roberto-cu8-gestionar-materia-prima-refinamiento.md)
+Última sesión: [`2026-10-13-pilar-cu11-historial-produccion-refinamiento.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/sessions/2026-10-13-pilar-cu11-historial-produccion-refinamiento.md)
 
 ---
 
 ## 📦 2. Lo entregado en esta sesión
 
-### Rediseño Institucional de Autenticación (CU1, CU2)
-- **Tipografía corporativa:** Instalación de `sugo.regular.otf` en `src/assets/fonts/` y registro de clase `.font-sugo`.
-- **`LoginPage.tsx`:** Layout Split-Screen con fotografía editorial (`photo-bakery.jpg`) oculta automáticamente en móviles (`hidden lg:flex`), logo circular SVG limpio, reemplazo de emojis por iconos Lucide acordes (`ShieldCheck`, `Briefcase`, `ShoppingBag`, `ChefHat`), checkbox "Recordarme" en frontend y ajuste vertical para eliminar barras de scroll en resolución estándar.
-- **`ForgotPasswordPage.tsx`:** Diseño Split-Screen emparejado con Login, tipografía Sugo y feedback anti-enumeración.
-- **`ResetPasswordPage.tsx`:** Diseño de tarjeta centrada (sin foto lateral de panadería), título en Sugo, inputs de contraseña con alternancia de visibilidad y checklist reactivo de complejidad.
-- **`AuthCard.tsx`:** Contenedor común actualizado con logo SVG y cabecera en Sugo.
-
-### Frontend de Producción Diaria (CU10, CU11)
-- **Tipos y Servicios:** `src/types/produccion.ts` y `src/services/produccionService.ts` con arquitectura híbrida de fallback mock automático.
-- **Componentes:**
-  - `BalanceInsumosCard.tsx` (consumo de insumos en tiempo real y alertas de stock).
-  - `TablaLoteProduccion.tsx` (historial de lotes con filtros y paginación).
-  - `ModalDetalleProduccion.tsx` (auditoría de materias primas consumidas vs unidades producidas).
-  - `RegistrarProduccionModal.tsx` (alta de lotes con cálculo de receta dinámico).
-  - `ProduccionTab.tsx` (vista orquestadora en `/dashboard/productos?tab=produccion`).
-- **Pestañas integradas:** Doble pestaña en `ProductosPage.tsx` ("Catálogo de productos" y "Producción diaria").
-
-### Mantenimiento Backend / Git
-- Corrección de conflicto de merge en `backend/requirements.txt` preservando `psycopg2-binary>=2.9.9`.
+### Refinamiento y Consolidación de CU11 (Historial de Producción)
+- **RBAC Extendido:** Guarda `PuedeConsultarHistorialProduccion` ajustada para incluir `gestionar_productos`, `generar_reportes` y `is_superuser`, otorgando acceso a *Administrador* y *Propietario* además del *Personal de Producción*.
+- **Prevención de N+1:** Reemplazo de `obj.detalles.count()` por `len(obj.detalles.all())` en `ProduccionSerializer.get_total_variedades` aprovechando el prefetch en memoria.
+- **Validación Estricta:** Manejo defensivo en `ProduccionListView` para `fecha_desde` y `fecha_hasta` (formato ISO `AAAA-MM-DD`, validación temporal `fecha_desde <= fecha_hasta`) y casteo entero de `id_producto`, con respuesta HTTP 400 detallada.
+- **Suite de Pruebas Automatizadas:** 7 tests unitarios en `produccion/tests.py` verificando autenticación, autorización por rol (incluyendo admin con `gestionar_productos`), validaciones de fechas y casteo de ID.
+- **Seed Demostrativo:** Ejecución de `seed_historial_demo.py` cargando 3 turnos (06, 07 y 08 de septiembre 2026) con 36 detalles reales de producción en PostgreSQL.
 
 ---
 
@@ -59,8 +46,10 @@ Registro de decisiones: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia
 
 | Verificación | Comando / Entorno | Resultado |
 |---|---|---|
-| Build & Types Frontend | `npm run build` (`tsc -b && vite build`) | ✅ **Exitoso (2004 módulos, 0 errores)** |
-| Git Status | `git status -s` | ✅ **Limpio y consistente** |
+| Pruebas Producción + Inventario | `manage.py test apps.productos_inventario.produccion.tests ...` | ✅ **Exitoso (21/21 tests OK en 1.2s)** |
+| Build & Types Frontend | `npm run build` (`tsc -b && vite build`) | ✅ **Exitoso (2016 módulos, 0 errores)** |
+| Seed Demostrativo CU11 | `python manage.py seed_historial_demo` | ✅ **3 jornadas y 36 detalles sembrados** |
+| Git Status | `git status -s` | ✅ **Consistente** |
 
 ---
 

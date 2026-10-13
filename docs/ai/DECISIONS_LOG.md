@@ -504,3 +504,17 @@
 - **Motivo:** Garantizar el cumplimiento estricto del PUDS respecto a los actores de CU08, elevar la calidad de UX/accesibilidad y asegurar robustez en el intercambio de datos cliente-servidor.
 - **Impacto:** CU08 completado, validado con 5 pruebas unitarias backend y build frontend 100% en verde (0 errores).
 
+---
+
+# 📅 2026-10-13 — CU11: Consultar historial de producción (Refinamiento y Consolidación)
+
+### 44. Ampliación de Permisos RBAC, Prevención N+1 y Validación Estricta de Filtros en CU11
+- **Decisión:**
+  1. **Ampliación de Permisos RBAC:** Actualizar la guarda `PuedeConsultarHistorialProduccion` en `apps.productos_inventario.produccion.permissions` para verificar `{'registrar_produccion', 'gestionar_productos', 'generar_reportes'} & permisos` y `is_superuser`. Esto permite al *Propietario* y *Administrador* supervisar y consultar el historial de producción diaria y sus detalles sin incurrir en rechazos 403 Forbidden.
+  2. **Optimización de Consultas N+1:** En `ProduccionSerializer.get_total_variedades`, reemplazar `obj.detalles.count()` (que disparaba una consulta `SELECT COUNT(*)` individual por cada fila) por `len(obj.detalles.all())`, aprovechando la precarga en memoria efectuada por `prefetch_related('detalles__id_producto')` en `selectors.py`.
+  3. **Validación Estricta de Parámetros de Consulta:** Agregar validación explícita en `ProduccionListView` para `fecha_desde` y `fecha_hasta` (formato ISO `AAAA-MM-DD` y validación cruzada de rango `fecha_desde <= fecha_hasta`), y casteo seguro de `id_producto`, devolviendo respuestas estructuradas HTTP 400 Bad Request en lugar de permitir excepciones no controladas 500.
+  4. **Poblado Demostrativo Idempotente:** Ejecutar `seed_historial_demo.py` asegurando 3 turnos (06, 07 y 08 de septiembre de 2026) con 36 detalles de producción reales asociados a usuarios activos (`mrojas` y `ptorrez`), sin afectar existencias ni inventario físico.
+- **Motivo:** Cumplir integralmente con la matriz de actores del PUDS (`PACKAGE_CU_MAP.md`), garantizar rendimiento óptimo en la serialización de lotes y blindar la API ante parámetros malformados.
+- **Impacto:** CU11 completamente operativo y consolidado con 7 pruebas unitarias backend y compilación frontend en 0 errores.
+
+

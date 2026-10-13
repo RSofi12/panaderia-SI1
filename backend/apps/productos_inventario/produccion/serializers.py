@@ -52,7 +52,7 @@ class ProduccionSerializer(serializers.ModelSerializer):
         return sum(detalle.cantidad_producida for detalle in obj.detalles.all())
 
     def get_total_variedades(self, obj):
-        return obj.detalles.count()
+        return len(obj.detalles.all())
 
     def get_costo_total(self, obj):
         total = sum(

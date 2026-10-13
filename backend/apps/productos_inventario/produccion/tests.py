@@ -62,3 +62,41 @@ class PruebasBaseProduccion(TestCase):
         respuesta = self.client.get('/api/produccion/')
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         self.assertIsInstance(respuesta.data, list)
+
+    def test_usuario_con_gestionar_productos_puede_consultar_historial(self):
+        rol_admin = Rol.objects.create(nombre='Administrador', descripcion='Gestión de inventario y productos')
+        permiso_admin = Permiso.objects.create(
+            nombre='gestionar_productos',
+            modulo='productos_inventario',
+            descripcion='Gestión de catálogo y productos'
+        )
+        rol_admin.permisos.add(permiso_admin)
+        usuario_admin = Usuario.objects.create_user(
+            nombre_usuario='admin_user',
+            password='PanADERIA2026!',
+            nombre_completo='Carlos Admin',
+            email='admin@mail.com',
+            id_rol=rol_admin,
+        )
+        self.client.force_authenticate(user=usuario_admin)
+        respuesta = self.client.get('/api/produccion/')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+
+    def test_rango_fechas_invalido_responde_400(self):
+        self.client.force_authenticate(user=self.usuario)
+        respuesta = self.client.get('/api/produccion/?fecha_desde=2026-10-15&fecha_hasta=2026-10-10')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('fecha_desde', respuesta.data)
+
+    def test_formato_fecha_invalido_responde_400(self):
+        self.client.force_authenticate(user=self.usuario)
+        respuesta = self.client.get('/api/produccion/?fecha_desde=invalida')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('fecha_desde', respuesta.data)
+
+    def test_id_producto_invalido_responde_400(self):
+        self.client.force_authenticate(user=self.usuario)
+        respuesta = self.client.get('/api/produccion/?id_producto=no_es_numero')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('id_producto', respuesta.data)
+

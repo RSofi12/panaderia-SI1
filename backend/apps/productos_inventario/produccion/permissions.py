@@ -1,15 +1,25 @@
-"""Permisos de acceso para el módulo de producción."""
+"""Permisos de acceso para el módulo de producción (CU10, CU11)."""
 
 from rest_framework.permissions import BasePermission
 
 
 class PuedeConsultarHistorialProduccion(BasePermission):
-    """Solo el Personal de Producción tiene acceso a consultar historial de producción."""
+    """
+    Permite la consulta del historial de producción a:
+    - Personal de Producción ('registrar_produccion')
+    - Propietario y Administrador ('gestionar_productos', 'generar_reportes')
+    """
+
+    message = 'Tu rol no cuenta con permisos para consultar el historial de producción.'
 
     def has_permission(self, request, view):
         usuario = request.user
         if not usuario or not usuario.is_authenticated:
             return False
 
+        if usuario.is_superuser:
+            return True
+
         permisos = set(usuario.get_permisos_nombres())
-        return 'registrar_produccion' in permisos
+        permisos_permitidos = {'registrar_produccion', 'gestionar_productos', 'generar_reportes'}
+        return bool(permisos & permisos_permitidos)
