@@ -74,9 +74,6 @@ export const ComercializacionPage: React.FC = () => {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <header className="flex flex-col gap-1">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
-          Comercialización · Ciclo 3
-        </p>
         <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-900">
           <TrendingUp className="h-7 w-7 text-amber-700" aria-hidden="true" />
           Ventas en mostrador
