@@ -328,7 +328,7 @@ export const ProductosPage: React.FC = () => {
               className={claseTab(pestanaActiva === 'historial')}
             >
               <History className="h-4 w-4" />
-              <span>CU11 · Historial</span>
+              <span>Historial de producción</span>
             </button>
           )}
         </div>
