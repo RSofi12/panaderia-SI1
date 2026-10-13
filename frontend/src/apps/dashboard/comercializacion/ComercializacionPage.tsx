@@ -1,171 +1,225 @@
-import React from 'react';
-import {
-  ShoppingBag,
-  ClipboardList,
-  Clock,
-  Receipt,
-  Store,
-  Sparkles,
-  TrendingUp,
-  AlertCircle,
-  ArrowRight,
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowRight, Banknote, CreditCard, Receipt, ShoppingBag, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
+import type { VentaResumen } from '../../../types/venta';
+import { ChipMetodo } from './ventas/ChipMetodo';
+import { ventaService } from './ventas/ventaService';
 
-interface CasoUsoCard {
-  cu: string;
-  titulo: string;
-  descripcion: string;
-  actores: string;
-  icono: React.ElementType;
+function bolivianos(valor: number): string {
+  return `Bs ${valor.toFixed(2)}`;
 }
 
-const CASOS_USO: CasoUsoCard[] = [
-  {
-    cu: 'CU13',
-    titulo: 'Registrar venta',
-    descripcion:
-      'Registro ágil de ventas directas por unidad en mostrador, cálculo de total y descuento automático de inventario terminado.',
-    actores: 'Personal de Ventas',
-    icono: ShoppingBag,
-  },
-  {
-    cu: 'CU14',
-    titulo: 'Registrar pedido',
-    descripcion:
-      'Recepción y registro de pedidos anticipados de pan y pastelería con fecha de entrega, cliente y anticipo.',
-    actores: 'Personal de Ventas',
-    icono: ClipboardList,
-  },
-  {
-    cu: 'CU15',
-    titulo: 'Consultar estado de pedido',
-    descripcion:
-      'Seguimiento en tiempo real de pedidos (Pendiente, En elaboración, Listo para entrega, Entregado, Cancelado).',
-    actores: 'Personal de Ventas, Personal de Producción',
-    icono: Clock,
-  },
-  {
-    cu: 'CU16',
-    titulo: 'Generar comprobante de venta',
-    descripcion:
-      'Emisión e impresión de notas de venta o facturas detallando productos, cantidades, método de pago e importe.',
-    actores: 'Personal de Ventas',
-    icono: Receipt,
-  },
-  {
-    cu: 'CU17',
-    titulo: 'Consultar disponibilidad de productos',
-    descripcion:
-      'Consulta rápida en pantalla de existencias de panes disponibles para la venta al momento de atender a un cliente.',
-    actores: 'Personal de Ventas',
-    icono: Store,
-  },
-];
+function hora(fechaIso: string): string {
+  return new Date(fechaIso).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' });
+}
+
+interface ResumenDia {
+  cantidad: number;
+  total: number;
+  efectivo: number;
+  stripe: number;
+}
+
+function resumir(ventas: VentaResumen[]): ResumenDia {
+  let efectivo = 0;
+  let stripe = 0;
+  for (const venta of ventas) {
+    const centavos = Math.round(Number(venta.total) * 100);
+    if (venta.metodo_pago === 'stripe') stripe += centavos;
+    else efectivo += centavos;
+  }
+  return {
+    cantidad: ventas.length,
+    total: (efectivo + stripe) / 100,
+    efectivo: efectivo / 100,
+    stripe: stripe / 100,
+  };
+}
+
+type EstadoCarga = 'cargando' | 'listo' | 'error';
 
 export const ComercializacionPage: React.FC = () => {
+  const { hasPermission } = useAuth();
+  const puedeVender = hasPermission('registrar_ventas');
+  const [ventas, setVentas] = useState<VentaResumen[]>([]);
+  const [estado, setEstado] = useState<EstadoCarga>('cargando');
+
+  useEffect(() => {
+    if (!puedeVender) return;
+    let vigente = true;
+    ventaService
+      .listarHoy()
+      .then((datos) => {
+        if (!vigente) return;
+        setVentas(datos);
+        setEstado('listo');
+      })
+      .catch(() => {
+        if (vigente) setEstado('error');
+      });
+    return () => {
+      vigente = false;
+    };
+  }, [puedeVender]);
+
+  const resumen = resumir(ventas);
+  const ultimas = ventas.slice(0, 5);
+  const fechaHoy = new Date().toLocaleDateString('es-BO', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      {/* Encabezado General */}
-      <div>
+      <header className="flex flex-col gap-1">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
-          Comercialización · Ciclo 3 (CU13–CU17)
+          Comercialización · Ciclo 3
         </p>
-        <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
-              <TrendingUp className="h-7 w-7 text-amber-700" />
-              Comercialización (Ventas y Pedidos)
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Venta de panes en mostrador, control de pedidos anticipados y emisión de comprobantes.
+        <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-900">
+          <TrendingUp className="h-7 w-7 text-amber-700" aria-hidden="true" />
+          Ventas en mostrador
+        </h2>
+        <p className="text-sm text-slate-500 first-letter:uppercase">{fechaHoy}</p>
+      </header>
+
+      <section
+        aria-labelledby="titulo-mostrador"
+        className="mostrador-aparecer relative overflow-hidden rounded-3xl bg-[#2b1a10] p-6 text-amber-50 shadow-lg shadow-amber-950/20 sm:p-8"
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-amber-500/25 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-orange-600/20 blur-3xl"
+        />
+        <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-xl">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/15 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-300">
+              <ShoppingBag className="h-3.5 w-3.5" aria-hidden="true" />
+              CU13 · Registrar venta
+            </span>
+            <h3 id="titulo-mostrador" className="font-sugo mt-3 text-4xl leading-tight text-amber-100 sm:text-5xl">
+              Mostrador
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-amber-100/75">
+              Elige los panes, revisa el total y cobra en efectivo o con tarjeta (Stripe). El stock del
+              mostrador se descuenta al confirmar.
             </p>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
-            <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-            Módulo en Progreso · Ciclo 3
-          </span>
+          {puedeVender ? (
+            <Link
+              to="/dashboard/comercializacion/ventas"
+              className="group inline-flex shrink-0 items-center justify-center gap-3 rounded-2xl bg-amber-400 px-6 py-4 text-base font-bold text-[#2b1a10] shadow-md transition hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/50"
+            >
+              Abrir mostrador
+              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+            </Link>
+          ) : (
+            <p className="max-w-xs rounded-2xl bg-white/5 p-4 text-sm text-amber-100/80">
+              Tu rol no tiene el permiso para registrar ventas. Pídeselo al administrador.
+            </p>
+          )}
         </div>
-      </div>
+      </section>
 
-      {/* Banner Informativo */}
-      <section className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50/50 to-white p-6 shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-700 text-white shadow-md shadow-amber-700/20">
-              <ShoppingBag className="h-6 w-6" />
+      {puedeVender ? (
+        <>
+          <section aria-label="Resumen de hoy" className="grid gap-4 sm:grid-cols-3">
+            <TarjetaCifra
+              etiqueta="Vendido hoy"
+              valor={estado === 'listo' ? bolivianos(resumen.total) : '—'}
+              detalle={estado === 'listo' ? `${resumen.cantidad} ${resumen.cantidad === 1 ? 'venta' : 'ventas'}` : ''}
+              icono={Receipt}
+              destacada
+            />
+            <TarjetaCifra
+              etiqueta="En efectivo"
+              valor={estado === 'listo' ? bolivianos(resumen.efectivo) : '—'}
+              detalle="Dinero en caja"
+              icono={Banknote}
+            />
+            <TarjetaCifra
+              etiqueta="Con tarjeta"
+              valor={estado === 'listo' ? bolivianos(resumen.stripe) : '—'}
+              detalle="Cobrado por Stripe"
+              icono={CreditCard}
+            />
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-bold text-slate-900">Últimas ventas de hoy</h3>
+              {ventas.length > ultimas.length ? (
+                <Link
+                  to="/dashboard/comercializacion/ventas"
+                  className="text-xs font-semibold text-amber-800 hover:underline"
+                >
+                  Ver las {ventas.length}
+                </Link>
+              ) : null}
             </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900">
-                Paquete de Comercialización en Desarrollo
-              </h3>
-              <p className="mt-1 text-sm text-slate-600 leading-relaxed max-w-2xl">
-                Este módulo se encuentra planificado según el cronograma del PUDS para el{' '}
-                <strong className="text-slate-800">Ciclo 3</strong>. Integrará el flujo de caja diario,
-                despacho de pedidos y emisión de comprobantes conectado con las existencias de mostrador (CU12).
+
+            {estado === 'cargando' ? (
+              <p className="mt-4 text-sm text-slate-500">Cargando ventas…</p>
+            ) : null}
+            {estado === 'error' ? (
+              <p className="mt-4 text-sm text-amber-900">No se pudieron cargar las ventas de hoy.</p>
+            ) : null}
+            {estado === 'listo' && ventas.length === 0 ? (
+              <p className="mt-4 text-sm text-slate-500">
+                Todavía no hay ventas hoy. La primera aparecerá aquí apenas la cobres.
               </p>
-            </div>
-          </div>
-          <Link
-            to="/dashboard/productos?tab=existencias"
-            className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-xs font-semibold text-amber-900 shadow-sm hover:bg-amber-50 transition-colors"
-          >
-            <span>Ver existencias actuales (CU12)</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-      </section>
+            ) : null}
 
-      {/* Casos de Uso Planificados */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700">
-            Casos de Uso del Paquete (5 Casos de Uso)
-          </h3>
-          <span className="text-xs text-slate-500 font-medium">Ciclo 3 PUDS</span>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {CASOS_USO.map((item) => {
-            const Icono = item.icono;
-            return (
-              <div
-                key={item.cu}
-                className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition-shadow hover:shadow-md hover:border-amber-200"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-900">
-                      {item.cu}
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500">
-                      <AlertCircle className="h-3 w-3 text-amber-600" />
-                      Planificado
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2.5 mb-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-800">
-                      <Icono className="h-4 w-4" />
+            {ultimas.length > 0 ? (
+              <ul className="mt-3 divide-y divide-slate-100">
+                {ultimas.map((venta) => (
+                  <li key={venta.id_venta} className="flex items-center justify-between gap-3 py-2.5 text-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-xs text-slate-400">#{venta.numero_comprobante}</span>
+                      <span className="tabular-nums text-slate-500">{hora(venta.fecha_hora)}</span>
+                      <ChipMetodo metodo={venta.metodo_pago} />
                     </div>
-                    <h4 className="text-sm font-bold text-slate-900">{item.titulo}</h4>
-                  </div>
-
-                  <p className="text-xs text-slate-600 leading-relaxed mb-4">{item.descripcion}</p>
-                </div>
-
-                <div className="border-t border-slate-100 pt-3">
-                  <p className="text-[11px] text-slate-400">
-                    <span className="font-semibold text-slate-600">Actor:</span> {item.actores}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+                    <span className="font-semibold tabular-nums text-slate-900">
+                      {bolivianos(Number(venta.total))}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </section>
+        </>
+      ) : null}
     </div>
   );
 };
 
+interface TarjetaCifraProps {
+  etiqueta: string;
+  valor: string;
+  detalle: string;
+  icono: React.ElementType;
+  destacada?: boolean;
+}
+
+function TarjetaCifra({ etiqueta, valor, detalle, icono: Icono, destacada = false }: TarjetaCifraProps) {
+  return (
+    <div
+      className={`rounded-2xl border p-5 ${
+        destacada ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{etiqueta}</p>
+        <Icono className="h-4 w-4 text-amber-700" aria-hidden="true" />
+      </div>
+      <p className="mt-2 text-2xl font-bold tabular-nums text-slate-900">{valor}</p>
+      <p className="mt-0.5 text-xs text-slate-500">{detalle}</p>
+    </div>
+  );
+}
 export default ComercializacionPage;

@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'apps.compras.proveedores',
     'apps.compras.compra_materia_prima',
     'apps.comercializacion',
+    'apps.comercializacion.ventas',
     'apps.reportes',
 ]
 
@@ -267,3 +268,7 @@ PASSWORD_RESET_URL = config(
     'PASSWORD_RESET_URL',
     default='http://localhost:5173/recuperar-password/nueva',
 )
+
+# CU13: cobro con tarjeta. Vacío hasta que el equipo pegue las claves de prueba de Stripe.
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
+STRIPE_CURRENCY = config('STRIPE_CURRENCY', default='bob')

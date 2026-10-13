@@ -242,7 +242,7 @@
 - [ ] **CU 12:** Consultar existencias de productos terminados (`apps.productos_inventario` - Propietario, Ventas).
 
 ### 🟡 Ciclo 3 — Comercialización y Ventas (7 CU)
-- [ ] **CU 13:** Registrar venta en mostrador (efectivo / QR) con descuento de stock (`apps.comercializacion` - Ventas).
+- [x] **CU 13:** Registrar venta en mostrador (efectivo / Stripe) con descuento de stock (`apps.comercializacion.ventas`).
 - [ ] **CU 14:** Registrar pedido anticipado (`apps.comercializacion` - Ventas).
 - [ ] **CU 15:** Consultar estado de pedido (`apps.comercializacion` - Ventas, Producción).
 - [ ] **CU 16:** Generar comprobante de venta (`apps.comercializacion` - Ventas).

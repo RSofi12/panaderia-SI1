@@ -541,6 +541,12 @@
 - **Motivo:** Cumplir el rol central del sistema MRP de la panadería, asegurando consistencia matemática entre consumo de materia prima y stock de producto terminado con máxima confiabilidad transaccional.
 - **Impacto:** Backend de CU10 completamente operativo, con 16 pruebas automatizadas en `produccion/tests.py` y suite completa de 45 pruebas en `productos_inventario` en verde (0 fallos).
 
+---
+
+### 47. 📅 2026-10-13 — CU13: Métodos de pago efectivo y Stripe en Comercialización
+- **Decisión:** La venta de mostrador solo contempla `efectivo` y `stripe`. El id del cobro con tarjeta se guarda en `venta.id_transaccion_stripe`. En efectivo esa columna queda vacía. El descuento de stock vive en `productos_terminados/services/descontar_stock.py`. La sub-app es `apps.comercializacion.ventas` y la pantalla está en `frontend/src/apps/dashboard/comercializacion/ventas/`.
+- **Motivo:** El DDL ya tenía `id_transaccion_stripe`. El equipo fijó esos dos métodos para el CU13. El script de población usa `stripe` en las filas que antes decían `qr`.
+- **Impacto:** `pedido` y `venta` documentan un `CHECK` con esos dos valores. Una venta Stripe no se guarda si el cobro no está confirmado. Si después falta stock, el cobro se anula.
 
 
 

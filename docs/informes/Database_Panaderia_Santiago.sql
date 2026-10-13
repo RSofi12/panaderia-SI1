@@ -356,7 +356,10 @@ CREATE TABLE "pedido" (
   "fecha_entrega" timestamp,
   "estado" varchar(20) NOT NULL DEFAULT 'pendiente',
   "metodo_pago" varchar(20),
-  "total" decimal(10,2) NOT NULL DEFAULT 0
+  "total" decimal(10,2) NOT NULL DEFAULT 0,
+  CONSTRAINT "pedido_metodo_pago_valido" CHECK (
+    "metodo_pago" IS NULL OR "metodo_pago" IN ('efectivo', 'stripe')
+  )
 );
 
 CREATE TABLE "detalle_pedido" (
@@ -376,7 +379,15 @@ CREATE TABLE "venta" (
   "fecha_hora" timestamp NOT NULL DEFAULT (now()),
   "metodo_pago" varchar(20) NOT NULL,
   "id_transaccion_stripe" varchar(100),
-  "total" decimal(10,2) NOT NULL DEFAULT 0
+  "total" decimal(10,2) NOT NULL DEFAULT 0,
+  CONSTRAINT "venta_metodo_pago_valido" CHECK (
+    "metodo_pago" IN ('efectivo', 'stripe')
+  ),
+  CONSTRAINT "venta_stripe_coherente" CHECK (
+    ("metodo_pago" = 'efectivo' AND "id_transaccion_stripe" IS NULL)
+    OR
+    ("metodo_pago" = 'stripe' AND "id_transaccion_stripe" IS NOT NULL)
+  )
 );
 
 CREATE TABLE "detalle_venta" (

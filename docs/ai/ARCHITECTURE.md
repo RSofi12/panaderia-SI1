@@ -161,16 +161,13 @@ backend/
 │   │   │
 │   │   └── gastos/              # 🔮 Sub-app CU20: Ciclo 4 (Gastos e Inversiones)
 │   │
-│   ├── comercializacion/        # Módulo 4: Clientes, Ventas (Mostrador/QR) y Pedidos
-│   │   ├── migrations/
-│   │   ├── __init__.py
-│   │   ├── admin.py
-│   │   ├── apps.py
-│   │   ├── models.py            # Cliente, Pedido, DetallePedido, Venta, DetalleVenta
-│   │   ├── serializers.py
-│   │   ├── services.py          # Registro de ventas, pedidos, comprobantes y stock
-│   │   ├── urls.py              # /api/ventas/, /api/pedidos/, /api/clientes/
-│   │   └── views.py
+│   ├── comercializacion/        # Módulo 4: Ventas (mostrador) y, después, pedidos
+│   │   ├── urls.py              # incluye las sub-apps
+│   │   └── ventas/              # CU13 Registrar venta (efectivo / Stripe)
+│   │       ├── models.py        # Venta, DetalleVenta
+│   │       ├── services/        # registrar_venta.py, stripe_pago.py
+│   │       ├── urls.py          # /api/ventas/ y /api/ventas/stripe/intencion/
+│   │       └── views.py
 │   │
 │   └── reportes/                # Módulo 5: Generación y Agregación de Reportes
 │       ├── migrations/
@@ -262,7 +259,8 @@ frontend/src/apps/
     ├── usuarios/                      #   CU3 Gestionar usuarios, CU4 Roles y permisos, CU26 Bitácora
     ├── productos/                     #   CU5, CU8–CU12, CU18, CU19
     ├── compras/                       #   CU6, CU7, CU20
-    ├── ventas/                        #   CU13–CU17
+    ├── comercializacion/              #   CU13–CU17
+    │   └── ventas/                    #   CU13 Registrar venta
     └── reportes/                      #   CU21–CU25
 ```
 
@@ -275,7 +273,7 @@ Las carpetas de `src/apps/dashboard/` replican los **5 paquetes del backend** ([
 | `usuarios/` | `apps.usuarios_seguridad` | CU2, CU3, CU4, CU26 |
 | `productos/` | `apps.productos_inventario` | CU5, CU8, CU9, CU10, CU11, CU12, CU18, CU19 |
 | `compras/` | `apps.compras` | CU6, CU7, CU20 |
-| `ventas/` | `apps.comercializacion` | CU13, CU14, CU15, CU16, CU17 |
+| `comercializacion/ventas/` | `apps.comercializacion.ventas` | CU13 (CU14–CU17 siguen en el paquete) |
 | `reportes/` | `apps.reportes` | CU21, CU22, CU23, CU24, CU25 |
 
 > **Nota:** `auth/` es la única carpeta que **no** replica un paquete backend. Es transversal: su lógica reside en `apps.usuarios_seguridad` pero su vida es independiente del dashboard (es lo único accesible sin sesión).

@@ -292,13 +292,13 @@ INSERT INTO "movimiento_producto_terminado" ("id_movimiento","id_inventario","id
 
 INSERT INTO "pedido" ("id_pedido","id_cliente","id_usuario","fecha_registro","fecha_entrega","estado","metodo_pago","total") VALUES
 (1, 1,3,'2026-09-06 08:00:00','2026-09-06 18:00:00','entregado','efectivo',23.50),
-(2, 2,4,'2026-09-06 09:30:00','2026-09-07 07:00:00','entregado','qr',95.00),
+(2, 2,4,'2026-09-06 09:30:00','2026-09-07 07:00:00','entregado','stripe',95.00),
 (3, 3,3,'2026-09-06 15:00:00','2026-09-08 09:00:00','en_preparacion','efectivo',35.00),
-(4, 4,4,'2026-09-06 16:20:00','2026-09-09 07:00:00','pendiente','qr',110.00),
+(4, 4,4,'2026-09-06 16:20:00','2026-09-09 07:00:00','pendiente','stripe',110.00),
 (5, 5,3,'2026-09-07 10:00:00','2026-09-07 19:00:00','entregado','efectivo',30.00),
-(6, 6,4,'2026-09-07 11:15:00','2026-09-08 08:00:00','listo','qr',51.00),
+(6, 6,4,'2026-09-07 11:15:00','2026-09-08 08:00:00','listo','stripe',51.00),
 (7, 1,3,'2026-09-07 14:45:00','2026-09-08 17:00:00','en_preparacion','efectivo',18.00),
-(8, 3,4,'2026-09-08 08:30:00','2026-09-08 20:00:00','pendiente','qr',18.75),
+(8, 3,4,'2026-09-08 08:30:00','2026-09-08 20:00:00','pendiente','stripe',18.75),
 (9, 5,3,'2026-09-08 09:45:00','2026-09-08 12:00:00','entregado','efectivo',29.00),
 (10,2,4,'2026-09-08 10:10:00','2026-09-09 07:00:00','cancelado',NULL,35.00);
 
@@ -322,16 +322,16 @@ INSERT INTO "detalle_pedido" ("id_detalle_pedido","id_pedido","id_producto","can
 
 INSERT INTO "venta" ("id_venta","id_pedido","id_usuario","numero_comprobante","fecha_hora","metodo_pago","id_transaccion_stripe","total") VALUES
 (1, NULL,3,100001,'2026-09-06 09:15:00','efectivo',NULL,17.00),
-(2, NULL,4,100002,'2026-09-06 12:40:00','qr','pi_3P8xQR000002',11.10),
+(2, NULL,4,100002,'2026-09-06 12:40:00','stripe','pi_3P8xQR000002',11.10),
 (3, NULL,3,100003,'2026-09-06 17:50:00','efectivo',NULL,18.40),
-(4, NULL,4,100004,'2026-09-07 09:20:00','qr','pi_3P8xQR000004',20.25),
+(4, NULL,4,100004,'2026-09-07 09:20:00','stripe','pi_3P8xQR000004',20.25),
 (5, NULL,3,100005,'2026-09-07 13:10:00','efectivo',NULL,19.80),
-(6, NULL,4,100006,'2026-09-07 18:05:00','qr','pi_3P8xQR000006',22.00),
+(6, NULL,4,100006,'2026-09-07 18:05:00','stripe','pi_3P8xQR000006',22.00),
 (7, NULL,3,100007,'2026-09-08 09:05:00','efectivo',NULL,17.80),
-(8, NULL,4,100008,'2026-09-08 12:30:00','qr','pi_3P8xQR000008',14.50),
+(8, NULL,4,100008,'2026-09-08 12:30:00','stripe','pi_3P8xQR000008',14.50),
 (9, NULL,3,100009,'2026-09-08 17:40:00','efectivo',NULL,13.90),
 (10,1,   3,100010,'2026-09-06 18:00:00','efectivo',NULL,23.50),
-(11,2,   4,100011,'2026-09-07 07:00:00','qr','pi_3P8xQR000011',95.00),
+(11,2,   4,100011,'2026-09-07 07:00:00','stripe','pi_3P8xQR000011',95.00),
 (12,5,   3,100012,'2026-09-07 19:00:00','efectivo',NULL,30.00),
 (13,9,   3,100013,'2026-09-08 12:00:00','efectivo',NULL,29.00);
 
@@ -448,10 +448,10 @@ INSERT INTO "movimiento_producto_terminado" ("id_movimiento","id_inventario","id
 -- =========================================================
 
 INSERT INTO "pedido" ("id_pedido","id_cliente","id_usuario","fecha_registro","fecha_entrega","estado","metodo_pago","total") VALUES
-(11,6,3,'2026-09-09 08:15:00','2026-09-09 18:00:00','entregado','qr',32.00),
-(12,4,4,'2026-09-09 09:00:00','2026-09-10 07:00:00','pendiente','qr',88.00),
+(11,6,3,'2026-09-09 08:15:00','2026-09-09 18:00:00','entregado','stripe',32.00),
+(12,4,4,'2026-09-09 09:00:00','2026-09-10 07:00:00','pendiente','stripe',88.00),
 (13,1,3,'2026-09-09 11:30:00','2026-09-09 17:00:00','entregado','efectivo',31.50),
-(14,2,4,'2026-09-09 14:00:00','2026-09-10 07:00:00','en_preparacion','qr',114.00);
+(14,2,4,'2026-09-09 14:00:00','2026-09-10 07:00:00','en_preparacion','stripe',114.00);
 
 INSERT INTO "detalle_pedido" ("id_detalle_pedido","id_pedido","id_producto","cantidad","precio_unitario","subtotal") VALUES
 (17,11,1,30,0.60,18.00),(18,11,2,20,0.70,14.00),      -- P11: Marraqueta, Casero
@@ -465,7 +465,7 @@ INSERT INTO "detalle_pedido" ("id_detalle_pedido","id_pedido","id_producto","can
 -- =========================================================
 
 INSERT INTO "venta" ("id_venta","id_pedido","id_usuario","numero_comprobante","fecha_hora","metodo_pago","id_transaccion_stripe","total") VALUES
-(14,11,3,100014,'2026-09-09 18:00:00','qr','pi_3P8xQR000014',32.00),
+(14,11,3,100014,'2026-09-09 18:00:00','stripe','pi_3P8xQR000014',32.00),
 (15,13,3,100015,'2026-09-09 17:00:00','efectivo',NULL,31.50);
 
 INSERT INTO "detalle_venta" ("id_detalle_venta","id_venta","id_producto","cantidad","precio_unitario","subtotal") VALUES

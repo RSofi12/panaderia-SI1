@@ -23,7 +23,8 @@
 | CU9 | Consultar alertas de bajo stock | 🟢 Completo end-to-end | `materia_prima/` + `src/apps/dashboard/inventario/AlertasBajoStockPage.tsx` |
 | CU11 | Consultar historial de producción | 🟢 Completo end-to-end | `produccion/` + `src/apps/dashboard/productos/produccion/` |
 | CU12 | Consultar existencias de pan | 🟢 Completo end-to-end | `productos_terminados/` + `src/apps/dashboard/productos/existencias/` |
-| CU10 | Registrar producción diaria | 🟡 Backend listo / Frontend pend. | `produccion/` + `RegistrarProduccionModal.tsx` |
+| CU10 | Registrar producción diaria | 🟢 Completo end-to-end | `produccion/` + `RegistrarProduccionModal.tsx` |
+| CU13 | Registrar venta | 🟢 Efectivo y Stripe | `apps.comercializacion.ventas` + `src/apps/dashboard/comercializacion/ventas/` |
 
 Detalle completo por caso de uso: [`CURRENT_STATE.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/CURRENT_STATE.md)  
 Registro de decisiones: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/DECISIONS_LOG.md)  
