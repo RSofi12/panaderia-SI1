@@ -17,9 +17,10 @@ import ProductoFormModal from './components/ProductoFormModal';
 import ConfirmarEstadoDialog from './components/ConfirmarEstadoDialog';
 import { formatearBs } from './precios';
 import ProduccionTab from './produccion/ProduccionTab';
+import HistorialProduccionPage from './produccion/HistorialProduccionPage';
 
 type EstadoFiltro = '' | 'true' | 'false';
-type PestanaProducto = 'catalogo' | 'produccion';
+type PestanaProducto = 'catalogo' | 'produccion' | 'historial';
 
 type ModalAbierto =
   | { tipo: 'formulario'; producto: Producto | null }
@@ -40,11 +41,13 @@ export const ProductosPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as PestanaProducto | null;
 
-  // Deriva la pestaña activa: si el rol es de producción (no tiene gestión de catálogo), abre producción directamente
+  // El personal de producción abre directamente la pestaña de producción diaria.
   const pestanaActiva: PestanaProducto =
-    tabParam === 'produccion' || (!puedeGestionar && puedeRegistrarProduccion)
-      ? 'produccion'
-      : 'catalogo';
+    tabParam === 'historial' && puedeRegistrarProduccion
+      ? 'historial'
+      : tabParam === 'produccion' || (!puedeGestionar && puedeRegistrarProduccion)
+        ? 'produccion'
+        : 'catalogo';
 
   const cambiarPestana = (nueva: PestanaProducto) => {
     setSearchParams(
@@ -155,17 +158,23 @@ export const ProductosPage: React.FC = () => {
       {/* Encabezado General del Módulo */}
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
-          Productos e Inventario · {pestanaActiva === 'catalogo' ? 'CU5' : 'CU10 & CU11'}
+          Productos e Inventario · {pestanaActiva === 'catalogo' ? 'CU5' : pestanaActiva === 'historial' ? 'CU11' : 'CU10'}
         </p>
         <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-              {pestanaActiva === 'catalogo' ? 'Catálogo de productos' : 'Producción diaria'}
+              {pestanaActiva === 'catalogo'
+                ? 'Catálogo de productos'
+                : pestanaActiva === 'historial'
+                  ? 'Historial de producción'
+                  : 'Producción diaria'}
             </h2>
             <p className="mt-1 text-sm text-slate-500">
               {pestanaActiva === 'catalogo'
                 ? 'Panes que elabora la panadería, con su costo, margen y precio de venta.'
-                : 'Registro de horneado diario, cálculo MRP de recetas y consumo automático de insumos.'}
+                : pestanaActiva === 'historial'
+                  ? 'Consulta de jornadas registradas, responsables y cantidades producidas.'
+                  : 'Registro de horneado diario, cálculo MRP de recetas y consumo automático de insumos.'}
             </p>
           </div>
 
@@ -216,11 +225,29 @@ export const ProductosPage: React.FC = () => {
             <Wheat className="h-4 w-4" />
             <span>Producción diaria</span>
           </button>
+
+          {puedeRegistrarProduccion && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={pestanaActiva === 'historial'}
+              onClick={() => cambiarPestana('historial')}
+              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+                pestanaActiva === 'historial'
+                  ? 'border-amber-600 text-amber-900'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              <span>CU11 · Historial</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* Contenido según pestaña activa */}
-      {pestanaActiva === 'produccion' ? (
+      {pestanaActiva === 'historial' ? (
+        <HistorialProduccionPage />
+      ) : pestanaActiva === 'produccion' ? (
         <ProduccionTab />
       ) : (
         <>
