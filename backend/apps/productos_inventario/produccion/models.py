@@ -17,6 +17,7 @@ class JornadaProduccion(models.TextChoices):
     MANANA = 'Mañana', 'Mañana'
     TARDE = 'Tarde', 'Tarde'
     NOCHE = 'Noche', 'Noche'
+    UNICA = 'unica', 'Jornada Única'
 
 
 class Produccion(models.Model):

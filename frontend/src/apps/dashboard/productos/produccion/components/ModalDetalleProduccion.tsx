@@ -84,7 +84,7 @@ export const ModalDetalleProduccion: React.FC<ModalDetalleProduccionProps> = ({
           <div className="rounded-xl bg-amber-50/80 border border-amber-200/70 p-3 shadow-2xs">
             <p className="text-[11px] font-medium text-amber-800">Costo total lote</p>
             <p className="text-xl font-bold text-amber-950 mt-0.5">
-              Bs {parseFloat(registro.costo_total).toFixed(2)}
+              Bs {Number(registro.costo_total || 0).toFixed(2)}
             </p>
           </div>
         </div>
@@ -124,10 +124,10 @@ export const ModalDetalleProduccion: React.FC<ModalDetalleProduccionProps> = ({
                           {d.cantidad_producida} u.
                         </td>
                         <td className="py-2.5 px-3 text-right text-slate-500">
-                          Bs {parseFloat(d.costo_unitario).toFixed(2)}
+                          Bs {Number(d.costo_unitario || 0).toFixed(2)}
                         </td>
                         <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-900">
-                          Bs {parseFloat(d.subtotal_costo).toFixed(2)}
+                          Bs {Number(d.subtotal_costo || 0).toFixed(2)}
                         </td>
                       </tr>
                     ))
@@ -152,7 +152,7 @@ export const ModalDetalleProduccion: React.FC<ModalDetalleProduccionProps> = ({
                   >
                     <p className="text-slate-500 text-[11px] font-medium">{c.nombre_insumo}</p>
                     <p className="text-sm font-bold text-slate-900 mt-0.5">
-                      -{c.cantidad_descontada.toFixed(3)} {c.unidad_medida}
+                      -{Number(c.cantidad_descontada || 0).toFixed(3)} {c.unidad_medida}
                     </p>
                   </div>
                 ))}

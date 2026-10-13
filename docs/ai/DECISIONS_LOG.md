@@ -530,8 +530,20 @@
 
 ---
 
-## 📅 2026-10-13 — CU13: métodos de pago efectivo y Stripe
+### 46. Implementación Backend de CU10 (Registrar Producción Diaria): Modelo de Recetas BOM, Explosión de Materiales, Transacción Atómica con select_for_update y Auditoría
+- **Decisión:**
+  1. **Modelo de Recetas (BOM/MRP):** Crear el modelo `ProductoMateriaPrima` en `apps.productos_inventario.productos.models` con tabla física `producto_materia_prima` y restricción única `(id_producto, id_materia_prima)`, permitiendo asociar los insumos requeridos por unidad de pan elaborado según el diseño físico del DDL.
+  2. **Trazabilidad en Kardex de Insumos:** Agregar clave foránea diferida `id_produccion` en `apps.productos_inventario.materia_prima.models.MovimientoMateriaPrima` vinculando las salidas de almacén a la orden horneada.
+  3. **Cálculo Dinámico de Costo de Producción:** Implementar cálculo automático del costo unitario de elaboración en `services.py` como la sumatoria de $(\text{cantidad\_requerida} \times \text{precio\_actual\_insumo})$ a partir del `HistorialPrecioMateriaPrima`, con fallback transparente al `costo_produccion` base del producto en catálogo si no hubiese compras previas.
+  4. **Transacción Atómica y Bloqueo Pesimista:** En `registrar_produccion_diaria()` (`services.py`), envolver el proceso en `@transaction.atomic` y ejecutar `InventarioMateriaPrima.objects.select_for_update()` para prevenir condiciones de carrera en hornadas simultáneas. Si la existencia de cualquier ingrediente es inferior al consumo total requerido, se lanza `ValidationError` con detalle de faltantes y se produce un rollback completo e inmediato sin persistir registros parciales.
+  5. **Doble Afectación de Kardex:** Por cada orden exitosa se descuenta el stock de insumos (`MovimientoMateriaPrima` con `tipo='salida'`) y se incrementa el stock de pan terminado en mostrador (`MovimientoProductoTerminado` con `tipo='entrada'`).
+  6. **Auditoría e Idempotencia:** Registro automático en `Bitacora` bajo la acción `AccionBitacora.REGISTRO_PRODUCCION`, permitiendo además múltiples producciones por día y turno (soporte a `JornadaProduccion.UNICA` y turnos `Mañana`, `Tarde`, `Noche`). Seeder `seed_recetas` creado para las 12 recetas oficiales (37 relaciones de insumos) de `Poblacion_4_Dias_Panaderia_Santiago.sql`.
+- **Motivo:** Cumplir el rol central del sistema MRP de la panadería, asegurando consistencia matemática entre consumo de materia prima y stock de producto terminado con máxima confiabilidad transaccional.
+- **Impacto:** Backend de CU10 completamente operativo, con 16 pruebas automatizadas en `produccion/tests.py` y suite completa de 45 pruebas en `productos_inventario` en verde (0 fallos).
 
+---
+
+### 47. 📅 2026-10-13 — CU13: Métodos de pago efectivo y Stripe en Comercialización
 - **Decisión:** La venta de mostrador solo contempla `efectivo` y `stripe`. El id del cobro con tarjeta se guarda en `venta.id_transaccion_stripe`. En efectivo esa columna queda vacía. El descuento de stock vive en `productos_terminados/services/descontar_stock.py`. La sub-app es `apps.comercializacion.ventas` y la pantalla está en `frontend/src/apps/dashboard/comercializacion/ventas/`.
 - **Motivo:** El DDL ya tenía `id_transaccion_stripe`. El equipo fijó esos dos métodos para el CU13. El script de población usa `stripe` en las filas que antes decían `qr`.
 - **Impacto:** `pedido` y `venta` documentan un `CHECK` con esos dos valores. Una venta Stripe no se guarda si el cobro no está confirmado. Si después falta stock, el cobro se anula.

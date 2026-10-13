@@ -18,7 +18,7 @@ import type {
  * exista el endpoint definitivo de CU10 en Django.
  */
 const USAR_MOCK_HISTORIAL = false;
-const USAR_MOCK_REGISTRO = true;
+const USAR_MOCK_REGISTRO = false;
 
 const normalizarJornadaFrontend = (valor?: string): JornadaProduccion => {
   const normalizado = (valor || '').toLowerCase();
@@ -33,7 +33,7 @@ const normalizarJornadaBackend = (valor?: string): string | undefined => {
   if (!valor) return undefined;
   const normalizado = valor.toLowerCase();
 
-  if (normalizado === 'manana') return 'Mañana';
+  if (normalizado === 'manana' || normalizado === 'mañana') return 'Mañana';
   if (normalizado === 'tarde') return 'Tarde';
   if (normalizado === 'noche') return 'Noche';
   if (normalizado === 'unica') return 'unica';
@@ -67,7 +67,7 @@ const mapearProduccionBackend = (item: any): ProduccionRegistro => ({
 });
 
 // ============================================================================
-// DATOS MOCK OFICIALES (Fuente: Poblacion_4_Dias_Panaderia_Santiago.sql)
+// DATOS MOCK DE RESPALDO (Fuente: Poblacion_4_Dias_Panaderia_Santiago.sql)
 // ============================================================================
 
 interface MockMateriaPrima {
@@ -281,19 +281,21 @@ let mockHistorialProducciones: ProduccionRegistro[] = [
 
 export const produccionService = {
   /**
-   * Obtiene la lista de recetas (BOM) para cálculo local inmediato.
+   * Obtiene la lista de recetas (BOM) para cálculo inmediato (CU10).
+   * Conectado a GET /api/produccion/recetas/
    */
   async obtenerRecetas(): Promise<RecetaProducto[]> {
     if (USAR_MOCK_REGISTRO) {
       return [...MOCK_RECETAS];
     }
-    const response = await api.get<RecetaProducto[]>('/productos/recetas/');
+    const response = await api.get<RecetaProducto[]>('/produccion/recetas/');
     return response.data;
   },
 
   /**
    * Simulación y explosión de materiales en tiempo real (MRP).
    * Calcula el consumo de cada insumo y verifica si el stock actual alcanza.
+   * Conectado a POST /api/produccion/simular/
    */
   async simularConsumo(
     detalles: Array<{ id_producto: number; cantidad_producida: number }>
@@ -348,16 +350,41 @@ export const produccionService = {
       };
     }
 
-    const response = await api.post<BalanceMaterialesSimulacion>(
-      '/productos/producciones/simular/',
-      { detalles }
+    const payloadBackend = {
+      detalles: detalles
+        .filter((d) => (d.cantidad_producida || 0) > 0)
+        .map((d) => ({
+          id_producto: Number(d.id_producto),
+          cantidad_producida: Number(d.cantidad_producida),
+        })),
+    };
+
+    const response = await api.post<any>(
+      '/produccion/simular/',
+      payloadBackend
     );
-    return response.data;
+
+    const data = response.data;
+    return {
+      es_viable: Boolean(data.es_viable),
+      total_panes_unidades: Number(data.total_panes_unidades ?? 0),
+      costo_estimado_total: Number(data.costo_estimado_total ?? 0),
+      insumos: (data.insumos ?? []).map((insumo: any) => ({
+        id_materia_prima: Number(insumo.id_materia_prima),
+        nombre_insumo: String(insumo.nombre_insumo ?? ''),
+        unidad_medida: String(insumo.unidad_medida ?? ''),
+        cantidad_requerida: Number(insumo.cantidad_requerida ?? 0),
+        stock_disponible: Number(insumo.stock_disponible ?? 0),
+        suficiente: Boolean(insumo.suficiente),
+        diferencia_faltante: Number(insumo.diferencia_faltante ?? 0),
+      })),
+    };
   },
 
   /**
    * Registra una jornada de producción (CU10).
    * Realiza la transacción atómica: descuenta insumos y suma producto terminado.
+   * Conectado a POST /api/produccion/
    */
   async registrarProduccion(
     payload: RegistrarProduccionPayload
@@ -427,15 +454,36 @@ export const produccionService = {
       return nuevoRegistro;
     }
 
-    const response = await api.post<ProduccionRegistro>(
-      '/productos/producciones/',
-      payload
+    const payloadBackend = {
+      fecha: payload.fecha,
+      jornada: normalizarJornadaBackend(payload.jornada) || 'unica',
+      detalles: payload.detalles
+        .filter((d) => (d.cantidad_producida || 0) > 0)
+        .map((d) => ({
+          id_producto: Number(d.id_producto),
+          cantidad_producida: Number(d.cantidad_producida),
+        })),
+    };
+
+    const response = await api.post<any>(
+      '/produccion/',
+      payloadBackend
     );
-    return response.data;
+    return mapearProduccionBackend(response.data);
+  },
+
+  /**
+   * Consulta una producción individual con su desglose completo (CU11).
+   * Conectado a GET /api/produccion/<id>/
+   */
+  async obtenerDetalle(id_produccion: number): Promise<ProduccionRegistro> {
+    const response = await api.get<any>(`/produccion/${id_produccion}/`);
+    return mapearProduccionBackend(response.data);
   },
 
   /**
    * Consulta el historial de producciones registradas (CU11).
+   * Conectado a GET /api/produccion/
    */
   async listarHistorial(filtros: ProduccionFiltros = {}): Promise<ProduccionRegistro[]> {
     if (USAR_MOCK_HISTORIAL) {

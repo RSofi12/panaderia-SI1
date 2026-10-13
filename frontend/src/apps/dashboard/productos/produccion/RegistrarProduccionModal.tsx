@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import productoService from '../../../../services/productoService';
 import produccionService from '../../../../services/produccionService';
+import { normalizarErrorApi } from '../../../../services/erroresApi';
 import type {
   BalanceMaterialesSimulacion,
   JornadaProduccion,
@@ -46,7 +47,7 @@ export const RegistrarProduccionModal: React.FC<RegistrarProduccionModalProps> =
   const [guardando, setGuardando] = useState(false);
   const [errorGuardado, setErrorGuardado] = useState<string | null>(null);
 
-  // 1. Cargar catálogo de productos activos al abrir el modal
+  // 1. Cargar catálogo de productos activos al abrir el modal desde base de datos
   useEffect(() => {
     if (!abierto) return;
 
@@ -54,22 +55,44 @@ export const RegistrarProduccionModal: React.FC<RegistrarProduccionModalProps> =
     setCargandoProductos(true);
     setErrorGuardado(null);
 
-    productoService
-      .listar({ activo: 'true' })
-      .then((productos) => {
+    const cargarCatalogo = async () => {
+      try {
+        const productos = await productoService.listar({ activo: 'true' });
         if (!vigente) return;
-        const renglones: RenglonLoteProduccion[] = productos.map((p) => ({
-          id_producto: p.id_producto,
-          nombre_producto: p.nombre,
-          categoria_nombre: p.categoria_nombre,
-          costo_unitario: parseFloat(p.costo_produccion) || 0.5,
-          cantidad_producida: 0,
-        }));
-        setFilas(renglones);
-      })
-      .catch(() => {
+        if (productos && productos.length > 0) {
+          const renglones: RenglonLoteProduccion[] = productos.map((p) => ({
+            id_producto: p.id_producto,
+            nombre_producto: p.nombre,
+            categoria_nombre: p.categoria_nombre,
+            costo_unitario: parseFloat(p.costo_produccion) || 0.5,
+            cantidad_producida: 0,
+          }));
+          setFilas(renglones);
+          return;
+        }
+      } catch {
+        // En caso de que falle /productos/, intentar con /produccion/recetas/
+      }
+
+      try {
+        const recetas = await produccionService.obtenerRecetas();
         if (!vigente) return;
-        // Si el backend de productos no estuviera disponible, creamos lista con los 12 panes estándar
+        if (recetas && recetas.length > 0) {
+          const renglones: RenglonLoteProduccion[] = recetas.map((r) => ({
+            id_producto: r.id_producto,
+            nombre_producto: r.nombre_producto,
+            categoria_nombre: 'Elaboración Propia',
+            costo_unitario: 0.5,
+            cantidad_producida: 0,
+          }));
+          setFilas(renglones);
+          return;
+        }
+      } catch {
+        // Fallback secundario si la red está inaccesible
+      }
+
+      if (vigente) {
         const lotePorDefecto: RenglonLoteProduccion[] = [
           { id_producto: 1, nombre_producto: 'Marraqueta', categoria_nombre: 'Tradicionales', costo_unitario: 0.4, cantidad_producida: 0 },
           { id_producto: 2, nombre_producto: 'Casero', categoria_nombre: 'Tradicionales', costo_unitario: 0.45, cantidad_producida: 0 },
@@ -85,10 +108,12 @@ export const RegistrarProduccionModal: React.FC<RegistrarProduccionModalProps> =
           { id_producto: 12, nombre_producto: 'Pan de Leche', categoria_nombre: 'De Leche', costo_unitario: 0.8, cantidad_producida: 0 },
         ];
         setFilas(lotePorDefecto);
-      })
-      .finally(() => {
-        if (vigente) setCargandoProductos(false);
-      });
+      }
+    };
+
+    cargarCatalogo().finally(() => {
+      if (vigente) setCargandoProductos(false);
+    });
 
     return () => {
       vigente = false;
@@ -100,28 +125,39 @@ export const RegistrarProduccionModal: React.FC<RegistrarProduccionModalProps> =
     if (!abierto || filas.length === 0) return;
 
     let vigente = true;
+    const detalles = filas
+      .filter((f) => (f.cantidad_producida || 0) > 0)
+      .map((f) => ({
+        id_producto: f.id_producto,
+        cantidad_producida: f.cantidad_producida,
+      }));
+
+    if (detalles.length === 0) {
+      setBalance({
+        es_viable: true,
+        total_panes_unidades: 0,
+        costo_estimado_total: 0,
+        insumos: [],
+      });
+      setCalculandoBalance(false);
+      return;
+    }
+
     setCalculandoBalance(true);
 
     const temporizador = setTimeout(async () => {
       try {
-        const detalles = filas
-          .filter((f) => f.cantidad_producida > 0)
-          .map((f) => ({
-            id_producto: f.id_producto,
-            cantidad_producida: f.cantidad_producida,
-          }));
-
         const res = await produccionService.simularConsumo(detalles);
         if (vigente) {
           setBalance(res);
           setErrorGuardado(null);
         }
       } catch (err) {
-        // En caso de fallo de red al simular
+        // En caso de fallo de red al simular, no bloquear interfaz
       } finally {
         if (vigente) setCalculandoBalance(false);
       }
-    }, 150);
+    }, 180);
 
     return () => {
       vigente = false;
@@ -152,7 +188,7 @@ export const RegistrarProduccionModal: React.FC<RegistrarProduccionModalProps> =
     setFilas((prev) => prev.map((f) => ({ ...f, cantidad_producida: 0 })));
   };
 
-  // Confirmar y registrar la producción
+  // Confirmar y registrar la producción en base de datos
   const handleConfirmar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!balance.es_viable || balance.total_panes_unidades <= 0) return;
@@ -176,11 +212,8 @@ export const RegistrarProduccionModal: React.FC<RegistrarProduccionModalProps> =
       onGuardado(registro);
       onCerrar();
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setErrorGuardado(err.message);
-      } else {
-        setErrorGuardado('Ocurrió un error inesperado al registrar la producción.');
-      }
+      const errorNorm = normalizarErrorApi(err);
+      setErrorGuardado(errorNorm.mensaje);
     } finally {
       setGuardando(false);
     }

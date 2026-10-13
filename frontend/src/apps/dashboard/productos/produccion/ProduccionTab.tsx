@@ -21,8 +21,13 @@ import RegistrarProduccionModal from './RegistrarProduccionModal';
 import ModalDetalleProduccion from './components/ModalDetalleProduccion';
 
 export const ProduccionTab: React.FC = () => {
-  const { hasPermission } = useAuth();
-  const puedeRegistrar = hasPermission('registrar_produccion');
+  const { hasPermission, hasRole } = useAuth();
+  const puedeRegistrar =
+    hasPermission('registrar_produccion') ||
+    hasPermission('gestionar_productos') ||
+    hasPermission('gestionar_inventario') ||
+    hasRole('Administrador') ||
+    hasRole('Propietario');
 
   const [historial, setHistorial] = useState<ProduccionRegistro[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -57,6 +62,25 @@ export const ProduccionTab: React.FC = () => {
   useEffect(() => {
     cargarHistorial();
   }, [filtroJornada, fechaDesde, fechaHasta]);
+
+  const handleVerDetalle = async (reg: ProduccionRegistro) => {
+    if (
+      reg.detalles &&
+      reg.detalles.length > 0 &&
+      reg.consumos_materia_prima &&
+      reg.consumos_materia_prima.length > 0
+    ) {
+      setRegistroDetalleSeleccionado(reg);
+      return;
+    }
+
+    try {
+      const detalleCompleto = await produccionService.obtenerDetalle(reg.id_produccion);
+      setRegistroDetalleSeleccionado(detalleCompleto);
+    } catch {
+      setRegistroDetalleSeleccionado(reg);
+    }
+  };
 
   const handleGuardadoExitoso = (nuevoRegistro: ProduccionRegistro) => {
     setAviso(
@@ -271,12 +295,12 @@ export const ProduccionTab: React.FC = () => {
                       {reg.total_variedades}
                     </td>
                     <td className="py-3 px-4 text-right font-mono font-semibold text-slate-900">
-                      Bs {parseFloat(reg.costo_total).toFixed(2)}
+                      Bs {Number(reg.costo_total || 0).toFixed(2)}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <button
                         type="button"
-                        onClick={() => setRegistroDetalleSeleccionado(reg)}
+                        onClick={() => handleVerDetalle(reg)}
                         className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer shadow-2xs"
                       >
                         <Eye className="h-3.5 w-3.5 text-slate-500" />
