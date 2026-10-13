@@ -48,3 +48,10 @@ Integrar en la rama `cu08-consultar-stock` los cambios publicados en `origin/mai
 - Verificar el endpoint autenticado `GET /api/inventario/materias-primas/`, incluyendo los filtros `nombre`, `activo` y `bajo_minimo`.
 - Las cinco pruebas CU8 pasan con SQLite temporal; `python manage.py check` y `makemigrations --check --dry-run` no detectan problemas.
 - `npm run build` y ESLint focalizado en los archivos del cambio finalizaron correctamente. La vista del navegador carga los datos disponibles; las acciones de gestión aparecerán después de aplicar migraciones e iniciar sesión nuevamente.
+
+## Integración posterior: CU12
+
+- Se integró `origin/main`, que ya contenía la implementación de CU12 (existencias de productos terminados, KPIs, filtros y kardex).
+- Se resolvió el solapamiento de `ProductosPage.tsx` conservando las cuatro pestañas autorizadas por rol: catálogo, CU12, stock de materia prima (CU8) y producción.
+- Los cambios de CU8 en backend, migraciones, pruebas y frontend se conservaron junto con las nuevas rutas, servicios, tipos y pruebas de CU12.
+- Validación de la integración: build de producción frontend exitoso; `manage.py check`, `makemigrations --check --dry-run` y 14 pruebas combinadas de CU8/CU12 pasan con SQLite temporal.

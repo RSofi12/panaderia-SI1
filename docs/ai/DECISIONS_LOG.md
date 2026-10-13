@@ -379,7 +379,7 @@
 # 📅 2026-09-28 — CU3: Gestionar usuarios (frontend)
 
 ### 29. Arquitectura de componentes, accesibilidad WCAG y ciclo de vida de modales
-- **Decisión:** 
+- **Decisión:**
   1. La UI del CU3 se organiza en `src/apps/dashboard/usuarios/` con subcomponentes locales en `components/`. El diálogo base `Modal.tsx` se coloca en `src/apps/dashboard/components/` por ser compartido exclusivamente por el dashboard, reservando `src/components/` para futuros componentes globales de toda la SPA.
   2. Los tres modales (`ModalUsuario`, `ModalEstado`, `ModalRestablecerContrasena`) se inicializan con lazy state (`useState(() => ...)`) y son montados con `key` dependiente del id del usuario en vez de resetear el estado con `useEffect`.
   3. Tras una edición exitosa, la tabla vuelve a pedir la página al servidor con `trasEdicion()` en lugar de mutar la fila en el cliente, respetando el ordenamiento alfabético y el filtrado por `icontains` de PostgreSQL.
@@ -417,7 +417,7 @@
 # 📅 2026-09-28 — CU4: Asignar roles y permisos (frontend)
 
 ### 34. Navegación en pestañas bajo `/dashboard/usuarios`, sincronización con URL y matriz de permisos por módulos
-- **Decisión:** 
+- **Decisión:**
   1. CU4 no crea una nueva ruta de primer nivel en el menú principal; se integra como pestaña "Roles y permisos" dentro del módulo unificado de *Usuarios y Seguridad* (`/dashboard/usuarios`).
   2. `ProtectedRoute` y `AppRoutes.tsx` se ampliaron para aceptar `requiredPermission?: string | string[]` con semántica *any-of*, permitiendo el acceso tanto con `gestionar_usuarios` como con `asignar_permisos`.
   3. La pestaña activa se sincroniza bidireccionalmente con la URL mediante `useSearchParams` (`?tab=roles` vs `?tab=usuarios`), preservando el estado en recargas, historial y navegación directa.
@@ -482,3 +482,15 @@
 - **Motivo:** Evitar la sobrecarga de una única sub-app `produccion/` que concentraba 4 CUs dispares, separando claramente la fábrica/elaboración (responsabilidad del maestro panadero) del almacén de mostrador y mermas (responsabilidad de ventas y administración).
 - **Impacto:** Archivos concisos (< 80 líneas), desacoplamiento total de desarrollo entre compañeros del equipo y estructura simétrica en todo el backend.
 
+---
+
+# 📅 2026-10-12 — Implementación de CU12 (Existencias de Pan) y Aislamiento por Rol
+
+### 42. Modelo de Kardex, Endurecimiento de Fallback y Control de Visibilidad por Rol en CU12
+- **Decisión:**
+  1. **Kardex y Trazabilidad:** Implementar `MovimientoProductoTerminado` como kardex físico de entradas y salidas de pan de mostrador, articulando en CU12 la consulta de existencias con el histórico cronológico auditado.
+  2. **Permisos y Seguridad:** Exigir `gestionar_inventario`, `registrar_ventas` o `gestionar_productos` en el backend, habilitando la lectura al *Personal de Ventas*, *Producción*, *Propietario* y *Administrador*.
+  3. **Aislamiento en Frontend:** En `ProductosPage.tsx`, condicionar estrictamente la visibilidad de las pestañas a los permisos del usuario. El *Personal de Ventas* únicamente ve y accede a la pestaña de "Existencias (CU12)", sin posibilidad de interactuar con la gestión de catálogo (CU5) ni con la orden de producción diaria (CU10). Si intenta forzar query params en la URL (`?tab=catalogo` o `?tab=produccion`), es redirigido automáticamente a su vista autorizada.
+  4. **Corrección de Fallback Mock:** Modificar `existenciasService.ts` para que un array vacío `[]` retornado por la API (búsqueda sin resultados) sea tratado como respuesta legítima del servidor y no dispare datos mock simulados.
+- **Motivo:** Cumplir el principio de menor privilegio (PoLP), evitar desorientación del personal de mostrador con opciones que no le corresponden y garantizar fidelidad de datos entre backend y frontend.
+- **Impacto:** Interfaz segura, limpia y 100% acorde al rol de trabajo, con suite de 9 tests unitarios pasando en verde.

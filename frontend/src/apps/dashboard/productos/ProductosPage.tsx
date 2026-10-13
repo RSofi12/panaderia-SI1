@@ -9,6 +9,7 @@ import {
   Plus,
   Power,
   Search,
+  Store,
   Wheat,
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -19,9 +20,10 @@ import ConfirmarEstadoDialog from './components/ConfirmarEstadoDialog';
 import { formatearBs } from './precios';
 import ProduccionTab from './produccion/ProduccionTab';
 import InventarioTab from './inventario/InventarioTab';
+import ExistenciasTab from './existencias/ExistenciasTab';
 
 type EstadoFiltro = '' | 'true' | 'false';
-type PestanaProducto = 'catalogo' | 'produccion' | 'inventario';
+type PestanaProducto = 'catalogo' | 'produccion' | 'inventario' | 'existencias';
 
 type ModalAbierto =
   | { tipo: 'formulario'; producto: Producto | null }
@@ -46,6 +48,12 @@ const ENCABEZADOS: Record<PestanaProducto, { cu: string; titulo: string; descrip
     descripcion:
       'Registro de horneado diario, cálculo MRP de recetas y consumo automático de insumos.',
   },
+  existencias: {
+    cu: 'CU12',
+    titulo: 'Existencias de pan en mostrador',
+    descripcion:
+      'Consulta en tiempo real de unidades disponibles para la venta directa, alertas de stock y valorización.',
+  },
   inventario: {
     cu: 'CU8',
     titulo: 'Gestión de materias primas',
@@ -64,19 +72,34 @@ export const ProductosPage: React.FC = () => {
   const { hasPermission } = useAuth();
   const puedeGestionar = hasPermission('gestionar_productos');
   const puedeRegistrarProduccion = hasPermission('registrar_produccion');
-  const puedeVerInventario = hasPermission('gestionar_inventario');
+  const puedeConsultarInventario = hasPermission('gestionar_inventario') || hasPermission('registrar_ventas');
+  const puedeVerInventario =
+    hasPermission('gestionar_inventario') || hasPermission('gestionar_materias_primas');
+
+  const puedeVerCatalogo = puedeGestionar;
+  const puedeVerExistencias = puedeConsultarInventario || puedeGestionar;
+  const puedeVerProduccion = puedeRegistrarProduccion || puedeGestionar;
+
+  const permitidas: PestanaProducto[] = [];
+  if (puedeVerCatalogo) permitidas.push('catalogo');
+  if (puedeVerExistencias) permitidas.push('existencias');
+  if (puedeVerInventario) permitidas.push('inventario');
+  if (puedeVerProduccion) permitidas.push('produccion');
 
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as PestanaProducto | null;
 
-  // Deriva la pestaña activa: si el rol es de producción (no tiene gestión de catálogo), abre producción directamente
-  let pestanaActiva: PestanaProducto = 'catalogo';
-  if (tabParam === 'inventario' && puedeVerInventario) {
-    pestanaActiva = 'inventario';
-  } else if (tabParam === 'produccion' || (!puedeGestionar && puedeRegistrarProduccion)) {
-    pestanaActiva = 'produccion';
-  }
+  // Pestaña por defecto según el rol del usuario
+  const tabPorDefecto = (() => {
+    if (!puedeGestionar && puedeRegistrarProduccion && puedeVerProduccion) return 'produccion';
+    if (!puedeGestionar && puedeConsultarInventario && puedeVerExistencias) return 'existencias';
+    return permitidas[0] ?? 'existencias';
+  })();
 
+  // Deriva la pestaña activa: garantiza que solo se acceda a pestañas autorizadas
+  const pestanaActiva: PestanaProducto = permitidas.includes(tabParam as PestanaProducto)
+    ? (tabParam as PestanaProducto)
+    : tabPorDefecto;
   const encabezado = ENCABEZADOS[pestanaActiva];
 
   const cambiarPestana = (nueva: PestanaProducto) => {
@@ -183,6 +206,18 @@ export const ProductosPage: React.FC = () => {
     }
   };
 
+  if (permitidas.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl py-12 text-center">
+        <AlertCircle className="mx-auto h-12 w-12 text-amber-600" />
+        <h3 className="mt-3 text-lg font-bold text-slate-900">Acceso no autorizado</h3>
+        <p className="mt-1 text-sm text-slate-500">
+          Tu rol actual no cuenta con permisos para consultar o gestionar productos e inventario.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Encabezado General del Módulo */}
@@ -208,33 +243,37 @@ export const ProductosPage: React.FC = () => {
           )}
         </div>
 
-        {/* Selector de pestañas */}
+        {/* Selector de pestañas: solo muestra las secciones autorizadas */}
         <div
           role="tablist"
           aria-label="Secciones de productos e inventario"
           className="flex border-b border-slate-200 mt-5 gap-6"
         >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={pestanaActiva === 'catalogo'}
-            onClick={() => cambiarPestana('catalogo')}
-            className={claseTab(pestanaActiva === 'catalogo')}
-          >
-            <Package className="h-4 w-4" />
-            <span>Catálogo de panes</span>
-          </button>
+          {puedeVerCatalogo && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={pestanaActiva === 'catalogo'}
+              onClick={() => cambiarPestana('catalogo')}
+              className={claseTab(pestanaActiva === 'catalogo')}
+            >
+              <Package className="h-4 w-4" />
+              <span>Catálogo de panes</span>
+            </button>
+          )}
 
-          <button
-            type="button"
-            role="tab"
-            aria-selected={pestanaActiva === 'produccion'}
-            onClick={() => cambiarPestana('produccion')}
-            className={claseTab(pestanaActiva === 'produccion')}
-          >
-            <Wheat className="h-4 w-4" />
-            <span>Producción diaria</span>
-          </button>
+          {puedeVerExistencias && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={pestanaActiva === 'existencias'}
+              onClick={() => cambiarPestana('existencias')}
+              className={claseTab(pestanaActiva === 'existencias')}
+            >
+              <Store className="h-4 w-4" />
+              <span>Existencias (CU12)</span>
+            </button>
+          )}
 
           {puedeVerInventario && (
             <button
@@ -248,11 +287,26 @@ export const ProductosPage: React.FC = () => {
               <span>Stock de materia prima</span>
             </button>
           )}
+
+          {puedeVerProduccion && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={pestanaActiva === 'produccion'}
+              onClick={() => cambiarPestana('produccion')}
+              className={claseTab(pestanaActiva === 'produccion')}
+            >
+              <Wheat className="h-4 w-4" />
+              <span>Producción diaria</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* Contenido según pestaña activa */}
-      {pestanaActiva === 'produccion' ? (
+      {pestanaActiva === 'existencias' ? (
+        <ExistenciasTab />
+      ) : pestanaActiva === 'produccion' ? (
         <ProduccionTab />
       ) : pestanaActiva === 'inventario' ? (
         <InventarioTab />
