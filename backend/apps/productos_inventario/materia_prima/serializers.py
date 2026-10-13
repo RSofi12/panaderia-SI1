@@ -51,9 +51,6 @@ class MateriaPrimaSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('El stock mínimo no puede ser negativo.')
         return value
 
-    # Los SerializerMethodField no pasan por COERCE_DECIMAL_TO_STRING: si se
-    # devolviera el Decimal, el JSON llevaría un número y no texto como el
-    # resto de los DecimalField de la API.
     def get_stock_actual(self, obj):
         inventario = getattr(obj, 'inventario', None)
         if inventario is None:
@@ -97,3 +94,30 @@ class MateriaPrimaStockSerializer(serializers.ModelSerializer):
         if stock <= obj.stock_minimo:
             return 'bajo_minimo'
         return 'normal'
+
+
+class AlertaBajoStockSerializer(serializers.ModelSerializer):
+    """Datos de una materia prima con alerta de bajo stock (CU9)."""
+
+    stock_actual = serializers.DecimalField(
+        source='stock_para_alerta',
+        max_digits=10,
+        decimal_places=3,
+        read_only=True,
+    )
+    faltante = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MateriaPrima
+        fields = [
+            'id_materia_prima',
+            'nombre',
+            'unidad_medida',
+            'stock_actual',
+            'stock_minimo',
+            'faltante',
+        ]
+
+    def get_faltante(self, obj):
+        cantidad = obj.stock_minimo - obj.stock_para_alerta
+        return f'{cantidad:.3f}'

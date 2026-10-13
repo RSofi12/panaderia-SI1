@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
   Boxes,
@@ -23,6 +23,7 @@ import ProduccionTab from './produccion/ProduccionTab';
 import HistorialProduccionPage from './produccion/HistorialProduccionPage';
 import InventarioTab from './inventario/InventarioTab';
 import ExistenciasTab from './existencias/ExistenciasTab';
+import { ROLES_ALERTAS_BAJO_STOCK } from '../../../types/materiaPrima';
 
 type EstadoFiltro = '' | 'true' | 'false';
 type PestanaProducto = 'catalogo' | 'produccion' | 'historial' | 'inventario' | 'existencias';
@@ -76,7 +77,9 @@ const claseTab = (activa: boolean) =>
   }`;
 
 export const ProductosPage: React.FC = () => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, hasRole } = useAuth();
+  const puedeConsultarAlertas = hasPermission('gestionar_inventario')
+    && ROLES_ALERTAS_BAJO_STOCK.some((rol) => hasRole(rol));
   const puedeGestionar = hasPermission('gestionar_productos');
   const puedeRegistrarProduccion = hasPermission('registrar_produccion');
   const puedeConsultarInventario = hasPermission('gestionar_inventario') || hasPermission('registrar_ventas');
@@ -230,6 +233,11 @@ export const ProductosPage: React.FC = () => {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
+      {puedeConsultarAlertas && (
+        <Link to="/dashboard/inventario/alertas-bajo-stock" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100">
+          <AlertCircle aria-hidden="true" className="h-4 w-4" />Consultar alertas de bajo stock
+        </Link>
+      )}
       {/* Encabezado General del Módulo */}
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">

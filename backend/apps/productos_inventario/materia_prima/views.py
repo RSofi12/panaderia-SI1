@@ -6,13 +6,19 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.usuarios_seguridad.bitacora.models import AccionBitacora, Bitacora
 from apps.productos_inventario.materia_prima.models import InventarioMateriaPrima, MateriaPrima
-from apps.productos_inventario.materia_prima.permissions import PuedeGestionarMateriaPrima
+from apps.productos_inventario.materia_prima.permissions import (
+    EsRolAutorizadoCU09,
+    PuedeGestionarMateriaPrima,
+)
+from apps.productos_inventario.materia_prima.selectors import obtener_materias_primas_bajo_stock
 from apps.productos_inventario.materia_prima.serializers import (
+    AlertaBajoStockSerializer,
     MateriaPrimaSerializer,
     MateriaPrimaStockSerializer,
 )
+from apps.usuarios_seguridad.bitacora.models import AccionBitacora, Bitacora
+from apps.usuarios_seguridad.users.permissions import TienePermiso
 
 
 class MateriaPrimaListView(APIView):
@@ -122,3 +128,18 @@ class MateriaPrimaStockListView(APIView):
             materias = materias.filter(inventario__stock_actual__lte=F('stock_minimo'))
 
         return Response(MateriaPrimaStockSerializer(materias, many=True).data)
+
+
+class AlertasBajoStockView(APIView):
+    """GET /api/materias-primas/bajo-stock/ — Consulta de alertas de bajo stock (CU9)."""
+
+    def get_permissions(self):
+        return [
+            TienePermiso('gestionar_inventario'),
+            EsRolAutorizadoCU09(),
+        ]
+
+    def get(self, request):
+        materias = obtener_materias_primas_bajo_stock()
+        serializer = AlertaBajoStockSerializer(materias, many=True)
+        return Response(serializer.data)
