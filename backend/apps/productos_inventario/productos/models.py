@@ -95,3 +95,4 @@ class HistorialPrecioProducto(models.Model):
 
     def __str__(self):
         return f'{self.id_producto.nombre}: Bs {self.precio} ({self.fecha_inicio:%Y-%m-%d})'
+        

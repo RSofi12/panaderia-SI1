@@ -26,6 +26,7 @@ class Command(BaseCommand):
                 (10, 'generar_reportes', 'reportes', 'Consultar y generar reportes administrativos y operativos'),
                 (11, 'consultar_bitacora', 'usuarios_seguridad', 'Consultar el historial de acciones registradas en el sistema'),
                 (12, 'asignar_permisos', 'usuarios_seguridad', 'Asignar roles y definir permisos del sistema (matriz de acceso)'),
+                (13, 'gestionar_materias_primas', 'productos_inventario', 'Crear, editar y activar o inactivar materias primas'),
             ]
 
             permisos_dict = {}
@@ -65,8 +66,8 @@ class Command(BaseCommand):
 
             # 3. Rol - Permiso
             rol_permisos_map = {
-                1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],  # Admin: Todos
-                2: [2, 3, 4, 6, 7, 8, 9, 10, 11],            # Propietario: Todo menos gestionar usuarios y roles
+                1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],  # Admin: Todos
+                2: [2, 3, 4, 6, 7, 8, 9, 10, 11, 13],            # Propietario: gestión de materias primas incluida
                 3: [3, 4, 6, 10],                            # Ventas
                 4: [5, 6],                                   # Producción
             }

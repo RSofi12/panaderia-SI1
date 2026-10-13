@@ -26,11 +26,11 @@ from .serializers import (
 class ExistenciasListView(APIView):
     """
     GET /api/productos-terminados/existencias/
-    
+
     Caso de Uso CU12: Consultar existencias de productos terminados.
     Permite consultar en tiempo real las existencias disponibles de cada tipo de pan listo
     para la venta en mostrador.
-    
+
     Parámetros de consulta (Query Params):
       - q: Búsqueda insensible a mayúsculas por nombre del pan.
       - categoria: ID numérico de la categoría de producto.
@@ -96,7 +96,7 @@ class ExistenciasListView(APIView):
 class ResumenExistenciasView(APIView):
     """
     GET /api/productos-terminados/existencias/resumen/
-    
+
     Retorna métricas consolidadas (KPIs) en tiempo real para las tarjetas de información:
       - Total de variedades de pan en catálogo activo
       - Total de piezas de pan listas en mostrador
@@ -146,7 +146,7 @@ class ResumenExistenciasView(APIView):
 class KardexProductoTerminadoView(APIView):
     """
     GET /api/productos-terminados/existencias/<int:id_producto>/movimientos/
-    
+
     Kardex / Historial de movimientos del producto terminado:
     Permite auditar el flujo de un pan específico (entradas por horneado y salidas por venta/merma).
     """

@@ -70,6 +70,11 @@ class AccionBitacora(models.TextChoices):
     # --- CU7: Registrar compra ---
     ALTA_COMPRA = 'ALTA_COMPRA', 'Registro de compra de materia prima'
 
+    # --- CU8: Gestionar materia prima ---
+    ALTA_MATERIA_PRIMA = 'ALTA_MATERIA_PRIMA', 'Alta de materia prima'
+    EDICION_MATERIA_PRIMA = 'EDICION_MATERIA_PRIMA', 'Modificación de materia prima'
+    CAMBIAR_ESTADO_MATERIA_PRIMA = 'CAMBIAR_ESTADO_MATERIA_PRIMA', 'Activación o inactivación de materia prima'
+
 
 class Bitacora(models.Model):
     """

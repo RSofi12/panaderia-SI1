@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
+  Boxes,
   CheckCircle2,
   Package,
   Pencil,
@@ -18,10 +19,11 @@ import ProductoFormModal from './components/ProductoFormModal';
 import ConfirmarEstadoDialog from './components/ConfirmarEstadoDialog';
 import { formatearBs } from './precios';
 import ProduccionTab from './produccion/ProduccionTab';
+import InventarioTab from './inventario/InventarioTab';
 import ExistenciasTab from './existencias/ExistenciasTab';
 
 type EstadoFiltro = '' | 'true' | 'false';
-type PestanaProducto = 'catalogo' | 'produccion' | 'existencias';
+type PestanaProducto = 'catalogo' | 'produccion' | 'inventario' | 'existencias';
 
 type ModalAbierto =
   | { tipo: 'formulario'; producto: Producto | null }
@@ -34,13 +36,46 @@ interface Resultado {
   error: string | null;
 }
 
+const ENCABEZADOS: Record<PestanaProducto, { cu: string; titulo: string; descripcion: string }> = {
+  catalogo: {
+    cu: 'CU5',
+    titulo: 'Catálogo de productos',
+    descripcion: 'Panes que elabora la panadería, con su costo, margen y precio de venta.',
+  },
+  produccion: {
+    cu: 'CU10 & CU11',
+    titulo: 'Producción diaria',
+    descripcion:
+      'Registro de horneado diario, cálculo MRP de recetas y consumo automático de insumos.',
+  },
+  existencias: {
+    cu: 'CU12',
+    titulo: 'Existencias de pan en mostrador',
+    descripcion:
+      'Consulta en tiempo real de unidades disponibles para la venta directa, alertas de stock y valorización.',
+  },
+  inventario: {
+    cu: 'CU8',
+    titulo: 'Gestión de materias primas',
+    descripcion: 'Administra insumos, define stock mínimo y consulta existencias actuales.',
+  },
+};
+
+const claseTab = (activa: boolean) =>
+  `pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
+    activa
+      ? 'border-amber-600 text-amber-900'
+      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+  }`;
+
 export const ProductosPage: React.FC = () => {
   const { hasPermission } = useAuth();
   const puedeGestionar = hasPermission('gestionar_productos');
   const puedeRegistrarProduccion = hasPermission('registrar_produccion');
   const puedeConsultarInventario = hasPermission('gestionar_inventario') || hasPermission('registrar_ventas');
+  const puedeVerInventario =
+    hasPermission('gestionar_inventario') || hasPermission('gestionar_materias_primas');
 
-  // Permisos por pestaña
   const puedeVerCatalogo = puedeGestionar;
   const puedeVerExistencias = puedeConsultarInventario || puedeGestionar;
   const puedeVerProduccion = puedeRegistrarProduccion || puedeGestionar;
@@ -48,6 +83,7 @@ export const ProductosPage: React.FC = () => {
   const permitidas: PestanaProducto[] = [];
   if (puedeVerCatalogo) permitidas.push('catalogo');
   if (puedeVerExistencias) permitidas.push('existencias');
+  if (puedeVerInventario) permitidas.push('inventario');
   if (puedeVerProduccion) permitidas.push('produccion');
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -64,6 +100,7 @@ export const ProductosPage: React.FC = () => {
   const pestanaActiva: PestanaProducto = permitidas.includes(tabParam as PestanaProducto)
     ? (tabParam as PestanaProducto)
     : tabPorDefecto;
+  const encabezado = ENCABEZADOS[pestanaActiva];
 
   const cambiarPestana = (nueva: PestanaProducto) => {
     setSearchParams(
@@ -186,24 +223,12 @@ export const ProductosPage: React.FC = () => {
       {/* Encabezado General del Módulo */}
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
-          Productos e Inventario · {pestanaActiva === 'catalogo' ? 'CU5' : pestanaActiva === 'produccion' ? 'CU10 & CU11' : 'CU12'}
+          Productos e Inventario · {encabezado.cu}
         </p>
         <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-              {pestanaActiva === 'catalogo'
-                ? 'Catálogo de productos'
-                : pestanaActiva === 'produccion'
-                  ? 'Producción diaria'
-                  : 'Existencias de pan en mostrador'}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {pestanaActiva === 'catalogo'
-                ? 'Panes que elabora la panadería, con su costo, margen y precio de venta.'
-                : pestanaActiva === 'produccion'
-                  ? 'Registro de horneado diario, cálculo MRP de recetas y consumo automático de insumos.'
-                  : 'Consulta en tiempo real de unidades disponibles para la venta directa, alertas de stock y valorización.'}
-            </p>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">{encabezado.titulo}</h2>
+            <p className="mt-1 text-sm text-slate-500">{encabezado.descripcion}</p>
           </div>
 
           {pestanaActiva === 'catalogo' && puedeGestionar && (
@@ -230,10 +255,7 @@ export const ProductosPage: React.FC = () => {
               role="tab"
               aria-selected={pestanaActiva === 'catalogo'}
               onClick={() => cambiarPestana('catalogo')}
-              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${pestanaActiva === 'catalogo'
-                  ? 'border-amber-600 text-amber-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-                }`}
+              className={claseTab(pestanaActiva === 'catalogo')}
             >
               <Package className="h-4 w-4" />
               <span>Catálogo de panes</span>
@@ -246,13 +268,23 @@ export const ProductosPage: React.FC = () => {
               role="tab"
               aria-selected={pestanaActiva === 'existencias'}
               onClick={() => cambiarPestana('existencias')}
-              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${pestanaActiva === 'existencias'
-                  ? 'border-amber-600 text-amber-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-                }`}
+              className={claseTab(pestanaActiva === 'existencias')}
             >
               <Store className="h-4 w-4" />
               <span>Existencias productos</span>
+            </button>
+          )}
+
+          {puedeVerInventario && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={pestanaActiva === 'inventario'}
+              onClick={() => cambiarPestana('inventario')}
+              className={claseTab(pestanaActiva === 'inventario')}
+            >
+              <Boxes className="h-4 w-4" />
+              <span>Stock de materia prima</span>
             </button>
           )}
 
@@ -262,10 +294,7 @@ export const ProductosPage: React.FC = () => {
               role="tab"
               aria-selected={pestanaActiva === 'produccion'}
               onClick={() => cambiarPestana('produccion')}
-              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${pestanaActiva === 'produccion'
-                  ? 'border-amber-600 text-amber-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-                }`}
+              className={claseTab(pestanaActiva === 'produccion')}
             >
               <Wheat className="h-4 w-4" />
               <span>Producción diaria</span>
@@ -279,6 +308,8 @@ export const ProductosPage: React.FC = () => {
         <ExistenciasTab />
       ) : pestanaActiva === 'produccion' ? (
         <ProduccionTab />
+      ) : pestanaActiva === 'inventario' ? (
+        <InventarioTab />
       ) : (
         <>
           {aviso && (
@@ -422,7 +453,6 @@ export const ProductosPage: React.FC = () => {
                 </table>
               </div>
             )}
-
             <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
               {cargando && !resultado
                 ? 'Cargando catálogo...'

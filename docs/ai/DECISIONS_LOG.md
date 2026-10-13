@@ -379,7 +379,7 @@
 # 📅 2026-09-28 — CU3: Gestionar usuarios (frontend)
 
 ### 29. Arquitectura de componentes, accesibilidad WCAG y ciclo de vida de modales
-- **Decisión:** 
+- **Decisión:**
   1. La UI del CU3 se organiza en `src/apps/dashboard/usuarios/` con subcomponentes locales en `components/`. El diálogo base `Modal.tsx` se coloca en `src/apps/dashboard/components/` por ser compartido exclusivamente por el dashboard, reservando `src/components/` para futuros componentes globales de toda la SPA.
   2. Los tres modales (`ModalUsuario`, `ModalEstado`, `ModalRestablecerContrasena`) se inicializan con lazy state (`useState(() => ...)`) y son montados con `key` dependiente del id del usuario en vez de resetear el estado con `useEffect`.
   3. Tras una edición exitosa, la tabla vuelve a pedir la página al servidor con `trasEdicion()` en lugar de mutar la fila en el cliente, respetando el ordenamiento alfabético y el filtrado por `icontains` de PostgreSQL.
@@ -417,7 +417,7 @@
 # 📅 2026-09-28 — CU4: Asignar roles y permisos (frontend)
 
 ### 34. Navegación en pestañas bajo `/dashboard/usuarios`, sincronización con URL y matriz de permisos por módulos
-- **Decisión:** 
+- **Decisión:**
   1. CU4 no crea una nueva ruta de primer nivel en el menú principal; se integra como pestaña "Roles y permisos" dentro del módulo unificado de *Usuarios y Seguridad* (`/dashboard/usuarios`).
   2. `ProtectedRoute` y `AppRoutes.tsx` se ampliaron para aceptar `requiredPermission?: string | string[]` con semántica *any-of*, permitiendo el acceso tanto con `gestionar_usuarios` como con `asignar_permisos`.
   3. La pestaña activa se sincroniza bidireccionalmente con la URL mediante `useSearchParams` (`?tab=roles` vs `?tab=usuarios`), preservando el estado en recargas, historial y navegación directa.
@@ -494,5 +494,3 @@
   4. **Corrección de Fallback Mock:** Modificar `existenciasService.ts` para que un array vacío `[]` retornado por la API (búsqueda sin resultados) sea tratado como respuesta legítima del servidor y no dispare datos mock simulados.
 - **Motivo:** Cumplir el principio de menor privilegio (PoLP), evitar desorientación del personal de mostrador con opciones que no le corresponden y garantizar fidelidad de datos entre backend y frontend.
 - **Impacto:** Interfaz segura, limpia y 100% acorde al rol de trabajo, con suite de 9 tests unitarios pasando en verde.
-
-
