@@ -78,7 +78,16 @@ Se preservó estrictamente toda la lógica del equipo (cálculo automático de p
    - `compra_materia_prima/migrations/0003_alter_detallecompra_id_materia_prima.py`: Actualiza la relación FK en estado de Django usando `SeparateDatabaseAndState`.
    - `productos_inventario/migrations/0007_remove_producto_id_categoria_and_more.py`: Desvincula los modelos del estado de la app raíz usando `SeparateDatabaseAndState` sin emitir `DROP TABLE`.
 
+8. **Sincronización del Diagrama de Clases PlantUML (`database_panaderia_con_funciones.puml`):**
+   - Se actualizó el diagrama de clases para que refleje con total fidelidad el DDL físico de PostgreSQL (`Database_Panaderia_Santiago.sql`).
+   - Se incorporaron las entidades de seguridad avanzada: `ConfiguracionSeguridad` (singleton CU1, CU2) y `TokenRecuperacion` (CU2), con sus atributos de bloqueo, expiración y SHA-256.
+   - Se formalizó la entidad asociativa `RolPermiso` y el atributo `modulo` en `Permiso`.
+   - Se completaron los atributos de `Usuario` (`email`, `isStaff`, `isSuperuser`, `intentosFallidos`, `bloqueadoHasta`, etc.) y métodos de desbloqueo/recuperación.
+   - Se añadió la entidad `NotaPerdidaProducto` (CU18 - mermas de panadería) con relaciones a `DetalleProduccion`, `Usuario` y `MovimientoProductoTerminado`.
+   - Se ajustaron las multiplicidades de movimientos (de 0..1 a 0..*) para compras, producción y mermas.
+
 ---
+
 
 ## 3. 🧠 Decisiones técnicas tomadas
 - **Incolumidad de la Base de Datos:** Cero pérdida de datos. Las tablas físicas `categoria_producto`, `producto`, `historial_precio_producto`, `materia_prima`, `inventario_materia_prima`, `historial_precio_materia_prima` y `movimiento_materia_prima` permanecen intactas en PostgreSQL.
