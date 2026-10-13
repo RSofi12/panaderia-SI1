@@ -494,3 +494,47 @@
   4. **Corrección de Fallback Mock:** Modificar `existenciasService.ts` para que un array vacío `[]` retornado por la API (búsqueda sin resultados) sea tratado como respuesta legítima del servidor y no dispare datos mock simulados.
 - **Motivo:** Cumplir el principio de menor privilegio (PoLP), evitar desorientación del personal de mostrador con opciones que no le corresponden y garantizar fidelidad de datos entre backend y frontend.
 - **Impacto:** Interfaz segura, limpia y 100% acorde al rol de trabajo, con suite de 9 tests unitarios pasando en verde.
+
+### 43. Consolidación de CU08 (Gestionar Materia Prima): Aislamiento RBAC de Insumos, Modal Institucional y Serialización Estandarizada
+- **Decisión:**
+  1. **Aislamiento Estricto por Rol en Frontend:** En `ProductosPage.tsx`, restringir el acceso y visibilidad de la pestaña `inventario` ("Stock de materia prima") exclusivamente a los roles autorizados según `PACKAGE_CU_MAP.md` (*Propietario*, *Administrador* y *Personal de Producción*), condicionando `puedeVerInventario` a `hasPermission('gestionar_materias_primas') || hasPermission('registrar_produccion')`. El *Personal de Ventas* queda excluido de la visualización del almacén de materias primas.
+  2. **Diálogo Institucional Accesible:** Reemplazar `window.confirm()` nativo en `InventarioTab.tsx` por el componente `ConfirmarEstadoMateriaDialog`, con semántica accesible `alertdialog`, descripción de impacto de activación/inactivación y estados de procesamiento no bloqueantes.
+  3. **Retroalimentación Granular de Validación:** Integrar captura y mapeo de errores de campo devueltos por DRF (400 `ValidationError`), asociando los mensajes específicos directamente a los inputs de `nombre`, `unidad_medida` y `stock_minimo` con resaltado visual (`border-red-400`).
+  4. **Estandarización de Serialización de Decimales:** Homogeneizar `MateriaPrimaStockSerializer` para retornar `stock_actual` formateado como string (`str(self._stock(obj))`), previniendo posibles inconsistencias de tipo entre serializadores de catálogo e inventario.
+- **Motivo:** Garantizar el cumplimiento estricto del PUDS respecto a los actores de CU08, elevar la calidad de UX/accesibilidad y asegurar robustez en el intercambio de datos cliente-servidor.
+- **Impacto:** CU08 completado, validado con 5 pruebas unitarias backend y build frontend 100% en verde (0 errores).
+
+---
+
+# 📅 2026-10-13 — CU11: Consultar historial de producción (Refinamiento y Consolidación)
+
+### 44. Ampliación de Permisos RBAC, Prevención N+1 y Validación Estricta de Filtros en CU11
+- **Decisión:**
+  1. **Ampliación de Permisos RBAC:** Actualizar la guarda `PuedeConsultarHistorialProduccion` en `apps.productos_inventario.produccion.permissions` para verificar `{'registrar_produccion', 'gestionar_productos', 'generar_reportes'} & permisos` y `is_superuser`. Esto permite al *Propietario* y *Administrador* supervisar y consultar el historial de producción diaria y sus detalles sin incurrir en rechazos 403 Forbidden.
+  2. **Optimización de Consultas N+1:** En `ProduccionSerializer.get_total_variedades`, reemplazar `obj.detalles.count()` (que disparaba una consulta `SELECT COUNT(*)` individual por cada fila) por `len(obj.detalles.all())`, aprovechando la precarga en memoria efectuada por `prefetch_related('detalles__id_producto')` en `selectors.py`.
+  3. **Validación Estricta de Parámetros de Consulta:** Agregar validación explícita en `ProduccionListView` para `fecha_desde` y `fecha_hasta` (formato ISO `AAAA-MM-DD` y validación cruzada de rango `fecha_desde <= fecha_hasta`), y casteo seguro de `id_producto`, devolviendo respuestas estructuradas HTTP 400 Bad Request en lugar de permitir excepciones no controladas 500.
+  4. **Poblado Demostrativo Idempotente:** Ejecutar `seed_historial_demo.py` asegurando 3 turnos (06, 07 y 08 de septiembre de 2026) con 36 detalles de producción reales asociados a usuarios activos (`mrojas` y `ptorrez`), sin afectar existencias ni inventario físico.
+- **Motivo:** Cumplir integralmente con la matriz de actores del PUDS (`PACKAGE_CU_MAP.md`), garantizar rendimiento óptimo en la serialización de lotes y blindar la API ante parámetros malformados.
+- **Impacto:** CU11 completamente operativo y consolidado con 7 pruebas unitarias backend y compilación frontend en 0 errores.
+
+---
+
+### 45. Integración de CU09 (Alertas de Bajo Stock de Materia Prima): Selector con Coalesce y Doble Guarda RBAC
+- **Decisión:**
+  1. **Ubicación y Arquitectura:** Mantener CU09 dentro de `apps.productos_inventario.materia_prima`, compartiendo modelo con CU08 y separando la consulta analítica en `selectors.py` (`obtener_materias_primas_bajo_stock`).
+  2. **Tratamiento de Insumos sin Inventario:** Aplicar `Coalesce(F('inventario__stock_actual'), Value(Decimal('0.000')))` para que materias primas recién creadas que aún no tienen movimiento sean evaluadas con stock cero si tienen un stock mínimo mayor a cero.
+  3. **Doble Guarda de Seguridad:** Exigir `TienePermiso('gestionar_inventario')` combinado con `EsRolAutorizadoCU09` (`ROLES_PERMITIDOS = {'Administrador', 'Propietario', 'Personal de Producción'}`). Esto garantiza que el Personal de Ventas (aunque cuente con `gestionar_inventario` en otros flujos de despacho) no acceda a las alertas de reposición de insumos de fábrica.
+  4. **Frontend Accesible y Coordinado:** Crear la ruta `/dashboard/inventario/alertas-bajo-stock` (`AlertasBajoStockPage.tsx`), enlazada con botón contextual desde `ProductosPage.tsx`, con tabla accesible WCAG, recarga con `AbortController` y aviso de faltante exacto.
+- **Motivo:** Evitar fragmentación de la sub-app `materia_prima`, respetar la matriz de actores de `PACKAGE_CU_MAP.md` y prevenir desabastecimiento de insumos críticos de horneado.
+- **Impacto:** CU09 integrado y verificado con 12 pruebas unitarias específicas y suite global de 33 pruebas en `productos_inventario` en verde.
+
+---
+
+## 📅 2026-10-13 — CU13: métodos de pago efectivo y Stripe
+
+- **Decisión:** La venta de mostrador solo contempla `efectivo` y `stripe`. El id del cobro con tarjeta se guarda en `venta.id_transaccion_stripe`. En efectivo esa columna queda vacía. El descuento de stock vive en `productos_terminados/services/descontar_stock.py`. La sub-app es `apps.comercializacion.ventas` y la pantalla está en `frontend/src/apps/dashboard/comercializacion/ventas/`.
+- **Motivo:** El DDL ya tenía `id_transaccion_stripe`. El equipo fijó esos dos métodos para el CU13. El script de población usa `stripe` en las filas que antes decían `qr`.
+- **Impacto:** `pedido` y `venta` documentan un `CHECK` con esos dos valores. Una venta Stripe no se guarda si el cobro no está confirmado. Si después falta stock, el cobro se anula.
+
+
+

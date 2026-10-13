@@ -10,6 +10,11 @@ import DashboardHome from '../apps/dashboard/DashboardHome';
 import UsuariosPage from '../apps/dashboard/usuarios/UsuariosPage';
 import ProductosPage from '../apps/dashboard/productos/ProductosPage';
 import ComprasModuloPage from '../apps/dashboard/compras/ComprasModuloPage';
+import AlertasBajoStockPage from '../apps/dashboard/inventario/AlertasBajoStockPage';
+import ComercializacionPage from '../apps/dashboard/comercializacion/ComercializacionPage';
+import RegistrarVentaPage from '../apps/dashboard/comercializacion/ventas/RegistrarVentaPage';
+import ReportesPage from '../apps/dashboard/reportes/ReportesPage';
+import { ROLES_ALERTAS_BAJO_STOCK } from '../types/materiaPrima';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -76,6 +81,11 @@ export const AppRoutes: React.FC = () => {
                 permite el backend a cualquier autenticado; la escritura exige
                 `gestionar_productos` y la controla la propia pantalla + API. */}
             <Route path="productos" element={<ProductosPage />} />
+            <Route path="inventario/alertas-bajo-stock" element={
+              <ProtectedRoute requiredPermission="gestionar_inventario" requiredRole={ROLES_ALERTAS_BAJO_STOCK}>
+                <AlertasBajoStockPage />
+              </ProtectedRoute>
+            } />
 
             {/* Módulo "Compras y Proveedores": pestañas CU7 (compras) y CU6
                 (proveedores); CU20 se sumará aquí. Sin ProtectedRoute de un
@@ -83,6 +93,16 @@ export const AppRoutes: React.FC = () => {
                 (gestionar_proveedores o registrar_compras) y el backend
                 responde 403 al resto. */}
             <Route path="compras" element={<ComprasModuloPage />} />
+            <Route path="comercializacion" element={<ComercializacionPage />} />
+            <Route
+              path="comercializacion/ventas"
+              element={
+                <ProtectedRoute requiredPermission="registrar_ventas">
+                  <RegistrarVentaPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="reportes" element={<ReportesPage />} />
           </Route>
 
           {/* Redirecciones por defecto */}

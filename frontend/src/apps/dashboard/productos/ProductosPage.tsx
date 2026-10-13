@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
   Boxes,
   CheckCircle2,
-  ClipboardList,
+  History,
   Package,
   Pencil,
   Plus,
@@ -23,6 +23,7 @@ import ProduccionTab from './produccion/ProduccionTab';
 import HistorialProduccionPage from './produccion/HistorialProduccionPage';
 import InventarioTab from './inventario/InventarioTab';
 import ExistenciasTab from './existencias/ExistenciasTab';
+import { ROLES_ALERTAS_BAJO_STOCK } from '../../../types/materiaPrima';
 
 type EstadoFiltro = '' | 'true' | 'false';
 type PestanaProducto = 'catalogo' | 'produccion' | 'historial' | 'inventario' | 'existencias';
@@ -76,13 +77,16 @@ const claseTab = (activa: boolean) =>
   }`;
 
 export const ProductosPage: React.FC = () => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, hasRole } = useAuth();
+  const puedeConsultarAlertas = hasPermission('gestionar_inventario')
+    && ROLES_ALERTAS_BAJO_STOCK.some((rol) => hasRole(rol));
   const puedeGestionar = hasPermission('gestionar_productos');
   const puedeRegistrarProduccion = hasPermission('registrar_produccion');
   const puedeConsultarInventario = hasPermission('gestionar_inventario') || hasPermission('registrar_ventas');
-  const puedeConsultarHistorial = puedeRegistrarProduccion;
+  // CU08: Solo Propietario, Administrador y Personal de Producción ven stock de materia prima
+  const puedeConsultarHistorial = puedeRegistrarProduccion || puedeGestionar;
   const puedeVerInventario =
-    hasPermission('gestionar_inventario') || hasPermission('gestionar_materias_primas');
+    hasPermission('gestionar_materias_primas') || hasPermission('registrar_produccion');
 
   const puedeVerCatalogo = puedeGestionar;
   const puedeVerExistencias = puedeConsultarInventario || puedeGestionar;
@@ -229,6 +233,11 @@ export const ProductosPage: React.FC = () => {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
+      {puedeConsultarAlertas && (
+        <Link to="/dashboard/inventario/alertas-bajo-stock" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100">
+          <AlertCircle aria-hidden="true" className="h-4 w-4" />Consultar alertas de bajo stock
+        </Link>
+      )}
       {/* Encabezado General del Módulo */}
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
@@ -280,7 +289,7 @@ export const ProductosPage: React.FC = () => {
               className={claseTab(pestanaActiva === 'existencias')}
             >
               <Store className="h-4 w-4" />
-              <span>Existencias (CU12)</span>
+              <span>Existencias productos</span>
             </button>
           )}
 
@@ -318,7 +327,7 @@ export const ProductosPage: React.FC = () => {
               onClick={() => cambiarPestana('historial')}
               className={claseTab(pestanaActiva === 'historial')}
             >
-              <ClipboardList className="h-4 w-4" />
+              <History className="h-4 w-4" />
               <span>CU11 · Historial</span>
             </button>
           )}
@@ -428,9 +437,8 @@ export const ProductosPage: React.FC = () => {
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-                              producto.activo ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
-                            }`}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${producto.activo ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                              }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${producto.activo ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                             {producto.activo ? 'Activo' : 'Inactivo'}
@@ -453,11 +461,10 @@ export const ProductosPage: React.FC = () => {
                                 onClick={() => setModal({ tipo: 'estado', producto })}
                                 title={producto.activo ? 'Inactivar' : 'Activar'}
                                 aria-label={`${producto.activo ? 'Inactivar' : 'Activar'} ${producto.nombre}`}
-                                className={`rounded-lg p-2 cursor-pointer ${
-                                  producto.activo
+                                className={`rounded-lg p-2 cursor-pointer ${producto.activo
                                     ? 'text-slate-500 hover:bg-red-50 hover:text-red-600'
                                     : 'text-slate-400 hover:bg-emerald-50 hover:text-emerald-600'
-                                }`}
+                                  }`}
                               >
                                 <Power className="w-4 h-4" />
                               </button>
@@ -479,7 +486,6 @@ export const ProductosPage: React.FC = () => {
                 </table>
               </div>
             )}
-
             <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
               {cargando && !resultado
                 ? 'Cargando catálogo...'

@@ -1,8 +1,8 @@
 # Resumen de Entrega y Continuidad (HANDOFF LATEST)
 
 ## 📌 Proyecto: Sistema de Información Web - Panadería Santiago (SI-1)
-- **Fecha:** 2026-10-12
-- **Estado del Ciclo:** Ciclo 1 consolidado (CU1–CU6, CU26) + **Ciclo 2 en desarrollo** (CU7 compras 🟢, CU12 existencias 🟢, CU10/CU11 frontend 🟡)
+- **Fecha:** 2026-10-13
+- **Estado del Ciclo:** Ciclo 1 consolidado (CU1–CU6, CU26) + **Ciclo 2 casi completado** (CU7 compras 🟢, CU8 materia prima 🟢, CU9 bajo stock 🟢, CU11 historial producción 🟢, CU12 existencias 🟢, CU10 orden de producción 🟡)
 - **Entorno:** Docker Compose (Recomendado: 1 comando para db, mailpit, backend y frontend) o Local directo
 
 ---
@@ -19,39 +19,26 @@
 | CU6 | Gestionar proveedores | 🟢 Completo end-to-end | `compras/` + `src/apps/dashboard/proveedores/` |
 | CU26 | Gestionar bitácora | 🟢 Completo end-to-end | `bitacora/` + `src/apps/dashboard/usuarios/bitacora/` |
 | CU7 | Registrar compra de materia prima | 🟢 Completo end-to-end | `compra_materia_prima/` + `src/apps/dashboard/compras/` |
+| CU8 | Gestionar materia prima (CRUD+Stock) | 🟢 Completo end-to-end | `materia_prima/` + `src/apps/dashboard/productos/inventario/` |
+| CU9 | Consultar alertas de bajo stock | 🟢 Completo end-to-end | `materia_prima/` + `src/apps/dashboard/inventario/AlertasBajoStockPage.tsx` |
+| CU11 | Consultar historial de producción | 🟢 Completo end-to-end | `produccion/` + `src/apps/dashboard/productos/produccion/` |
 | CU12 | Consultar existencias de pan | 🟢 Completo end-to-end | `productos_terminados/` + `src/apps/dashboard/productos/existencias/` |
 | CU10 | Registrar producción diaria | 🟡 Frontend listo / Backend pend. | `src/apps/dashboard/productos/produccion/RegistrarProduccionModal.tsx` |
-| CU11 | Consultar historial de producción | 🟢 Completo end-to-end | `produccion/` + `src/apps/dashboard/productos/produccion/HistorialProduccionPage.tsx` |
-| CU8 | Gestionar materia prima (CRUD+Stock) | ⚪ Planificado (Alcance ampliado) | `materia_prima/` (Andamiaje base listo) |
-| CU9 | Consultar alertas de bajo stock | ⚪ Planificado | `materia_prima/` |
+| CU13 | Registrar venta | 🟢 Efectivo y Stripe | `apps.comercializacion.ventas` + `src/apps/dashboard/comercializacion/ventas/` |
 
 Detalle completo por caso de uso: [`CURRENT_STATE.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/CURRENT_STATE.md)  
 Registro de decisiones: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/DECISIONS_LOG.md)  
-Última sesión: [`2026-10-12-roberto-cu12-consultar-existencias-productos-terminados.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/sessions/2026-10-12-roberto-cu12-consultar-existencias-productos-terminados.md)
+Última sesión: [`2026-10-13-pilar-cu11-historial-produccion-refinamiento.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/sessions/2026-10-13-pilar-cu11-historial-produccion-refinamiento.md)
 
 ---
 
 ## 📦 2. Lo entregado en esta sesión
 
-### Rediseño Institucional de Autenticación (CU1, CU2)
-- **Tipografía corporativa:** Instalación de `sugo.regular.otf` en `src/assets/fonts/` y registro de clase `.font-sugo`.
-- **`LoginPage.tsx`:** Layout Split-Screen con fotografía editorial (`photo-bakery.jpg`) oculta automáticamente en móviles (`hidden lg:flex`), logo circular SVG limpio, reemplazo de emojis por iconos Lucide acordes (`ShieldCheck`, `Briefcase`, `ShoppingBag`, `ChefHat`), checkbox "Recordarme" en frontend y ajuste vertical para eliminar barras de scroll en resolución estándar.
-- **`ForgotPasswordPage.tsx`:** Diseño Split-Screen emparejado con Login, tipografía Sugo y feedback anti-enumeración.
-- **`ResetPasswordPage.tsx`:** Diseño de tarjeta centrada (sin foto lateral de panadería), título en Sugo, inputs de contraseña con alternancia de visibilidad y checklist reactivo de complejidad.
-- **`AuthCard.tsx`:** Contenedor común actualizado con logo SVG y cabecera en Sugo.
-
-### Frontend de Producción Diaria (CU10, CU11)
-- **Tipos y Servicios:** `src/types/produccion.ts` y `src/services/produccionService.ts` con arquitectura híbrida de fallback mock automático.
-- **Componentes:**
-  - `BalanceInsumosCard.tsx` (consumo de insumos en tiempo real y alertas de stock).
-  - `TablaLoteProduccion.tsx` (historial de lotes con filtros y paginación).
-  - `ModalDetalleProduccion.tsx` (auditoría de materias primas consumidas vs unidades producidas).
-  - `RegistrarProduccionModal.tsx` (alta de lotes con cálculo de receta dinámico).
-  - `ProduccionTab.tsx` (vista orquestadora en `/dashboard/productos?tab=produccion`).
-- **Pestañas integradas:** Doble pestaña en `ProductosPage.tsx` ("Catálogo de productos" y "Producción diaria").
-
-### Mantenimiento Backend / Git
-- Corrección de conflicto de merge en `backend/requirements.txt` preservando `psycopg2-binary>=2.9.9`.
+### Integración y Reconciliación de CU09 (Alertas de Bajo Stock)
+- **Reconciliación Limpia con CU8:** Integradas las alertas de bajo stock dentro de la sub-app `materia_prima` sin alterar el CRUD existente de CU8.
+- **Selector y Serializador:** `obtener_materias_primas_bajo_stock()` con cálculo de faltante y Coalesce de stock en 0. Serializador `AlertaBajoStockSerializer`.
+- **Doble Guarda RBAC:** Exigencia de `TienePermiso('gestionar_inventario')` y `EsRolAutorizadoCU09` (Administrador, Propietario y Personal de Producción).
+- **Ruta y Componente:** Página dedicada `/dashboard/inventario/alertas-bajo-stock` (`AlertasBajoStockPage.tsx`) con accesibilidad WCAG y enlace contextual en `ProductosPage.tsx`.
 
 ---
 
@@ -59,8 +46,10 @@ Registro de decisiones: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia
 
 | Verificación | Comando / Entorno | Resultado |
 |---|---|---|
-| Build & Types Frontend | `npm run build` (`tsc -b && vite build`) | ✅ **Exitoso (2004 módulos, 0 errores)** |
-| Git Status | `git status -s` | ✅ **Limpio y consistente** |
+| Suite completa `productos_inventario` | `manage.py test apps.productos_inventario...` | ✅ **Exitoso (33/33 tests OK en 2.5s)** |
+| Pruebas específicas CU09 | `manage.py test apps.productos_inventario.materia_prima.tests` | ✅ **Exitoso (17/17 tests OK: 5 CU8 + 12 CU09)** |
+| Build & Types Frontend | `npm run build` (`tsc -b && vite build`) | ✅ **Exitoso (2019 módulos, 0 errores)** |
+| Git Status | `git status` | ✅ **Merge concluido y árbol limpio** |
 
 ---
 

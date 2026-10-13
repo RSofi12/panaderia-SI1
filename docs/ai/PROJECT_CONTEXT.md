@@ -49,7 +49,7 @@ Desarrollar un sistema de información web para la gestión de ventas, producci�
 2. **Seguridad y Accesos:** Implementar el control de acceso, gestión de usuarios, roles, permisos y registro de auditoría en bitácora.
 3. **Catálogo e Inventario:** Gestionar los catálogos de productos y proveedores, así como el control en tiempo real de inventarios de materia prima y productos terminados.
 4. **Producción (MRP Base):** Registrar la producción diaria con recálculo de costos y descuento/incremento automático en inventarios.
-5. **Comercialización y Ventas:** Administrar ventas en mostrador (efectivo y QR) y pedidos programados, generando comprobantes y sincronizando inventarios.
+5. **Comercialización y Ventas:** Administrar ventas en mostrador (efectivo y Stripe) y pedidos programados, generando comprobantes y sincronizando inventarios.
 6. **Finanzas y Reportes:** Registrar compras, gastos e inversiones, y generar reportes operativos y consolidados de resultados económicos.
 
 ---
