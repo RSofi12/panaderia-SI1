@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Boxes,
   CheckCircle2,
+  ClipboardList,
   Package,
   Pencil,
   Plus,
@@ -317,22 +318,7 @@ export const ProductosPage: React.FC = () => {
               onClick={() => cambiarPestana('historial')}
               className={claseTab(pestanaActiva === 'historial')}
             >
-              <span>CU11 · Historial</span>
-            </button>
-          )}
-
-          {puedeConsultarHistorial && (
-            <button
-              type="button"
-              role="tab"
-              aria-selected={pestanaActiva === 'historial'}
-              onClick={() => cambiarPestana('historial')}
-              className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-colors cursor-pointer ${
-                pestanaActiva === 'historial'
-                  ? 'border-amber-600 text-amber-900'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-              }`}
-            >
+              <ClipboardList className="h-4 w-4" />
               <span>CU11 · Historial</span>
             </button>
           )}

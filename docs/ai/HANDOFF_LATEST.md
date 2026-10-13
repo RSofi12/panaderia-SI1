@@ -21,7 +21,7 @@
 | CU7 | Registrar compra de materia prima | 🟢 Completo end-to-end | `compra_materia_prima/` + `src/apps/dashboard/compras/` |
 | CU12 | Consultar existencias de pan | 🟢 Completo end-to-end | `productos_terminados/` + `src/apps/dashboard/productos/existencias/` |
 | CU10 | Registrar producción diaria | 🟡 Frontend listo / Backend pend. | `src/apps/dashboard/productos/produccion/RegistrarProduccionModal.tsx` |
-| CU11 | Consultar historial de producción | 🟡 Frontend listo / Backend pend. | `src/apps/dashboard/productos/produccion/TablaLoteProduccion.tsx` |
+| CU11 | Consultar historial de producción | 🟢 Completo end-to-end | `produccion/` + `src/apps/dashboard/productos/produccion/HistorialProduccionPage.tsx` |
 | CU8 | Gestionar materia prima (CRUD+Stock) | ⚪ Planificado (Alcance ampliado) | `materia_prima/` (Andamiaje base listo) |
 | CU9 | Consultar alertas de bajo stock | ⚪ Planificado | `materia_prima/` |
 
