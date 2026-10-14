@@ -265,7 +265,7 @@ export const ProductosPage: React.FC = () => {
         <div
           role="tablist"
           aria-label="Secciones de productos e inventario"
-          className="flex border-b border-slate-200 mt-5 gap-6"
+          className="flex flex-wrap border-b border-slate-200 mt-5 gap-x-6 gap-y-1"
         >
           {puedeVerCatalogo && (
             <button

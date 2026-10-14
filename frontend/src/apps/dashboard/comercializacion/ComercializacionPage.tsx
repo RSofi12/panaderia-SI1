@@ -175,8 +175,8 @@ export const ComercializacionPage: React.FC = () => {
             {ultimas.length > 0 ? (
               <ul className="mt-3 divide-y divide-slate-100">
                 {ultimas.map((venta) => (
-                  <li key={venta.id_venta} className="flex items-center justify-between gap-3 py-2.5 text-sm">
-                    <div className="flex items-center gap-3">
+                  <li key={venta.id_venta} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2.5 text-sm">
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                       <span className="font-mono text-xs text-slate-400">#{venta.numero_comprobante}</span>
                       <span className="tabular-nums text-slate-500">{hora(venta.fecha_hora)}</span>
                       <ChipMetodo metodo={venta.metodo_pago} />

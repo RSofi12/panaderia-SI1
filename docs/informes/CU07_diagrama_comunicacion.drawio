@@ -1,130 +1,233 @@
 <mxfile host="app.diagrams.net" agent="panaderia-si1" version="22.1.0">
   <diagram id="cu07-comunicacion" name="CU07 Comunicacion">
-    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1560" pageHeight="1020" math="0" shadow="0">
+    <mxGraphModel dx="1030" dy="567" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
-        <mxCell id="titulo" value="CU07. Registrar compra de materia prima — Diagrama de comunicación" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=16;fontFamily=Helvetica;fontStyle=1;fontColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="40" y="24" width="720" height="30" as="geometry" />
+        <mxCell id="titulo" value="CU07. Registrar compra de materia prima — Diagrama de comunicación" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=1;fontSize=12;fontStyle=1;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="520" height="24" as="geometry" />
         </mxCell>
 
-        <mxCell id="actor" value="Propietario" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;fontFamily=Helvetica;fontSize=13;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="70" y="470" width="40" height="80" as="geometry" />
+        <!-- Objetos -->
+        <mxCell id="actor" value=":Propietario" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="370" width="30" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ui" value=":ComprasPageView" style="shape=umlBoundary;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="360" width="80" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ctrl" value=":CompraController" style="ellipse;shape=umlControl;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="580" y="355" width="70" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="prov" value=":Proveedor" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="82" width="36" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="mp" value=":MateriaPrima" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="162" width="36" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="det" value=":DetalleCompra" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="242" width="36" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="compra" value=":Compra" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="352" width="36" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="inv" value=":InventarioMateriaPrima" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="432" width="36" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="hist" value=":HistorialPrecioMateriaPrima" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="512" width="36" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="mov" value=":MovimientoMateriaPrima" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="592" width="36" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="bit" value=":Bitacora" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="672" width="36" height="36" as="geometry" />
         </mxCell>
 
-        <mxCell id="ui" value="" style="shape=umlBoundary;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="330" y="465" width="80" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="ui-l" value="UI&lt;br&gt;&lt;b&gt;ComprasPageView&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="270" y="550" width="200" height="40" as="geometry" />
-        </mxCell>
-
-        <mxCell id="ctrl" value="" style="shape=umlControl;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="710" y="455" width="100" height="100" as="geometry" />
-        </mxCell>
-        <mxCell id="ctrl-l" value="&lt;b&gt;:CompraController&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=top;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="660" y="560" width="200" height="24" as="geometry" />
-        </mxCell>
-
-        <mxCell id="prov" value="" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="972" y="171" width="68" height="68" as="geometry" />
-        </mxCell>
-        <mxCell id="prov-l" value="&lt;u&gt;Proveedor&lt;/u&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="1050" y="184" width="160" height="40" as="geometry" />
-        </mxCell>
-
-        <mxCell id="mp" value="" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="1045" y="245" width="68" height="68" as="geometry" />
-        </mxCell>
-        <mxCell id="mp-l" value="&lt;u&gt;MateriaPrima&lt;/u&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="1122" y="258" width="170" height="40" as="geometry" />
-        </mxCell>
-
-        <mxCell id="det" value="" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="1097" y="336" width="68" height="68" as="geometry" />
-        </mxCell>
-        <mxCell id="det-l" value="&lt;u&gt;DetalleCompra&lt;/u&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="1174" y="350" width="180" height="40" as="geometry" />
-        </mxCell>
-
-        <mxCell id="compra" value="" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="1123" y="437" width="68" height="68" as="geometry" />
-        </mxCell>
-        <mxCell id="compra-l" value="&lt;u&gt;Compra&lt;/u&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="1200" y="451" width="140" height="40" as="geometry" />
-        </mxCell>
-
-        <mxCell id="inv" value="" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="1122" y="542" width="68" height="68" as="geometry" />
-        </mxCell>
-        <mxCell id="inv-l" value="&lt;u&gt;Inventario&lt;br&gt;MateriaPrima&lt;/u&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="1200" y="548" width="170" height="56" as="geometry" />
-        </mxCell>
-
-        <mxCell id="hist" value="" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="1094" y="642" width="68" height="68" as="geometry" />
-        </mxCell>
-        <mxCell id="hist-l" value="&lt;u&gt;HistorialPrecio&lt;br&gt;MateriaPrima&lt;/u&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="1172" y="648" width="190" height="56" as="geometry" />
-        </mxCell>
-
-        <mxCell id="mov" value="" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="1041" y="732" width="68" height="68" as="geometry" />
-        </mxCell>
-        <mxCell id="mov-l" value="&lt;u&gt;Movimiento&lt;br&gt;MateriaPrima&lt;/u&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="1118" y="738" width="180" height="56" as="geometry" />
-        </mxCell>
-
-        <mxCell id="bit" value="" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;" vertex="1" parent="1">
-          <mxGeometry x="967" y="805" width="68" height="68" as="geometry" />
-        </mxCell>
-        <mxCell id="bit-l" value="&lt;u&gt;Bitacora&lt;/u&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=13;fontFamily=Helvetica;fontColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="1044" y="819" width="140" height="40" as="geometry" />
-        </mxCell>
-
-        <mxCell id="m-actor-ui" value="1: consultarCompras()&lt;br&gt;2: registrarCompra()&lt;br&gt;3: verDetalleCompra()" style="endArrow=block;endFill=1;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#000000;labelBackgroundColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;align=center;verticalAlign=bottom;exitX=1;exitY=0.3;entryX=0;entryY=0.3;rounded=0;" edge="1" parent="1" source="actor" target="ui">
+        <!-- Enlaces (sin flecha) -->
+        <mxCell id="l-actor-ui" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;" edge="1" parent="1" source="actor" target="ui">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-
-        <mxCell id="m-ui-ctrl" value="1.1: GET /api/compras/&lt;br&gt;2.1: POST /api/compras/&lt;br&gt;3.1: GET /api/compras/{id}/" style="endArrow=block;endFill=1;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#000000;labelBackgroundColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;align=center;verticalAlign=bottom;exitX=1;exitY=0.28;entryX=0;entryY=0.28;rounded=0;" edge="1" parent="1" source="ui" target="ctrl">
+        <mxCell id="l-ui-ctrl" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;" edge="1" parent="1" source="ui" target="ctrl">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-
-        <mxCell id="m-ctrl-ui" value="1.3: ComprasResponse()&lt;br&gt;2.10: CompraCreadaResponse()&lt;br&gt;3.3: CompraDetalleResponse()" style="endArrow=block;endFill=1;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#000000;labelBackgroundColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;align=center;verticalAlign=top;exitX=0;exitY=0.78;entryX=1;entryY=0.78;rounded=0;" edge="1" parent="1" source="ctrl" target="ui">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="l-prov" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;" edge="1" parent="1" source="ctrl" target="prov">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="100" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l-mp" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;" edge="1" parent="1" source="ctrl" target="mp">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l-det" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;" edge="1" parent="1" source="ctrl" target="det">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l-compra" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;" edge="1" parent="1" source="ctrl" target="compra">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l-inv" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;" edge="1" parent="1" source="ctrl" target="inv">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="450" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l-hist" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;" edge="1" parent="1" source="ctrl" target="hist">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l-mov" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;" edge="1" parent="1" source="ctrl" target="mov">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="610" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l-bit" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;" edge="1" parent="1" source="ctrl" target="bit">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="690" />
+            </Array>
+          </mxGeometry>
         </mxCell>
 
-        <mxCell id="m-prov" value="2.2: validarProveedorActivo()" style="endArrow=block;endFill=1;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#000000;labelBackgroundColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;rounded=0;" edge="1" parent="1" source="ctrl" target="prov">
-          <mxGeometry relative="1" as="geometry" />
+        <!-- Mensajes Propietario -> ComprasPageView -->
+        <mxCell id="t1" value="1: consultarCompras()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="160" y="317" width="150" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t1" target="t1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t2" value="2: registrarCompra()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="160" y="342" width="150" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t2" target="t2">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t3" value="3: verDetalleCompra()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="160" y="367" width="150" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t3" target="t3">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="m-mp" value="2.3: validarMateriaPrimaActiva()" style="endArrow=block;endFill=1;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#000000;labelBackgroundColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;rounded=0;" edge="1" parent="1" source="ctrl" target="mp">
-          <mxGeometry relative="1" as="geometry" />
+        <!-- Mensajes ComprasPageView -> CompraController -->
+        <mxCell id="t11" value="1.1: GET /api/compras/" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="410" y="317" width="165" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a11" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t11" target="t11">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t21" value="2.1: POST /api/compras/" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="410" y="342" width="165" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a21" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t21" target="t21">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t31" value="3.1: GET /api/compras/{id}/" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="410" y="367" width="165" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a31" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t31" target="t31">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="m-det" value="2.5: crearDetalleCompra()" style="endArrow=block;endFill=1;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#000000;labelBackgroundColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;rounded=0;" edge="1" parent="1" source="ctrl" target="det">
-          <mxGeometry relative="1" as="geometry" />
+        <!-- Retornos CompraController -> ComprasPageView -->
+        <mxCell id="t13" value="1.3: ComprasResponse()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="415" y="405" width="165" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a13" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fontSize=10;labelBackgroundColor=none;fontColor=default;dashed=1;" edge="1" parent="1" source="t13" target="t13">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t210" value="2.10: CompraCreadaResponse()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="415" y="430" width="165" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a210" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fontSize=10;labelBackgroundColor=none;fontColor=default;dashed=1;" edge="1" parent="1" source="t210" target="t210">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t33" value="3.3: CompraDetalleResponse()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="415" y="455" width="165" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a33" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;strokeWidth=1;fontSize=10;labelBackgroundColor=none;fontColor=default;dashed=1;" edge="1" parent="1" source="t33" target="t33">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="m-compra" value="1.2: listarCompras()&lt;br&gt;2.4: crearCompra()&lt;br&gt;3.2: obtenerCompra()" style="endArrow=block;endFill=1;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#000000;labelBackgroundColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;align=center;verticalAlign=bottom;rounded=0;" edge="1" parent="1" source="ctrl" target="compra">
-          <mxGeometry relative="1" as="geometry" />
+        <!-- Mensajes CompraController -> entidades -->
+        <mxCell id="t22" value="2.2: validarProveedorActivo()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="725" y="75" width="210" height="22" as="geometry" />
         </mxCell>
-
-        <mxCell id="m-inv" value="2.6: incrementarStock()" style="endArrow=block;endFill=1;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#000000;labelBackgroundColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;rounded=0;" edge="1" parent="1" source="ctrl" target="inv">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="a22" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t22" target="t22">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
         </mxCell>
-
-        <mxCell id="m-hist" value="2.7: registrarHistorialPrecio()" style="endArrow=block;endFill=1;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#000000;labelBackgroundColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;rounded=0;" edge="1" parent="1" source="ctrl" target="hist">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="t23" value="2.3: validarMateriaPrimaActiva()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="725" y="155" width="210" height="22" as="geometry" />
         </mxCell>
-
-        <mxCell id="m-mov" value="2.8: registrarMovimientoEntrada()" style="endArrow=block;endFill=1;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#000000;labelBackgroundColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;rounded=0;" edge="1" parent="1" source="ctrl" target="mov">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="a23" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t23" target="t23">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
         </mxCell>
-
-        <mxCell id="m-bit" value="2.9: registrarBitacora()" style="endArrow=block;endFill=1;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#000000;labelBackgroundColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;rounded=0;" edge="1" parent="1" source="ctrl" target="bit">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="t25" value="2.5: crearDetalleCompra()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="725" y="235" width="210" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a25" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t25" target="t25">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t12" value="1.2: listarCompras()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="725" y="295" width="210" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a12" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t12" target="t12">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t24" value="2.4: crearCompra()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="725" y="320" width="210" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a24" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t24" target="t24">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t32" value="3.2: obtenerCompra()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="725" y="345" width="210" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a32" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t32" target="t32">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t26" value="2.6: incrementarStock()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="725" y="425" width="210" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a26" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t26" target="t26">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t27" value="2.7: registrarHistorialPrecio()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="725" y="505" width="210" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a27" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t27" target="t27">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t28" value="2.8: registrarMovimientoEntrada()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="725" y="585" width="210" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a28" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t28" target="t28">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="t29" value="2.9: registrarBitacora()" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;labelBackgroundColor=none;" vertex="1" parent="1">
+          <mxGeometry x="725" y="665" width="210" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="a29" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="t29" target="t29">
+          <mxGeometry width="50" height="50" relative="1" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

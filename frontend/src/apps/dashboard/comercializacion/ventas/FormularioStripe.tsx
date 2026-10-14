@@ -74,7 +74,7 @@ export function FormularioStripe({ registrando, deshabilitado, totalTexto, onCon
         type="button"
         disabled={deshabilitado || registrando || !stripe || !tarjetaLista}
         onClick={cobrar}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-700 px-4 py-4 text-base font-bold text-white shadow-sm transition hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
+        className="flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-amber-700 px-4 py-4 text-center text-base font-bold leading-tight text-white shadow-sm transition hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
       >
         {registrando ? (
           <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />

@@ -30,6 +30,9 @@ const stripePromise = claveStripe ? loadStripe(claveStripe) : null;
 
 const BILLETES = [10, 20, 50, 100, 200];
 const TODAS = 'Todas';
+// El número de columnas sigue al ancho del catálogo, no al de la ventana:
+// con el menú lateral abierto, la ventana puede ser ancha y el catálogo angosto.
+const GRILLA_CATALOGO = 'grid grid-cols-1 gap-3 @min-[26rem]:grid-cols-2 @min-[42rem]:grid-cols-3';
 
 interface LineaCarrito {
   id_producto: number;
@@ -260,7 +263,7 @@ export default function RegistrarVentaPage() {
             Toca un pan para sumarlo al ticket. El precio sale del catálogo.
           </p>
         </div>
-        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm shadow-xs">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm shadow-xs">
           <span className="text-slate-500">Hoy</span>
           <span className="font-bold tabular-nums text-slate-900">{bolivianos(totalHoy / 100)}</span>
           <span className="h-4 w-px bg-slate-200" aria-hidden="true" />
@@ -270,8 +273,8 @@ export default function RegistrarVentaPage() {
         </div>
       </header>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <section aria-label="Catálogo de panes" className="space-y-4">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
+        <section aria-label="Catálogo de panes" className="@container min-w-0 space-y-4">
           <div className="flex flex-col gap-3">
             <label className="relative block">
               <span className="sr-only">Buscar pan</span>
@@ -341,7 +344,7 @@ export default function RegistrarVentaPage() {
           ) : null}
 
           {!cargando && !errorCarga ? (
-            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <ul className={GRILLA_CATALOGO}>
               {visibles.map((pan, indice) => (
                 <li
                   key={pan.id_producto}
@@ -359,7 +362,7 @@ export default function RegistrarVentaPage() {
           ) : null}
         </section>
 
-        <aside aria-label="Ticket de venta" className="lg:sticky lg:top-4">
+        <aside aria-label="Ticket de venta" className="min-w-0 xl:sticky xl:top-4">
           <div className="ticket-dentado rounded-t-3xl border border-b-0 border-amber-200/70 bg-[#fffaf1] p-5 shadow-md shadow-amber-900/5">
             <div className="flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-base font-bold text-slate-900">
@@ -491,7 +494,7 @@ export default function RegistrarVentaPage() {
                     type="button"
                     disabled={carrito.length === 0 || registrando || faltante}
                     onClick={() => void cobrarEfectivo()}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-700 px-4 py-4 text-base font-bold text-white shadow-sm transition hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
+                    className="flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl bg-amber-700 px-4 py-4 text-center text-base font-bold leading-tight text-white shadow-sm transition hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
                   >
                     {registrando ? (
                       <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
@@ -570,7 +573,7 @@ function TarjetaPan({ pan, enCarrito, onAgregar }: TarjetaPanProps) {
       } ${agotado ? 'opacity-55' : ''}`}
     >
       {enCarrito > 0 ? (
-        <span className="mostrador-sello absolute -right-2 -top-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-amber-700 px-2 text-xs font-bold tabular-nums text-white shadow">
+        <span className="mostrador-sello absolute right-2 top-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-amber-700 px-2 text-xs font-bold tabular-nums text-white shadow">
           {enCarrito}
         </span>
       ) : null}
@@ -578,7 +581,7 @@ function TarjetaPan({ pan, enCarrito, onAgregar }: TarjetaPanProps) {
         {pan.categoria_nombre || 'Pan'}
       </span>
       <span className="mt-0.5 text-base font-bold leading-snug text-slate-900">{pan.producto_nombre}</span>
-      <span className="mt-3 flex items-end justify-between gap-2">
+      <span className="mt-3 flex flex-wrap items-end justify-between gap-x-2 gap-y-1">
         <span className="text-xl font-black tabular-nums text-amber-800">{bolivianos(pan.precio_venta)}</span>
         <span
           className={`rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums ${
@@ -645,7 +648,7 @@ function LineaTicket({ linea, deshabilitado, onCambiar }: LineaTicketProps) {
           <Plus className="h-3.5 w-3.5" />
         </button>
       </div>
-      <span className="w-16 text-right text-sm font-bold tabular-nums text-slate-900">{bolivianos(subtotal)}</span>
+      <span className="shrink-0 text-right text-sm font-bold tabular-nums text-slate-900">{bolivianos(subtotal)}</span>
     </li>
   );
 }
@@ -689,7 +692,7 @@ function BotonMonto({ children, onClick }: { children: ReactNode; onClick: () =>
 
 function EsqueletoCatalogo() {
   return (
-    <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="Cargando panes">
+    <ul className={GRILLA_CATALOGO} aria-label="Cargando panes">
       {Array.from({ length: 6 }, (_, indice) => (
         <li key={indice} className="h-[7.5rem] animate-pulse rounded-2xl border border-slate-200 bg-white p-4">
           <div className="h-2.5 w-14 rounded bg-slate-100" />
@@ -711,7 +714,7 @@ function VentasDelDia({ ventas }: { ventas: VentaResumen[] }) {
         <p className="mt-3 text-sm text-slate-500">Todavía no hay ventas registradas hoy.</p>
       ) : (
         <div className="mt-3 overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[36rem] text-sm">
             <thead>
               <tr className="text-left text-[11px] uppercase tracking-wider text-slate-400">
                 <th className="py-2 pr-4 font-semibold">Comprobante</th>
@@ -784,7 +787,7 @@ function DialogoVentaRegistrada({ cerrada, onCerrar }: DialogoVentaRegistradaPro
         <ul className="mt-5 max-h-52 space-y-1.5 overflow-y-auto border-y-2 border-dashed border-amber-200 py-4 text-sm">
           {venta.detalles.map((linea) => (
             <li key={linea.id_detalle_venta} className="flex justify-between gap-3">
-              <span className="text-slate-700">
+              <span className="min-w-0 text-slate-700">
                 <span className="tabular-nums">{linea.cantidad}</span> × {linea.nombre_producto}
               </span>
               <span className="tabular-nums text-slate-900">{bolivianos(linea.subtotal)}</span>
