@@ -193,3 +193,145 @@ class PruebasVentaStripe(BaseVenta):
         stripe_mock.Refund.create.assert_called_once_with(payment_intent='pi_test_0001')
         self.stock_arani.refresh_from_db()
         self.assertEqual(self.stock_arani.stock_actual, 1)
+
+    @patch('apps.comercializacion.ventas.services.stripe_pago.stripe')
+    def test_crear_intencion_stripe_exitoso(self, stripe_mock):
+        mock_pi = MagicMock()
+        mock_pi.id = 'pi_test_crear_1'
+        mock_pi.client_secret = 'pi_test_crear_1_secret'
+        stripe_mock.PaymentIntent.create.return_value = mock_pi
+
+        self.client.force_authenticate(self.vendedor)
+        respuesta = self.client.post('/api/ventas/stripe/intencion/', {
+            'detalles': [{'id_producto': self.marraqueta.id_producto, 'cantidad': 4}],
+        }, format='json')
+
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(respuesta.data['id_transaccion_stripe'], 'pi_test_crear_1')
+        self.assertEqual(respuesta.data['client_secret'], 'pi_test_crear_1_secret')
+        self.assertEqual(respuesta.data['monto'], '2.00')
+        self.assertEqual(respuesta.data['moneda'], 'bob')
+
+    def test_crear_intencion_stripe_sin_stock_devuelve_400(self):
+        self.client.force_authenticate(self.vendedor)
+        respuesta = self.client.post('/api/ventas/stripe/intencion/', {
+            'detalles': [{'id_producto': self.arani.id_producto, 'cantidad': 10}],
+        }, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @patch('apps.comercializacion.ventas.services.stripe_pago.stripe')
+    def test_crear_intencion_stripe_monto_minimo_devuelve_400(self, stripe_mock):
+        import stripe as real_stripe
+        stripe_mock.error = real_stripe.error
+        stripe_mock.PaymentIntent.create.side_effect = real_stripe.error.InvalidRequestError(
+            'Amount must convert to at least 50 cents. Bs.0.50 converts to approximately $0.04.',
+            param='amount',
+        )
+
+        self.client.force_authenticate(self.vendedor)
+        respuesta = self.client.post('/api/ventas/stripe/intencion/', {
+            'detalles': [{'id_producto': self.marraqueta.id_producto, 'cantidad': 1}],
+        }, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('inferior al mínimo admitido', str(respuesta.data))
+
+    @patch('apps.comercializacion.ventas.services.stripe_pago.stripe')
+    def test_stripe_id_duplicado_rechaza_segunda_venta(self, stripe_mock):
+        stripe_mock.PaymentIntent.retrieve.return_value = self._intento()
+        # Primera venta exitosa
+        resp1 = self._cobrar(
+            self.vendedor,
+            [{'id_producto': self.marraqueta.id_producto, 'cantidad': 2}],
+            metodo='stripe',
+            id_stripe='pi_test_0001',
+        )
+        self.assertEqual(resp1.status_code, status.HTTP_201_CREATED)
+
+        # Segunda venta con el mismo id_stripe
+        resp2 = self._cobrar(
+            self.vendedor,
+            [{'id_producto': self.marraqueta.id_producto, 'cantidad': 2}],
+            metodo='stripe',
+            id_stripe='pi_test_0001',
+        )
+        self.assertEqual(resp2.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Venta.objects.count(), 1)
+
+    def test_efectivo_con_id_stripe_rechaza_con_400(self):
+        respuesta = self._cobrar(
+            self.vendedor,
+            [{'id_producto': self.marraqueta.id_producto, 'cantidad': 1}],
+            metodo='efectivo',
+            id_stripe='pi_test_no_debe_ir',
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Venta.objects.count(), 0)
+
+    @patch('apps.comercializacion.ventas.services.stripe_pago.stripe')
+    def test_stripe_monto_incoherente_anula_cobro(self, stripe_mock):
+        # Cobro en Stripe por Bs 5.00 pero en mostrador pide Bs 1.00 (2 marraquetas a 0.50)
+        stripe_mock.PaymentIntent.retrieve.return_value = self._intento(monto_centavos=500)
+        respuesta = self._cobrar(
+            self.vendedor,
+            [{'id_producto': self.marraqueta.id_producto, 'cantidad': 2}],
+            metodo='stripe',
+            id_stripe='pi_test_0001',
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Venta.objects.count(), 0)
+        stripe_mock.Refund.create.assert_called_once_with(payment_intent='pi_test_0001')
+
+    @patch('apps.comercializacion.ventas.services.stripe_pago.stripe')
+    def test_stripe_con_datos_tarjeta_manuales_exitoso(self, stripe_mock):
+        mock_pi = MagicMock()
+        mock_pi.id = 'pi_test_manual_1'
+        mock_pi.status = 'succeeded'
+        stripe_mock.PaymentIntent.create.return_value = mock_pi
+
+        self.client.force_authenticate(self.vendedor)
+        respuesta = self.client.post('/api/ventas/', {
+            'metodo_pago': 'stripe',
+            'detalles': [{'id_producto': self.marraqueta.id_producto, 'cantidad': 2}],
+            'datos_tarjeta': {
+                'numero': '4242424242424242',
+                'exp_mes': 12,
+                'exp_anio': 2028,
+                'cvc': '123',
+                'titular': 'Cliente Mostrador',
+            },
+        }, format='json')
+
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(respuesta.data['id_transaccion_stripe'], 'pi_test_manual_1')
+        self.assertEqual(respuesta.data['total'], '1.00')
+        self.assertEqual(Venta.objects.count(), 1)
+        self.stock_marraqueta.refresh_from_db()
+        self.assertEqual(self.stock_marraqueta.stock_actual, 8)
+
+    @patch('apps.comercializacion.ventas.services.stripe_pago.stripe')
+    def test_stripe_con_datos_tarjeta_declinada(self, stripe_mock):
+        import stripe as real_stripe
+        stripe_mock.error = real_stripe.error
+        stripe_mock.PaymentIntent.create.side_effect = real_stripe.error.CardError(
+            'Your card was declined.',
+            param='card',
+            code='card_declined',
+        )
+
+        self.client.force_authenticate(self.vendedor)
+        respuesta = self.client.post('/api/ventas/', {
+            'metodo_pago': 'stripe',
+            'detalles': [{'id_producto': self.marraqueta.id_producto, 'cantidad': 2}],
+            'datos_tarjeta': {
+                'numero': '4000000000000002',
+                'exp_mes': 12,
+                'exp_anio': 2028,
+                'cvc': '123',
+                'titular': 'Cliente Declinado',
+            },
+        }, format='json')
+
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Venta.objects.count(), 0)
+        texto_error = str(respuesta.data).lower()
+        self.assertTrue('declined' in texto_error or 'rechazada' in texto_error)

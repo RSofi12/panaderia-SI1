@@ -78,6 +78,9 @@ class AccionBitacora(models.TextChoices):
     EDICION_MATERIA_PRIMA = 'EDICION_MATERIA_PRIMA', 'Modificación de materia prima'
     CAMBIAR_ESTADO_MATERIA_PRIMA = 'CAMBIAR_ESTADO_MATERIA_PRIMA', 'Activación o inactivación de materia prima'
 
+    # --- CU10: Registrar producción diaria ---
+    REGISTRO_PRODUCCION = 'REGISTRO_PRODUCCION', 'Registro de producción diaria'
+
 
 class Bitacora(models.Model):
     """

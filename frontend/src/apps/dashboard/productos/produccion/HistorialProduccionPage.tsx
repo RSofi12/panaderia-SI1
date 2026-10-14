@@ -94,32 +94,31 @@ export const HistorialProduccionPage: React.FC = () => {
   const totalUnidades = historial.reduce((total, item) => total + item.total_unidades, 0);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-bold text-amber-800">CU11 · Consulta de producción</p>
-          <h1 className="mt-1 flex items-center gap-2 text-2xl font-bold text-slate-900">
-            <ClipboardList className="h-6 w-6 text-amber-700" />
-            Historial de producción
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-slate-600">
-            Consulta jornadas registradas, revisa sus responsables y abre el detalle de cada lote.
-          </p>
+    <div className="space-y-6">
+      {/* Resumen de métricas de producción */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+            <ClipboardList className="h-6 w-6" />
+          </span>
+          <div>
+            <p className="text-xs font-medium text-slate-500">Jornadas registradas</p>
+            <p className="text-xl font-bold tabular-nums text-slate-900">{historial.length}</p>
+          </div>
         </div>
-        <dl className="flex items-center divide-x divide-slate-200 rounded-lg border border-slate-200 bg-white px-4 py-3" aria-live="polite">
-          <div className="pr-5">
-            <dt className="text-xs font-medium text-slate-500">Jornadas</dt>
-            <dd className="mt-0.5 text-xl font-bold tabular-nums text-slate-900">{historial.length}</dd>
-          </div>
-          <div className="pl-5">
-            <dt className="text-xs font-medium text-slate-500">Unidades producidas</dt>
-            <dd className="mt-0.5 flex items-center gap-1.5 text-xl font-bold tabular-nums text-slate-900">
-              <CalendarDays className="h-4 w-4 text-amber-700" />
+
+        <div className="flex items-center gap-3.5 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
+            <CalendarDays className="h-6 w-6 text-amber-700" />
+          </span>
+          <div>
+            <p className="text-xs font-medium text-slate-500">Unidades producidas</p>
+            <p className="text-xl font-bold tabular-nums text-slate-900">
               {totalUnidades.toLocaleString('es-BO')}
-            </dd>
+            </p>
           </div>
-        </dl>
-      </header>
+        </div>
+      </div>
 
       <section className="rounded-lg border border-slate-200 border-l-4 border-l-amber-700 bg-white p-4 shadow-sm">
         <div className="mb-4 flex items-center gap-3">

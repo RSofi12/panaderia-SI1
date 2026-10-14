@@ -1,7 +1,7 @@
 # VARIABLES DE ESTE PEDIDO
-{{CICLO}} = 2
-{{CU_ID}} = CU_11
-{{CU_NOMBRE}} = Consultar historial de producción
+{{CICLO}} = ...
+{{CU_ID}} = ...
+{{CU_NOMBRE}} = ...
 {{POR_QUE_ES_COMPLEJO}} = ...
 
 
@@ -72,7 +72,7 @@ Dame por el chat un plan de implementación del {{CU_ID}}, con estas secciones:
 9. Riesgos y preguntas abiertas: decisiones de negocio que debo consultar
    al equipo o a la docente antes de programar.
 10. Orden de implementación sugerido (paso a paso, con entregables
-    verificables por paso) y nombre de rama de Git sugerido.
+    verificables por paso) y nombre de rama de Git sugerido (uso de una rama propia del desarrollador).
 
 # FORMATO
 - Español, claro y sencillo (soy estudiante de pregrado).

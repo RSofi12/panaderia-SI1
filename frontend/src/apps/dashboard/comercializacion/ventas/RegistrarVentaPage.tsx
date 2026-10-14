@@ -1,5 +1,3 @@
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 import {
   AlertCircle,
   ArrowLeft,
@@ -20,13 +18,14 @@ import type { ElementType, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import existenciasService from '../../../../services/existenciasService';
 import type { ExistenciaProducto } from '../../../../types/existencias';
-import type { MetodoPago, VentaRegistrada, VentaResumen } from '../../../../types/venta';
+import type {
+  MetodoPago,
+  VentaRegistrada,
+  VentaResumen,
+} from '../../../../types/venta';
 import { ChipMetodo } from './ChipMetodo';
-import { FormularioStripe } from './FormularioStripe';
+import { ModalPagoTarjeta } from './ModalPagoTarjeta';
 import { ventaService } from './ventaService';
-
-const claveStripe = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-const stripePromise = claveStripe ? loadStripe(claveStripe) : null;
 
 const BILLETES = [10, 20, 50, 100, 200];
 const TODAS = 'Todas';
@@ -100,6 +99,8 @@ export default function RegistrarVentaPage() {
   const [errorCobro, setErrorCobro] = useState('');
   const [cerrada, setCerrada] = useState<VentaCerrada | null>(null);
   const cerrarDialogo = useCallback(() => setCerrada(null), []);
+
+  const [modalTarjetaAbierto, setModalTarjetaAbierto] = useState(false);
 
   const aplicarCarga = useCallback((resultado: Awaited<ReturnType<typeof pedirMostrador>>) => {
     if (resultado) {
@@ -227,18 +228,17 @@ export default function RegistrarVentaPage() {
     }
   }
 
-  async function cobrarStripe(confirmarPago: (clientSecret: string) => Promise<string>) {
+  async function finalizarVentaStripe(idTransaccionStripe: string) {
     if (carrito.length === 0 || registrando) return;
     setRegistrando(true);
     limpiarAvisos();
     try {
-      const intencion = await ventaService.crearIntencion(detalles);
-      const idStripe = await confirmarPago(intencion.client_secret);
       const venta = await ventaService.registrar({
         metodo_pago: 'stripe',
-        id_transaccion_stripe: idStripe,
+        id_transaccion_stripe: idTransaccionStripe,
         detalles,
       });
+      setModalTarjetaAbierto(false);
       await cerrarVenta(venta);
     } catch (error) {
       setErrorCobro(mensajeDeError(error));
@@ -504,22 +504,38 @@ export default function RegistrarVentaPage() {
                     {registrando ? 'Registrando…' : `Cobrar ${totalTexto} en efectivo`}
                   </button>
                 </div>
-              ) : stripePromise ? (
-                <Elements stripe={stripePromise}>
-                  <FormularioStripe
-                    registrando={registrando}
-                    deshabilitado={carrito.length === 0}
-                    totalTexto={totalTexto}
-                    onConfirmar={(confirmar) => void cobrarStripe(confirmar)}
-                  />
-                </Elements>
               ) : (
-                <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-                  <p className="font-semibold text-slate-800">El cobro con tarjeta no está configurado.</p>
-                  <p className="mt-1 text-xs">
-                    Falta la clave pública de Stripe (<code>VITE_STRIPE_PUBLISHABLE_KEY</code>). Mientras tanto
-                    puedes cobrar en efectivo.
-                  </p>
+                <div className="space-y-3">
+                  <div className="rounded-2xl border border-amber-200/80 bg-white/90 p-4 shadow-xs">
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-xl bg-amber-100 p-2 text-amber-800 shrink-0">
+                        <CreditCard className="h-5 w-5" aria-hidden="true" />
+                      </div>
+                      <div className="space-y-1 text-xs">
+                        <p className="font-bold text-slate-800">Tarjeta de débito o crédito</p>
+                        <p className="text-slate-500 leading-relaxed">
+                          Al presionar el botón se abrirá la ventana para ingresar los datos de la tarjeta de forma segura.
+                        </p>
+                        <p className="flex items-center gap-1 font-semibold text-emerald-700 pt-0.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          Pasarela oficial de Stripe activa
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={carrito.length === 0 || registrando}
+                    onClick={() => {
+                      limpiarAvisos();
+                      setModalTarjetaAbierto(true);
+                    }}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-700 px-4 py-4 text-base font-bold text-white shadow-sm transition hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none"
+                  >
+                    <CreditCard className="h-5 w-5" aria-hidden="true" />
+                    {carrito.length === 0 ? 'Agrega productos al ticket' : `Pagar ${totalTexto} con tarjeta`}
+                  </button>
                 </div>
               )}
             </div>
@@ -540,6 +556,20 @@ export default function RegistrarVentaPage() {
       <VentasDelDia ventas={ventasHoy} />
 
       {cerrada ? <DialogoVentaRegistrada cerrada={cerrada} onCerrar={cerrarDialogo} /> : null}
+
+      <ModalPagoTarjeta
+        abierto={modalTarjetaAbierto}
+        totalTexto={totalTexto}
+        totalCentavos={totalCentavos}
+        detalles={detalles}
+        procesando={registrando}
+        errorMensaje={errorCobro}
+        onCerrar={() => {
+          setModalTarjetaAbierto(false);
+          limpiarAvisos();
+        }}
+        onVentaConfirmada={finalizarVentaStripe}
+      />
     </div>
   );
 }

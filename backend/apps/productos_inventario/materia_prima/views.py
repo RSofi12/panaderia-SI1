@@ -1,5 +1,4 @@
 from django.db import transaction
-from django.db.models import F
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -11,7 +10,10 @@ from apps.productos_inventario.materia_prima.permissions import (
     EsRolAutorizadoCU09,
     PuedeGestionarMateriaPrima,
 )
-from apps.productos_inventario.materia_prima.selectors import obtener_materias_primas_bajo_stock
+from apps.productos_inventario.materia_prima.selectors import (
+    filtrar_materias_primas_bajo_minimo,
+    obtener_materias_primas_bajo_stock,
+)
 from apps.productos_inventario.materia_prima.serializers import (
     AlertaBajoStockSerializer,
     MateriaPrimaSerializer,
@@ -125,7 +127,7 @@ class MateriaPrimaStockListView(APIView):
         elif activo != 'all':
             materias = materias.filter(activo=True)
         if bajo_minimo == 'true':
-            materias = materias.filter(inventario__stock_actual__lte=F('stock_minimo'))
+            materias = filtrar_materias_primas_bajo_minimo(materias)
 
         return Response(MateriaPrimaStockSerializer(materias, many=True).data)
 

@@ -47,7 +47,7 @@ Alias lógico: `apps/UsuariosSeguridad/*`
   **Actor(es):** Propietario, Administrador, Personal de Producción
 
 - **CU09 Consultar alertas de bajo stock** -> `apps.productos_inventario.materia_prima` (Ciclo 2)
-  Identificación de las materias primas cuyo stock actual está por debajo del stock mínimo definido, para gestionar oportunamente su reposición.
+  Identificación de las materias primas activas cuyo stock actual está en el mínimo o por debajo del stock mínimo definido (`stock_actual <= stock_minimo`), para gestionar oportunamente su reposición.
   **Actor(es):** Personal de Producción, Propietario
 
 - **CU10 Registrar producción diaria** -> `apps.productos_inventario.produccion` (Ciclo 2)

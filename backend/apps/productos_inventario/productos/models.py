@@ -95,4 +95,52 @@ class HistorialPrecioProducto(models.Model):
 
     def __str__(self):
         return f'{self.id_producto.nombre}: Bs {self.precio} ({self.fecha_inicio:%Y-%m-%d})'
+
+
+class ProductoMateriaPrima(models.Model):
+    """
+    Receta / BOM: Insumos requeridos por unidad de producto (tabla 'producto_materia_prima').
+    Fuente: Database_Panaderia_Santiago.sql y Poblacion_4_Dias_Panaderia_Santiago.sql.
+    CU10: Cálculo de explosión de insumos y descuento automático de inventario.
+    """
+    id = models.BigAutoField(primary_key=True)
+    id_producto = models.ForeignKey(
+        Producto,
+        on_delete=models.CASCADE,
+        db_column='id_producto',
+        related_name='receta_detalles',
+        verbose_name='Producto',
+    )
+    id_materia_prima = models.ForeignKey(
+        'materia_prima.MateriaPrima',
+        on_delete=models.PROTECT,
+        db_column='id_materia_prima',
+        related_name='productos_receta',
+        verbose_name='Materia prima',
+    )
+    cantidad_requerida = models.DecimalField(
+        max_digits=10,
+        decimal_places=3,
+        verbose_name='Cantidad requerida por unidad',
+    )
+    unidad_medida = models.CharField(
+        max_length=20,
+        verbose_name='Unidad de medida',
+    )
+
+    class Meta:
+        db_table = 'producto_materia_prima'
+        verbose_name = 'Receta de producto (materia prima)'
+        verbose_name_plural = 'Recetas de productos (materias primas)'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['id_producto', 'id_materia_prima'],
+                name='producto_materia_prima_unico',
+            )
+        ]
+        ordering = ['id_producto', 'id_materia_prima']
+
+    def __str__(self):
+        return f'{self.id_producto.nombre}: {self.cantidad_requerida} {self.unidad_medida} de {self.id_materia_prima.nombre}'
+
         

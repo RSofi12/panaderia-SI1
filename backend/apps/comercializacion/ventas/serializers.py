@@ -10,6 +10,14 @@ class VentaDetalleEntradaSerializer(serializers.Serializer):
     cantidad = serializers.IntegerField(min_value=1)
 
 
+class DatosTarjetaEntradaSerializer(serializers.Serializer):
+    numero = serializers.CharField(max_length=25)
+    exp_mes = serializers.IntegerField(min_value=1, max_value=12)
+    exp_anio = serializers.IntegerField(min_value=24, max_value=2099)
+    cvc = serializers.CharField(max_length=4)
+    titular = serializers.CharField(max_length=150, required=False, allow_blank=True)
+
+
 class VentaRegistroSerializer(serializers.Serializer):
     """El precio y el total los calcula registrar_venta()."""
     metodo_pago = serializers.ChoiceField(choices=MetodoPago.choices)
@@ -19,7 +27,26 @@ class VentaRegistroSerializer(serializers.Serializer):
         allow_blank=True,
         allow_null=True,
     )
+    datos_tarjeta = DatosTarjetaEntradaSerializer(required=False, allow_null=True)
     detalles = VentaDetalleEntradaSerializer(many=True, allow_empty=False)
+
+    def validate(self, attrs):
+        metodo = attrs.get('metodo_pago')
+        stripe_id = (attrs.get('id_transaccion_stripe') or '').strip()
+        datos_tarjeta = attrs.get('datos_tarjeta')
+
+        if metodo == MetodoPago.STRIPE:
+            if not stripe_id and not datos_tarjeta:
+                raise serializers.ValidationError({
+                    'tarjeta': 'La venta con Stripe requiere los datos de la tarjeta o el id de transacción.'
+                })
+        if metodo == MetodoPago.EFECTIVO:
+            if stripe_id or datos_tarjeta:
+                raise serializers.ValidationError({
+                    'id_transaccion_stripe': 'Una venta en efectivo no debe incluir datos de tarjeta ni id de Stripe.'
+                })
+        attrs['id_transaccion_stripe'] = stripe_id or None
+        return attrs
 
     def create(self, validated_data):
         request = self.context['request']
@@ -28,6 +55,7 @@ class VentaRegistroSerializer(serializers.Serializer):
                 usuario=request.user,
                 metodo_pago=validated_data['metodo_pago'],
                 id_transaccion_stripe=validated_data.get('id_transaccion_stripe'),
+                datos_tarjeta=validated_data.get('datos_tarjeta'),
                 detalles=validated_data['detalles'],
                 agente_usuario=request.META.get('HTTP_USER_AGENT'),
             )

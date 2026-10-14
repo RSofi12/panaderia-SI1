@@ -530,11 +530,67 @@
 
 ---
 
-## 📅 2026-10-13 — CU13: métodos de pago efectivo y Stripe
+### 46. Implementación Backend de CU10 (Registrar Producción Diaria): Modelo de Recetas BOM, Explosión de Materiales, Transacción Atómica con select_for_update y Auditoría
+- **Decisión:**
+  1. **Modelo de Recetas (BOM/MRP):** Crear el modelo `ProductoMateriaPrima` en `apps.productos_inventario.productos.models` con tabla física `producto_materia_prima` y restricción única `(id_producto, id_materia_prima)`, permitiendo asociar los insumos requeridos por unidad de pan elaborado según el diseño físico del DDL.
+  2. **Trazabilidad en Kardex de Insumos:** Agregar clave foránea diferida `id_produccion` en `apps.productos_inventario.materia_prima.models.MovimientoMateriaPrima` vinculando las salidas de almacén a la orden horneada.
+  3. **Cálculo Dinámico de Costo de Producción:** Implementar cálculo automático del costo unitario de elaboración en `services.py` como la sumatoria de $(\text{cantidad\_requerida} \times \text{precio\_actual\_insumo})$ a partir del `HistorialPrecioMateriaPrima`, con fallback transparente al `costo_produccion` base del producto en catálogo si no hubiese compras previas.
+  4. **Transacción Atómica y Bloqueo Pesimista:** En `registrar_produccion_diaria()` (`services.py`), envolver el proceso en `@transaction.atomic` y ejecutar `InventarioMateriaPrima.objects.select_for_update()` para prevenir condiciones de carrera en hornadas simultáneas. Si la existencia de cualquier ingrediente es inferior al consumo total requerido, se lanza `ValidationError` con detalle de faltantes y se produce un rollback completo e inmediato sin persistir registros parciales.
+  5. **Doble Afectación de Kardex:** Por cada orden exitosa se descuenta el stock de insumos (`MovimientoMateriaPrima` con `tipo='salida'`) y se incrementa el stock de pan terminado en mostrador (`MovimientoProductoTerminado` con `tipo='entrada'`).
+  6. **Auditoría e Idempotencia:** Registro automático en `Bitacora` bajo la acción `AccionBitacora.REGISTRO_PRODUCCION`, permitiendo además múltiples producciones por día y turno (soporte a `JornadaProduccion.UNICA` y turnos `Mañana`, `Tarde`, `Noche`). Seeder `seed_recetas` creado para las 12 recetas oficiales (37 relaciones de insumos) de `Poblacion_4_Dias_Panaderia_Santiago.sql`.
+- **Motivo:** Cumplir el rol central del sistema MRP de la panadería, asegurando consistencia matemática entre consumo de materia prima y stock de producto terminado con máxima confiabilidad transaccional.
+- **Impacto:** Backend de CU10 completamente operativo, con 16 pruebas automatizadas en `produccion/tests.py` y suite completa de 45 pruebas en `productos_inventario` en verde (0 fallos).
 
+---
+
+### 47. 📅 2026-10-13 — CU13: Métodos de pago efectivo y Stripe en Comercialización
 - **Decisión:** La venta de mostrador solo contempla `efectivo` y `stripe`. El id del cobro con tarjeta se guarda en `venta.id_transaccion_stripe`. En efectivo esa columna queda vacía. El descuento de stock vive en `productos_terminados/services/descontar_stock.py`. La sub-app es `apps.comercializacion.ventas` y la pantalla está en `frontend/src/apps/dashboard/comercializacion/ventas/`.
 - **Motivo:** El DDL ya tenía `id_transaccion_stripe`. El equipo fijó esos dos métodos para el CU13. El script de población usa `stripe` en las filas que antes decían `qr`.
 - **Impacto:** `pedido` y `venta` documentan un `CHECK` con esos dos valores. Una venta Stripe no se guarda si el cobro no está confirmado. Si después falta stock, el cobro se anula.
+
+---
+
+### 48. 📅 2026-10-13 — CU13: Endurecimiento Backend del Pago con Tarjeta (Stripe PaymentIntent & Auto-Refund)
+- **Decisión:**
+  1. **Sanitización de Claves y Moneda:** Limpiar automáticamente espacios y comillas en `STRIPE_SECRET_KEY` y normalizar `STRIPE_CURRENCY` a minúsculas (`bob`).
+  2. **Captura Resiliente de Excepciones Stripe:** Envolver todas las operaciones del SDK de Stripe (`PaymentIntent.create`, `PaymentIntent.retrieve`, `Refund.create`) en bloques `try...except stripe.error.StripeError` para traducir fallos de red, autenticación o restricciones de la pasarela a `ValidationError` estructurados con código HTTP 400 en lugar de provocar excepciones 500 no controladas.
+  3. **Manejo del Monto Mínimo en Bolivianos:** Detectar la restricción de Stripe de monto mínimo convertible a $0.50 USD (~Bs 6.00 en modo prueba) e informar al usuario con mensaje amigable que oriente a cobrar en efectivo o sumar más unidades al ticket.
+  4. **Validación a Nivel de Serializador:** Agregar validación cruzada en `VentaRegistroSerializer.validate()` que verifique que si el método es `stripe`, el campo `id_transaccion_stripe` sea obligatorio y no vacío; y si es `efectivo`, dicho campo sea nulo.
+  5. **Protección de Reembolsos Silenciosa:** Si falla la transacción atómica de guardado por agotamiento de stock, la anulación en Stripe mediante `Refund.create` se ejecuta de forma segura registrando advertencia en log sin enmascarar la excepción de negocio del inventario.
+- **Motivo:** Garantizar máxima confiabilidad transaccional en el cobro con tarjeta, evitar discrepancias contables y prevenir caídas del servidor ante respuestas de la API de Stripe.
+- **Impacto:** Suite de pruebas de `apps.comercializacion.ventas` ampliada a 14 pruebas unitarias pasando al 100% en verde (0 fallos).
+
+---
+
+---
+
+### 50. 📅 2026-10-14 — CU13: Modal Web Responsivo de Tarjeta Stripe y Eliminación de API Key en Frontend
+- **Decisión:**
+  1. **Eliminación Total de Solicitud de API Key en Frontend:** No solicitar al cajero ni al usuario ingresar la clave pública de Stripe (`pk_test_...`) en la interfaz. El frontend delega la autorización y confirmación del pago directamente al backend a través de la clave secreta (`STRIPE_SECRET_KEY`) configurada de forma segura en las variables de entorno del servidor.
+  2. **Modal Web Responsivo (`ModalPagoTarjeta.tsx`):** Diseñado según la referencia visual provista (Image 2), con estilo nativo de pasarela Stripe:
+     - Encabezado con botón "Volver" con flecha `<` y botón de cierre `X`.
+     - Contenedor unificado de inputs de tarjeta con borde envolvente clásico de Stripe: fila superior con número de tarjeta e insignias dinámicas de marcas (Visa, Mastercard, American Express); fila inferior dividida en dos columnas para Fecha de vencimiento (`MM / AA`) y Código de seguridad (`CVC`) con candado.
+     - Campo de titular de la tarjeta y nota de prueba académica discreta.
+     - Botón principal de pago con monto dinámico `Pagar Bs X.XX` e indicador de candado/seguridad.
+     - Soporte accesible WCAG: foco automático al abrir, cierre con tecla Escape, trampa de foco y atributos `role="dialog"` y `aria-modal="true"`.
+  3. **Cobro Manual en Backend (`stripe_pago.py`):** Creación del servicio `cobrar_con_tarjeta_manual(monto, datos_tarjeta)` que valida los datos ingresados manualmente (número, mes, año, CVC, titular) y procesa el cobro con el SDK de Stripe creando y confirmando el `PaymentIntent` con retorno del identificador de transacción oficial (`pi_...`).
+  4. **Limpieza de Componentes Obsoletos:** Eliminación de los componentes de prueba con chips predefinidos y solicitud de API key (`ConfiguracionStripeCard.tsx`, `TarjetaPruebaStripe.tsx`, `FormularioStripe.tsx`).
+- **Motivo:** Cumplir con las mejores prácticas de seguridad bancaria (cero exposición o solicitud de claves en el cliente), garantizar una interfaz web moderna, responsiva y ergonómica basada en el mockup de Stripe solicitado por el usuario.
+- **Impacto:** Experiencia de cobro fluida y profesional. 16 pruebas unitarias backend en `apps.comercializacion.ventas.tests` en verde (100% éxito) y compilación de producción de Vite en 0 errores.
+
+---
+
+### 51. 📅 2026-10-14 — CU13: Integración Oficial de Stripe Elements (`CardElement`) y Preservación del Formato Estándar de Stripe
+- **Decisión:**
+  1. **Integración Oficial con `@stripe/react-stripe-js`:** Montar el componente oficial `<CardElement>` dentro de `<Elements stripe={stripePromise}>`. Esto delega la captura cifrada de la tarjeta a los iframes oficiales de Stripe, garantizando soporte normativo PCI-DSS y tokenización directa.
+  2. **Endpoint Seguro de Configuración (`StripeConfigView`):** Crear el endpoint `GET /api/ventas/stripe/config/` en `apps.comercializacion.ventas` para exponer la clave pública (`publishable_key`) del servidor con soporte a fallback de `frontend/.env` (`VITE_STRIPE_PUBLISHABLE_KEY`), eliminando que el cajero deba escribir manualmente claves de API.
+  3. **Preservación del Formato Estándar de Stripe (con Soporte Link):** Mantener las opciones nativas de `CardElement` con su botón de Link y encabezados de verificación oficial ("Datos de la tarjeta - Verificación oficial Stripe" con badge de conexión cifrada). En producción (bajo HTTPS / SSL), Link operará de forma transparente y sin advertencias, preservando la experiencia y estética original de Stripe.
+  4. **Experiencia de Pago con Tarjeta de Prueba:** El modal permite al cajero/cliente ingresar los datos de la tarjeta de prueba (`4242 4242 4242 4242`), fecha futura y CVC, con botón dinámico de confirmación `Pagar Bs X.XX`.
+- **Motivo:** Preservar la estética y capacidades completas del componente modal de Stripe según el diseño original, entendiendo que el aviso de HTTP local desaparece naturalmente en el entorno de despliegue con HTTPS.
+- **Impacto:** CU13 completamente implementado de extremo a extremo (Efectivo y Tarjeta Stripe) con 16 pruebas backend en verde y frontend Vite compilando limpiamente.
+
+
+
 
 
 

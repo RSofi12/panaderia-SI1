@@ -206,9 +206,8 @@ interface TarjetaCifraProps {
 function TarjetaCifra({ etiqueta, valor, detalle, icono: Icono, destacada = false }: TarjetaCifraProps) {
   return (
     <div
-      className={`rounded-2xl border p-5 ${
-        destacada ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white'
-      }`}
+      className={`rounded-2xl border p-5 ${destacada ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white'
+        }`}
     >
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{etiqueta}</p>

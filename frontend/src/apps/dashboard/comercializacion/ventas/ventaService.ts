@@ -22,4 +22,14 @@ export const ventaService = {
     const respuesta = await api.get<VentaResumen[]>('/ventas/');
     return respuesta.data;
   },
+
+  async obtenerConfigStripe(): Promise<{ publishable_key: string }> {
+    try {
+      const respuesta = await api.get<{ publishable_key: string }>('/ventas/stripe/config/');
+      return respuesta.data;
+    } catch {
+      return { publishable_key: '' };
+    }
+  },
 };
+
