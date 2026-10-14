@@ -12,6 +12,7 @@ from django.db import IntegrityError, transaction
 from apps.comercializacion.ventas.models import DetalleVenta, MetodoPago, Venta
 from apps.comercializacion.ventas.services.stripe_pago import (
     anular_cobro_tarjeta,
+    cobrar_con_tarjeta_manual,
     confirmar_cobro_tarjeta,
 )
 from apps.productos_inventario.productos.models import Producto
@@ -203,7 +204,7 @@ def _anular_si_corresponde(id_stripe: str | None) -> None:
         anular_cobro_tarjeta(id_stripe)
 
 
-def registrar_venta(*, usuario, metodo_pago, id_transaccion_stripe=None, detalles, agente_usuario=None):
+def registrar_venta(*, usuario, metodo_pago, id_transaccion_stripe=None, datos_tarjeta=None, detalles, agente_usuario=None):
     if metodo_pago not in MetodoPago.values:
         raise ValidationError({
             'metodo_pago': 'El método de pago debe ser efectivo o stripe.'
@@ -215,10 +216,17 @@ def registrar_venta(*, usuario, metodo_pago, id_transaccion_stripe=None, detalle
 
     id_stripe = None
     if metodo_pago == MetodoPago.STRIPE:
-        id_stripe = confirmar_cobro_tarjeta(
-            id_transaccion_stripe=id_transaccion_stripe,
-            monto=total,
-        )
+        if datos_tarjeta:
+            id_stripe = cobrar_con_tarjeta_manual(monto=total, datos_tarjeta=datos_tarjeta)
+        elif id_transaccion_stripe:
+            id_stripe = confirmar_cobro_tarjeta(
+                id_transaccion_stripe=id_transaccion_stripe,
+                monto=total,
+            )
+        else:
+            raise ValidationError({
+                'tarjeta': 'La venta con Stripe requiere los datos de la tarjeta o el id de transacción.'
+            })
     else:
         id_stripe = None
 

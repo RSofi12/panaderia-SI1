@@ -280,3 +280,58 @@ class PruebasVentaStripe(BaseVenta):
         self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(Venta.objects.count(), 0)
         stripe_mock.Refund.create.assert_called_once_with(payment_intent='pi_test_0001')
+
+    @patch('apps.comercializacion.ventas.services.stripe_pago.stripe')
+    def test_stripe_con_datos_tarjeta_manuales_exitoso(self, stripe_mock):
+        mock_pi = MagicMock()
+        mock_pi.id = 'pi_test_manual_1'
+        mock_pi.status = 'succeeded'
+        stripe_mock.PaymentIntent.create.return_value = mock_pi
+
+        self.client.force_authenticate(self.vendedor)
+        respuesta = self.client.post('/api/ventas/', {
+            'metodo_pago': 'stripe',
+            'detalles': [{'id_producto': self.marraqueta.id_producto, 'cantidad': 2}],
+            'datos_tarjeta': {
+                'numero': '4242424242424242',
+                'exp_mes': 12,
+                'exp_anio': 2028,
+                'cvc': '123',
+                'titular': 'Cliente Mostrador',
+            },
+        }, format='json')
+
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(respuesta.data['id_transaccion_stripe'], 'pi_test_manual_1')
+        self.assertEqual(respuesta.data['total'], '1.00')
+        self.assertEqual(Venta.objects.count(), 1)
+        self.stock_marraqueta.refresh_from_db()
+        self.assertEqual(self.stock_marraqueta.stock_actual, 8)
+
+    @patch('apps.comercializacion.ventas.services.stripe_pago.stripe')
+    def test_stripe_con_datos_tarjeta_declinada(self, stripe_mock):
+        import stripe as real_stripe
+        stripe_mock.error = real_stripe.error
+        stripe_mock.PaymentIntent.create.side_effect = real_stripe.error.CardError(
+            'Your card was declined.',
+            param='card',
+            code='card_declined',
+        )
+
+        self.client.force_authenticate(self.vendedor)
+        respuesta = self.client.post('/api/ventas/', {
+            'metodo_pago': 'stripe',
+            'detalles': [{'id_producto': self.marraqueta.id_producto, 'cantidad': 2}],
+            'datos_tarjeta': {
+                'numero': '4000000000000002',
+                'exp_mes': 12,
+                'exp_anio': 2028,
+                'cvc': '123',
+                'titular': 'Cliente Declinado',
+            },
+        }, format='json')
+
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Venta.objects.count(), 0)
+        texto_error = str(respuesta.data).lower()
+        self.assertTrue('declined' in texto_error or 'rechazada' in texto_error)

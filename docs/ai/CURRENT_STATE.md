@@ -61,7 +61,8 @@
 | **CU18**| Registrar baja de productos terminados | `apps.productos_inventario.productos_terminados` | ⚪ |
 | **CU19**| Consultar historial de precios | `apps.productos_inventario.productos` | ⚪ |
 
-**CU13 (2026-10-13):** Venta de mostrador en `apps.comercializacion.ventas`. Métodos `efectivo` y `stripe`. El efectivo deja `id_transaccion_stripe` vacío. Stripe opera en modo de pruebas con validación en servidor de montos e intención (`PaymentIntent`), detección de mínimos en Bolivianos (`bob`), manejo resiliente de `StripeError` y auto-reembolso atómico (`Refund.create`) ante condiciones de carrera de inventario. 14 pruebas automatizadas en verde. Pantalla: `/dashboard/comercializacion/ventas`.
+**CU13 (2026-10-14):** Venta de mostrador en `apps.comercializacion.ventas`. Métodos `efectivo` y `stripe`. Backend transaccional con descuento atómico de existencias en `InventarioProductoTerminado` y creación de movimientos de salida en Kardex. Pasarela Stripe implementada de extremo a extremo: servicio `cobrar_con_tarjeta_manual` en backend con captura segura vía `STRIPE_SECRET_KEY` (sin requerir clave pública en el frontend), detección de monto mínimo en Bolivianos (~Bs 6.00), manejo resiliente de `StripeError` y auto-reembolso atómico (`Refund.create`) ante imprevistos de stock (16 pruebas backend en verde al 100%). Frontend completado en `/dashboard/comercializacion/ventas` con modal web responsivo nativo (`ModalPagoTarjeta.tsx`) modelado con fidelidad a la interfaz de Stripe (contenedor unificado de tarjeta, insignias dinámicas de Visa/MC/Amex, vencimiento, CVC con candado, titular y botón de pago con monto y candado), soporte WCAG y 0 errores en compilación Vite de producción (`npm run build`).
+
 
 
 ---

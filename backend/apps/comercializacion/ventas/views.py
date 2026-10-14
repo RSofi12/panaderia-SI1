@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status
@@ -89,3 +90,21 @@ class IntencionStripeView(APIView):
             return Response(crear_intencion(monto=total), status=status.HTTP_201_CREATED)
         except DjangoValidationError as exc:
             _error_de_validacion(exc)
+
+
+class StripeConfigView(APIView):
+    """
+    GET /api/ventas/stripe/config/
+    Retorna la clave pública de Stripe (pk_test_...) configurada en el servidor.
+    """
+    permission_classes = [PuedeRegistrarVentas]
+
+    def get(self, request):
+        pk = (
+            getattr(settings, 'STRIPE_PUBLISHABLE_KEY', '')
+            or getattr(settings, 'VITE_STRIPE_PUBLISHABLE_KEY', '')
+            or ''
+        ).strip().strip("'\"")
+        return Response({'publishable_key': pk})
+
+

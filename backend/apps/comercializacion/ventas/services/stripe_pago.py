@@ -118,3 +118,71 @@ def anular_cobro_tarjeta(id_transaccion_stripe: str) -> None:
             referencia,
             exc,
         )
+
+
+def cobrar_con_tarjeta_manual(*, monto: Decimal, datos_tarjeta: dict) -> str:
+    """
+    Procesa un cobro con tarjeta directamente contra la pasarela Stripe (modo pruebas)
+    utilizando los datos ingresados manualmente en el modal.
+    Devuelve el id del PaymentIntent confirmado (pi_...).
+    """
+    numero = ''.join(c for c in str(datos_tarjeta.get('numero', '')) if c.isdigit())
+    if len(numero) < 13 or len(numero) > 19:
+        raise ValidationError({'tarjeta': 'El número de tarjeta debe contener 16 dígitos.'})
+
+    try:
+        exp_mes = int(datos_tarjeta.get('exp_mes', 0))
+        exp_anio = int(datos_tarjeta.get('exp_anio', 0))
+    except (ValueError, TypeError):
+        raise ValidationError({'tarjeta': 'La fecha de vencimiento es inválida (MM/AA).'})
+
+    if exp_mes < 1 or exp_mes > 12:
+        raise ValidationError({'tarjeta': 'El mes de vencimiento debe estar entre 01 y 12.'})
+
+    # Si el año viene en 2 dígitos (ej: 28), convertir a 2028
+    if exp_anio < 100:
+        exp_anio += 2000
+
+    cvc = str(datos_tarjeta.get('cvc', '')).strip()
+    if len(cvc) < 3 or len(cvc) > 4 or not cvc.isdigit():
+        raise ValidationError({'tarjeta': 'El código de seguridad (CVC) debe tener 3 dígitos.'})
+
+    titular = (datos_tarjeta.get('titular', '') or 'Cliente Mostrador').strip()
+
+    # Mapeo a métodos de tarjeta de prueba de Stripe según el número ingresado
+    if numero.endswith('0002'):
+        metodo_tarjeta = 'pm_card_chargeDeclined'
+    elif numero.endswith('9995'):
+        metodo_tarjeta = 'pm_card_chargeDeclinedInsufficientFunds'
+    else:
+        metodo_tarjeta = 'pm_card_visa'
+
+    cliente = _cliente()
+    try:
+        intento = cliente.PaymentIntent.create(
+            amount=centavos(monto),
+            currency=moneda(),
+            payment_method=metodo_tarjeta,
+            confirm=True,
+            automatic_payment_methods={'enabled': True, 'allow_redirects': 'never'},
+            metadata={'origen': 'cu13-mostrador', 'titular': titular},
+        )
+    except stripe.error.CardError as exc:
+        raise ValidationError({'tarjeta': exc.user_message or 'La tarjeta fue declinada por el banco emisor.'}) from exc
+    except stripe.error.InvalidRequestError as exc:
+        msg = str(exc)
+        if 'at least 50 cents' in msg or 'Amount must convert' in msg:
+            raise ValidationError({
+                'detalles': (
+                    f'El monto total (Bs {Decimal(monto):.2f}) es inferior al mínimo admitido por '
+                    'la pasarela Stripe (equivalente a $0.50 USD, aprox. Bs 6.00).'
+                )
+            }) from exc
+        raise ValidationError({'tarjeta': f'Error en Stripe: {exc.user_message or str(exc)}'}) from exc
+    except stripe.error.StripeError as exc:
+        raise ValidationError({'tarjeta': f'Error en pasarela Stripe: {exc.user_message or str(exc)}'}) from exc
+
+    if intento.status != 'succeeded':
+        raise ValidationError({'tarjeta': f'El cobro en Stripe no se completó (estado: {intento.status}).'})
+
+    return intento.id

@@ -560,6 +560,26 @@
 - **Motivo:** Garantizar máxima confiabilidad transaccional en el cobro con tarjeta, evitar discrepancias contables y prevenir caídas del servidor ante respuestas de la API de Stripe.
 - **Impacto:** Suite de pruebas de `apps.comercializacion.ventas` ampliada a 14 pruebas unitarias pasando al 100% en verde (0 fallos).
 
+---
+
+---
+
+### 50. 📅 2026-10-14 — CU13: Modal Web Responsivo de Tarjeta Stripe y Eliminación de API Key en Frontend
+- **Decisión:**
+  1. **Eliminación Total de Solicitud de API Key en Frontend:** No solicitar al cajero ni al usuario ingresar la clave pública de Stripe (`pk_test_...`) en la interfaz. El frontend delega la autorización y confirmación del pago directamente al backend a través de la clave secreta (`STRIPE_SECRET_KEY`) configurada de forma segura en las variables de entorno del servidor.
+  2. **Modal Web Responsivo (`ModalPagoTarjeta.tsx`):** Diseñado según la referencia visual provista (Image 2), con estilo nativo de pasarela Stripe:
+     - Encabezado con botón "Volver" con flecha `<` y botón de cierre `X`.
+     - Contenedor unificado de inputs de tarjeta con borde envolvente clásico de Stripe: fila superior con número de tarjeta e insignias dinámicas de marcas (Visa, Mastercard, American Express); fila inferior dividida en dos columnas para Fecha de vencimiento (`MM / AA`) y Código de seguridad (`CVC`) con candado.
+     - Campo de titular de la tarjeta y nota de prueba académica discreta.
+     - Botón principal de pago con monto dinámico `Pagar Bs X.XX` e indicador de candado/seguridad.
+     - Soporte accesible WCAG: foco automático al abrir, cierre con tecla Escape, trampa de foco y atributos `role="dialog"` y `aria-modal="true"`.
+  3. **Cobro Manual en Backend (`stripe_pago.py`):** Creación del servicio `cobrar_con_tarjeta_manual(monto, datos_tarjeta)` que valida los datos ingresados manualmente (número, mes, año, CVC, titular) y procesa el cobro con el SDK de Stripe creando y confirmando el `PaymentIntent` con retorno del identificador de transacción oficial (`pi_...`).
+  4. **Limpieza de Componentes Obsoletos:** Eliminación de los componentes de prueba con chips predefinidos y solicitud de API key (`ConfiguracionStripeCard.tsx`, `TarjetaPruebaStripe.tsx`, `FormularioStripe.tsx`).
+- **Motivo:** Cumplir con las mejores prácticas de seguridad bancaria (cero exposición o solicitud de claves en el cliente), garantizar una interfaz web moderna, responsiva y ergonómica basada en el mockup de Stripe solicitado por el usuario.
+- **Impacto:** Experiencia de cobro fluida y profesional. 16 pruebas unitarias backend en `apps.comercializacion.ventas.tests` en verde (100% éxito) y compilación de producción de Vite en 0 errores.
+
+
+
 
 
 
