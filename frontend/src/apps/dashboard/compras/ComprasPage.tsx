@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import {
   AlertCircle,
@@ -15,12 +16,16 @@ import {
 import { useAuth } from '../../../contexts/AuthContext';
 import compraService from '../../../services/compraService';
 import proveedorService from '../../../services/proveedorService';
-import type { Compra, CompraFiltros, CompraResumen } from '../../../types/compra';
+import type { Compra, CompraFiltros, CompraReposicion, CompraResumen } from '../../../types/compra';
 import type { Proveedor } from '../../../types/proveedor';
 import RegistrarCompraModal from './components/RegistrarCompraModal';
 import DetalleCompraModal from './components/DetalleCompraModal';
+import { leerReposicion } from './reposicion';
 
-type ModalAbierto = { tipo: 'registrar' } | { tipo: 'detalle'; idCompra: number } | null;
+type ModalAbierto =
+  | { tipo: 'registrar'; reposicion?: CompraReposicion }
+  | { tipo: 'detalle'; idCompra: number }
+  | null;
 
 interface Resultado {
   version: number;
@@ -33,11 +38,15 @@ const formatoFechaHora = new Intl.DateTimeFormat('es-BO', { dateStyle: 'medium',
 export const ComprasPage: React.FC = () => {
   const { hasPermission } = useAuth();
   const puedeRegistrar = hasPermission('registrar_compras');
+  const [params, setParams] = useSearchParams();
+  const reposicion = puedeRegistrar ? leerReposicion(params) : undefined;
 
   const [version, setVersion] = useState(0);
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const [modal, setModal] = useState<ModalAbierto>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  // Derivar la apertura desde la URL evita duplicar estado mediante un efecto.
+  const modalActivo: ModalAbierto = modal ?? (reposicion ? { tipo: 'registrar', reposicion } : null);
 
   // Filtros
   const [filtros, setFiltros] = useState<CompraFiltros>({
@@ -129,8 +138,18 @@ export const ComprasPage: React.FC = () => {
     window.setTimeout(() => setAviso(null), 4000);
   };
 
-  const handleRegistrada = (compra: Compra) => {
+  const cerrarModal = () => {
     setModal(null);
+    if (params.has('reposicion_materia_prima') || params.has('reposicion_cantidad')) {
+      const siguientes = new URLSearchParams(params);
+      siguientes.delete('reposicion_materia_prima');
+      siguientes.delete('reposicion_cantidad');
+      setParams(siguientes, { replace: true });
+    }
+  };
+
+  const handleRegistrada = (compra: Compra) => {
+    cerrarModal();
     setVersion((v) => v + 1);
     mostrarAviso(
       `Compra registrada: #${compra.id_compra} a ${compra.proveedor_nombre} por Bs ${compra.total}.`
@@ -394,12 +413,19 @@ export const ComprasPage: React.FC = () => {
         </div>
       </section>
 
-      {modal?.tipo === 'registrar' && (
-        <RegistrarCompraModal onClose={() => setModal(null)} onSaved={handleRegistrada} />
+      {puedeRegistrar && modalActivo?.tipo === 'registrar' && (
+        <RegistrarCompraModal
+          key={modalActivo.reposicion
+            ? `${modalActivo.reposicion.id_materia_prima}:${modalActivo.reposicion.cantidad}`
+            : 'manual'}
+          reposicion={modalActivo.reposicion}
+          onClose={cerrarModal}
+          onSaved={handleRegistrada}
+        />
       )}
 
-      {modal?.tipo === 'detalle' && (
-        <DetalleCompraModal idCompra={modal.idCompra} onClose={() => setModal(null)} />
+      {modalActivo?.tipo === 'detalle' && (
+        <DetalleCompraModal idCompra={modalActivo.idCompra} onClose={cerrarModal} />
       )}
     </div>
   );

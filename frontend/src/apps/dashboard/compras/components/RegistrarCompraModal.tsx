@@ -3,12 +3,13 @@ import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, Plus, Trash2, X } fr
 import compraService from '../../../../services/compraService';
 import proveedorService from '../../../../services/proveedorService';
 import normalizarErrorApi from '../../../../services/erroresApi';
-import type { Compra, CompraPayload, MateriaPrima } from '../../../../types/compra';
+import type { Compra, CompraPayload, CompraReposicion, MateriaPrima } from '../../../../types/compra';
 import type { Proveedor } from '../../../../types/proveedor';
 
 interface RegistrarCompraModalProps {
   onClose: () => void;
   onSaved: (compra: Compra) => void;
+  reposicion?: CompraReposicion;
 }
 
 /** Una fila del formulario. Los valores son string porque vienen de <input>. */
@@ -65,7 +66,8 @@ const inputClass = (conError: boolean) =>
     conError ? 'border-red-300' : 'border-slate-200'
   }`;
 
-export const RegistrarCompraModal: React.FC<RegistrarCompraModalProps> = ({ onClose, onSaved }) => {
+export const RegistrarCompraModal: React.FC<RegistrarCompraModalProps> = ({ onClose, onSaved, reposicion }) => {
+  const idMateriaReposicion = reposicion?.id_materia_prima;
   const contador = useRef(1);
   const nuevaLinea = (): LineaForm => ({
     clave: contador.current++,
@@ -81,7 +83,12 @@ export const RegistrarCompraModal: React.FC<RegistrarCompraModalProps> = ({ onCl
 
   const [idProveedor, setIdProveedor] = useState('');
   const [lineas, setLineas] = useState<LineaForm[]>(() => [
-    { clave: 0, id_materia_prima: '', cantidad: '', precio_unitario: '' },
+    {
+      clave: 0,
+      id_materia_prima: reposicion ? String(reposicion.id_materia_prima) : '',
+      cantidad: reposicion?.cantidad ?? '',
+      precio_unitario: '',
+    },
   ]);
   const [errores, setErrores] = useState<ErroresForm>(SIN_ERRORES);
   const [guardando, setGuardando] = useState(false);
@@ -106,7 +113,16 @@ export const RegistrarCompraModal: React.FC<RegistrarCompraModalProps> = ({ onCl
       .then(([listaProveedores, listaMaterias]) => {
         if (cancelado) return;
         setProveedores(listaProveedores);
-        setMaterias(listaMaterias);
+        const materiasActivas = listaMaterias.filter((materia) => materia.activo);
+        setMaterias(materiasActivas);
+        const materiaReposicion = materiasActivas.find((materia) => materia.id_materia_prima === idMateriaReposicion);
+        if (materiaReposicion) {
+          setLineas((actual) => actual.map((linea) => (
+            linea.clave === 0 && linea.id_materia_prima === String(idMateriaReposicion)
+              ? { ...linea, precio_unitario: linea.precio_unitario || materiaReposicion.precio_ultima_compra || '' }
+              : linea
+          )));
+        }
       })
       .catch((err) => {
         if (!cancelado) setErrorCarga(normalizarErrorApi(err).mensaje ?? 'No se pudieron cargar los datos.');
@@ -117,9 +133,12 @@ export const RegistrarCompraModal: React.FC<RegistrarCompraModalProps> = ({ onCl
     return () => {
       cancelado = true;
     };
-  }, []);
+  }, [idMateriaReposicion]);
 
   const materiaPorId = new Map(materias.map((m) => [String(m.id_materia_prima), m]));
+  const hayInsumosNoDisponibles = lineas.some((linea) => (
+    Boolean(linea.id_materia_prima) && !materiaPorId.has(linea.id_materia_prima)
+  ));
   const total = lineas.reduce((suma, linea) => suma + subtotalDe(linea), 0);
 
   const actualizarLinea = (clave: number, cambios: Partial<LineaForm>) => {
@@ -146,7 +165,13 @@ export const RegistrarCompraModal: React.FC<RegistrarCompraModalProps> = ({ onCl
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (bloqueado || cargando || errorCarga) return;
     const erroresLocales = validar(idProveedor, lineas);
+    for (const linea of lineas) {
+      if (linea.id_materia_prima && !materiaPorId.has(linea.id_materia_prima)) {
+        erroresLocales.lineas[linea.clave] = 'El insumo ya no está disponible. Seleccione un insumo activo.';
+      }
+    }
     if (tieneErrores(erroresLocales)) {
       setErrores(erroresLocales);
       return;
@@ -209,6 +234,17 @@ export const RegistrarCompraModal: React.FC<RegistrarCompraModalProps> = ({ onCl
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5 px-6 py-5" noValidate>
+            {reposicion && (
+              <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+                Reposición desde una alerta de stock. Revisa la cantidad, el proveedor y el precio antes de registrar la compra.
+              </p>
+            )}
+            {hayInsumosNoDisponibles && (
+              <div role="alert" className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                <AlertTriangle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>El insumo seleccionado ya no está disponible en el catálogo activo. Elige un insumo activo o cancela la compra.</span>
+              </div>
+            )}
             {registrada && (
               <div
                 role="status"
@@ -327,6 +363,9 @@ export const RegistrarCompraModal: React.FC<RegistrarCompraModalProps> = ({ onCl
                           className={inputClass(Boolean(error))}
                         >
                           <option value="">Elija un insumo</option>
+                          {linea.id_materia_prima && !materia && (
+                            <option value={linea.id_materia_prima} disabled>Insumo no disponible</option>
+                          )}
                           {materias.map((m) => (
                             <option key={m.id_materia_prima} value={m.id_materia_prima}>
                               {m.nombre} ({m.unidad_medida})
@@ -346,8 +385,14 @@ export const RegistrarCompraModal: React.FC<RegistrarCompraModalProps> = ({ onCl
                           inputMode="decimal"
                           value={linea.cantidad}
                           onChange={(e) => actualizarLinea(linea.clave, { cantidad: e.target.value })}
+                          aria-describedby={reposicion && linea.clave === 0 && cantidadNum <= 0
+                            ? 'ayuda-cantidad-reposicion'
+                            : undefined}
                           className={inputClass(Boolean(error))}
                         />
+                        {reposicion && linea.clave === 0 && cantidadNum <= 0 && (
+                          <p id="ayuda-cantidad-reposicion" className="mt-1 text-[11px] text-amber-800">Indica una cantidad mayor a 0 para comprar.</p>
+                        )}
                       </div>
                       <div className="col-span-4 sm:col-span-2">
                         <label htmlFor={`precio-${linea.clave}`} className="block text-[11px] text-slate-500 mb-1">
@@ -433,7 +478,7 @@ export const RegistrarCompraModal: React.FC<RegistrarCompraModalProps> = ({ onCl
               </button>
               <button
                 type="submit"
-                disabled={bloqueado}
+                disabled={bloqueado || hayInsumosNoDisponibles}
                 aria-live="polite"
                 className={`inline-flex min-w-[11rem] items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-300 cursor-pointer disabled:cursor-not-allowed ${
                   registrada

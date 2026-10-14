@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import { AlertCircle, CheckCircle2, Package, Pencil, Plus, Power, RefreshCw, Search } from 'lucide-react';
 import { useAuth } from '../../../../contexts/AuthContext';
@@ -11,6 +12,8 @@ import type {
   MateriaPrimaPayload,
   MateriaPrimaStock,
 } from '../../../../types/inventario';
+import { ROLES_ALERTAS_BAJO_STOCK } from '../../../../types/materiaPrima';
+import { useAlertasBajoStock } from '../../inventario/useAlertasBajoStock';
 
 type EstadoFiltro = '' | 'bajo_minimo' | 'true' | 'false' | 'all';
 
@@ -44,7 +47,9 @@ const ESTADOS: Record<EstadoStock, { etiqueta: string; badge: string; punto: str
 };
 
 export const InventarioTab: React.FC = () => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, hasRole } = useAuth();
+  const puedeConsultarAlertas = hasPermission('gestionar_inventario')
+    && ROLES_ALERTAS_BAJO_STOCK.some((rol) => hasRole(rol));
   const puedeGestionar = hasPermission('gestionar_materias_primas');
   const [busqueda, setBusqueda] = useState('');
   const [filtro, setFiltro] = useState<EstadoFiltro>('');
@@ -58,6 +63,7 @@ export const InventarioTab: React.FC = () => {
   const [erroresCampos, setErroresCampos] = useState<Record<string, string>>({});
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
+  const resumenAlertas = useAlertasBajoStock(puedeConsultarAlertas, version);
 
   const claveConsulta = JSON.stringify([busqueda.trim(), filtro, version]);
   const cargando = resultado?.clave !== claveConsulta;
@@ -221,6 +227,16 @@ export const InventarioTab: React.FC = () => {
           <RefreshCw className={`w-4 h-4 ${cargando ? 'animate-spin' : ''}`} />
           Actualizar
         </button>
+        {puedeConsultarAlertas && (
+          <Link to="/dashboard/inventario/alertas-bajo-stock"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-900 hover:bg-amber-100">
+            <AlertCircle aria-hidden="true" className="h-4 w-4" />
+            Alertas de stock
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs" aria-live="polite">
+              {resumenAlertas.cargando ? '…' : resumenAlertas.error ? 'Sin contador' : resumenAlertas.alertas.length}
+            </span>
+          </Link>
+        )}
         {puedeGestionar && (
           <button
             type="button"
