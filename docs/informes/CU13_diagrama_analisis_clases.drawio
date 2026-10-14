@@ -1,0 +1,210 @@
+<mxfile host="app.diagrams.net" agent="panaderia-si1" version="22.1.0">
+  <diagram id="cu13-analisis-clases" name="CU13 Analisis de clases">
+<mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1650" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- ===================== TÍTULO ===================== -->
+    <mxCell id="cu13a-titulo" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=16;" value="&lt;span style=&quot;font-size: 11pt; font-family: Arial, sans-serif; font-weight: 700;&quot;&gt;CU13. Registrar venta&lt;/span&gt;" vertex="1">
+      <mxGeometry height="30" width="420" x="240" y="20" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== ACTOR ===================== -->
+    <mxCell id="cu13a-actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontStyle=0;fontSize=12;labelBackgroundColor=none;fillColor=#fad9d5;strokeColor=#ae4132;" value="Personal de Ventas" vertex="1">
+      <mxGeometry height="50" width="30" x="40" y="795" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== INTERFAZ ===================== -->
+    <mxCell id="cu13a-ui" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;UI Registrar Venta&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ carrito: List[LineaCarrito]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ metodo_pago: MetodoPago&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ recibido: Decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ total: Decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ busqueda: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ categoria: String&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ cargarCatalogo(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ listarVentasDelDia(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ agregarProducto(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ cambiarCantidad(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ vaciarCarrito(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ cobrarEfectivo(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ cobrarStripe(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ mostrarComprobante(): void&lt;/p&gt;" vertex="1">
+      <mxGeometry height="290" width="210" x="140" y="675" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== CONTROLADOR ===================== -->
+    <mxCell id="cu13a-ctrl" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Controller&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Venta Controller&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ permiso: registrar_ventas&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ listarVentas(fecha)&lt;br&gt;+ obtenerVenta(id)&lt;br&gt;+ crearIntencionStripe(detalles)&lt;br&gt;+ registrarVenta(datos)&lt;br&gt;+ cotizarDetalles(detalles)&lt;br&gt;+ asegurarStockDisponible(lineas)&lt;br&gt;+ confirmarCobroTarjeta(id, monto)&lt;br&gt;+ bloquearInventarios(ids)&lt;br&gt;+ siguienteComprobante()&lt;br&gt;+ descontarPorVenta()&lt;br&gt;+ anularCobroTarjeta(id)&lt;br&gt;+ registrarBitacora()&lt;/p&gt;" vertex="1">
+      <mxGeometry height="280" width="240" x="440" y="680" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== SISTEMA EXTERNO ===================== -->
+    <mxCell id="cu13a-stripe" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Pasarela Stripe&lt;/b&gt;&lt;br&gt;&lt;i&gt;(sistema externo)&lt;/i&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ moneda: String = bob&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ crearPaymentIntent(monto)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ confirmCardPayment(client_secret)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ recuperarPaymentIntent(id)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ crearReembolso(id)&lt;/p&gt;" vertex="1">
+      <mxGeometry height="160" width="230" x="330" y="1100" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== ENTIDADES (columna principal) ===================== -->
+    <mxCell id="cu13a-venta" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Venta&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_venta: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_usuario: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ numero_comprobante: Long&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ fecha_hora: DateTime&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ metodo_pago: MetodoPago&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_transaccion_stripe: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ total: Decimal&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ findAll(fecha): List&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ findById(id)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ save(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ ultimoComprobante(): Long&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ actualizarTotal(): void&lt;/p&gt;" vertex="1">
+      <mxGeometry height="255" width="230" x="900" y="80" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-det" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;DetalleVenta&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_detalle_venta: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_venta: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_producto: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ cantidad: Integer&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ precio_unitario: Decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ subtotal: Decimal&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ save(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ calcularSubtotal(): Decimal&lt;/p&gt;" vertex="1">
+      <mxGeometry height="190" width="230" x="900" y="395" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-prod" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Producto&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_producto: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_categoria: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ nombre: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ descripcion: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ precio_venta: Decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ activo: Boolean&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ findById(id)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ inBulk(ids): List&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ estaActivo(): Boolean&lt;/p&gt;" vertex="1">
+      <mxGeometry height="205" width="230" x="900" y="645" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-inv" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;InventarioProductoTerminado&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_inventario: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_producto: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ stock_actual: Integer&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ bloquear(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ tieneStock(cantidad): Boolean&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ descontarStock(cantidad): void&lt;/p&gt;" vertex="1">
+      <mxGeometry height="160" width="230" x="900" y="910" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-mov" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;MovimientoProductoTerminado&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_movimiento: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_inventario: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_venta: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ fecha_hora: DateTime&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ tipo: TipoMovimiento&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ cantidad: Integer&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ registrarSalida(): void&lt;/p&gt;" vertex="1">
+      <mxGeometry height="175" width="230" x="900" y="1130" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-bit" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Bitacora&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_bitacora: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ usuario: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ accion: AccionBitacora&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ tabla_afectada: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ descripcion: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ agente_usuario: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ fecha_hora: DateTime&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ registrar(): void&lt;/p&gt;" vertex="1">
+      <mxGeometry height="190" width="230" x="900" y="1365" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== ENTIDADES / ENUM (columna secundaria) ===================== -->
+    <mxCell id="cu13a-usr" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Usuario&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_usuario: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_rol: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ nombre_usuario: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ nombre_completo: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ email: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ activo: Boolean&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ getPermisosNombres(): List&lt;/p&gt;" vertex="1">
+      <mxGeometry height="175" width="220" x="1280" y="20" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-metodo" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Enum&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;MetodoPago&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ efectivo&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ stripe&lt;/p&gt;" vertex="1">
+      <mxGeometry height="90" width="170" x="1280" y="230" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-tipo" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Enum&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;TipoMovimiento&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ entrada&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ salida&lt;/p&gt;" vertex="1">
+      <mxGeometry height="90" width="170" x="1280" y="1190" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== ACTOR - UI - CONTROLADOR - STRIPE ===================== -->
+    <mxCell id="cu13a-e-actor-ui" edge="1" parent="1" source="cu13a-actor" target="cu13a-ui" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-e-ui-ctrl" edge="1" parent="1" source="cu13a-ui" target="cu13a-ctrl" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-e-ui-stripe" edge="1" parent="1" source="cu13a-ui" target="cu13a-stripe" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-e-ctrl-stripe" edge="1" parent="1" source="cu13a-ctrl" target="cu13a-stripe" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== CONTROLADOR - ENTIDADES (abanico) ===================== -->
+    <mxCell id="cu13a-e-ctrl-venta" edge="1" parent="1" source="cu13a-ctrl" target="cu13a-venta" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.05;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-e-ctrl-det" edge="1" parent="1" source="cu13a-ctrl" target="cu13a-det" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.24;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-e-ctrl-prod" edge="1" parent="1" source="cu13a-ctrl" target="cu13a-prod" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.43;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-e-ctrl-inv" edge="1" parent="1" source="cu13a-ctrl" target="cu13a-inv" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.62;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-e-ctrl-mov" edge="1" parent="1" source="cu13a-ctrl" target="cu13a-mov" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.81;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-e-ctrl-bit" edge="1" parent="1" source="cu13a-ctrl" target="cu13a-bit" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.97;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== ASOCIACIONES ENTRE ENTIDADES ===================== -->
+    <!-- Venta 1 — 1..* DetalleVenta -->
+    <mxCell id="cu13a-r-venta-det" edge="1" parent="1" source="cu13a-venta" target="cu13a-det" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-r-venta-det-s" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-venta-det">
+      <mxGeometry x="-0.6" relative="1" as="geometry"><mxPoint x="14" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu13a-r-venta-det-t" value="1..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-venta-det">
+      <mxGeometry x="0.6" relative="1" as="geometry"><mxPoint x="18" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- Producto 1 — 0..* DetalleVenta -->
+    <mxCell id="cu13a-r-prod-det" edge="1" parent="1" source="cu13a-prod" target="cu13a-det" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-r-prod-det-s" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-prod-det">
+      <mxGeometry x="-0.6" relative="1" as="geometry"><mxPoint x="14" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu13a-r-prod-det-t" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-prod-det">
+      <mxGeometry x="0.6" relative="1" as="geometry"><mxPoint x="18" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- Producto 1 — 1 InventarioProductoTerminado -->
+    <mxCell id="cu13a-r-prod-inv" edge="1" parent="1" source="cu13a-prod" target="cu13a-inv" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-r-prod-inv-s" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-prod-inv">
+      <mxGeometry x="-0.6" relative="1" as="geometry"><mxPoint x="14" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu13a-r-prod-inv-t" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-prod-inv">
+      <mxGeometry x="0.6" relative="1" as="geometry"><mxPoint x="14" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- InventarioProductoTerminado 1 — 0..* MovimientoProductoTerminado -->
+    <mxCell id="cu13a-r-inv-mov" edge="1" parent="1" source="cu13a-inv" target="cu13a-mov" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-r-inv-mov-s" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-inv-mov">
+      <mxGeometry x="-0.6" relative="1" as="geometry"><mxPoint x="14" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu13a-r-inv-mov-t" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-inv-mov">
+      <mxGeometry x="0.6" relative="1" as="geometry"><mxPoint x="18" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- Venta 0..1 — 0..* MovimientoProductoTerminado (carril derecho) -->
+    <mxCell id="cu13a-r-venta-mov" edge="1" parent="1" source="cu13a-venta" target="cu13a-mov" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.9;exitDx=0;exitDy=0;entryX=1;entryY=0.2;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1180" y="309.5" />
+          <mxPoint x="1180" y="1165" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="cu13a-r-venta-mov-s" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-venta-mov">
+      <mxGeometry x="-0.94" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu13a-r-venta-mov-t" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-venta-mov">
+      <mxGeometry x="0.94" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- Usuario 1 — 0..* Venta -->
+    <mxCell id="cu13a-r-usr-venta" edge="1" parent="1" source="cu13a-usr" target="cu13a-venta" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.634;exitDx=0;exitDy=0;entryX=1;entryY=0.2;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-r-usr-venta-s" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-usr-venta">
+      <mxGeometry x="-0.7" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu13a-r-usr-venta-t" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-usr-venta">
+      <mxGeometry x="0.7" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- Venta 0..* — 1 MetodoPago -->
+    <mxCell id="cu13a-r-venta-metodo" edge="1" parent="1" source="cu13a-venta" target="cu13a-metodo" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0;entryY=0.317;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-r-venta-metodo-s" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-venta-metodo">
+      <mxGeometry x="-0.6" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu13a-r-venta-metodo-t" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-venta-metodo">
+      <mxGeometry x="0.7" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- Usuario 0..1 — 0..* Bitacora (carril exterior) -->
+    <mxCell id="cu13a-r-usr-bit" edge="1" parent="1" source="cu13a-usr" target="cu13a-bit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1560" y="107.5" />
+          <mxPoint x="1560" y="1460" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="cu13a-r-usr-bit-s" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-usr-bit">
+      <mxGeometry x="-0.96" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu13a-r-usr-bit-t" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-usr-bit">
+      <mxGeometry x="0.96" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- MovimientoProductoTerminado 0..* — 1 TipoMovimiento -->
+    <mxCell id="cu13a-r-mov-tipo" edge="1" parent="1" source="cu13a-mov" target="cu13a-tipo" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.6;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu13a-r-mov-tipo-s" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-mov-tipo">
+      <mxGeometry x="-0.4" relative="1" as="geometry"><mxPoint y="10" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu13a-r-mov-tipo-t" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu13a-r-mov-tipo">
+      <mxGeometry x="0.7" relative="1" as="geometry"><mxPoint y="10" as="offset" /></mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>
+  </diagram>
+</mxfile>

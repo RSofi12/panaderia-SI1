@@ -1,0 +1,224 @@
+<mxfile host="app.diagrams.net" agent="panaderia-si1" version="22.1.0">
+  <diagram id="cu07-analisis-clases" name="CU07 Analisis de clases">
+<mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="2000" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- ===================== TÍTULO ===================== -->
+    <mxCell id="cu07a-titulo" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=16;" value="&lt;span style=&quot;font-size: 11pt; font-family: Arial, sans-serif; font-weight: 700;&quot;&gt;CU07. Registrar compra de materia prima&lt;/span&gt;" vertex="1">
+      <mxGeometry height="30" width="420" x="240" y="20" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== ACTOR ===================== -->
+    <mxCell id="cu07a-actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontStyle=0;fontSize=12;labelBackgroundColor=none;fillColor=#fad9d5;strokeColor=#ae4132;" value="Propietario" vertex="1">
+      <mxGeometry height="50" width="30" x="40" y="965" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== INTERFAZ ===================== -->
+    <mxCell id="cu07a-ui" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;UI Registrar Compra&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ proveedor: Proveedor&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ lineas: List[LineaCompra]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ total: Decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ fecha_desde: Date&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ fecha_hasta: Date&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ search: String&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ listarCompras(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ filtrarCompras(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ verDetalleCompra(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ agregarLinea(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ quitarLinea(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ registrarCompra(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ mostrarAdvertencias(): void&lt;/p&gt;" vertex="1">
+      <mxGeometry height="275" width="210" x="140" y="852" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== CONTROLADOR ===================== -->
+    <mxCell id="cu07a-ctrl" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Controller&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Compra Controller&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ permiso: registrar_compras&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ listarCompras(filtros)&lt;br&gt;+ obtenerCompra(id)&lt;br&gt;+ registrarCompra(datos)&lt;br&gt;+ validarLineas(lineas)&lt;br&gt;+ validarProveedorActivo(id)&lt;br&gt;+ validarMateriasPrimas(ids)&lt;br&gt;+ bloquearInventarios(ids)&lt;br&gt;+ detectarVariacionPrecio()&lt;br&gt;+ calcularSubtotal()&lt;br&gt;+ calcularTotal()&lt;br&gt;+ registrarBitacora()&lt;/p&gt;" vertex="1">
+      <mxGeometry height="260" width="240" x="440" y="860" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== ENTIDADES (columna principal) ===================== -->
+    <mxCell id="cu07a-prov" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Proveedor&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_proveedor: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ nombre: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ telefono: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ direccion: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ fecha_registro: DateTime&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ activo: Boolean&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ findById(id)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ estaActivo(): Boolean&lt;/p&gt;" vertex="1">
+      <mxGeometry height="190" width="230" x="900" y="60" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-compra" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Compra&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_compra: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_proveedor: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_usuario: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ fecha_hora: DateTime&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ total: Decimal&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ findAll(filtros): List&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ findById(id)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ save(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ actualizarTotal(): void&lt;/p&gt;" vertex="1">
+      <mxGeometry height="205" width="230" x="900" y="310" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-det" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;DetalleCompra&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_detalle_compra: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_compra: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_materia_prima: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ cantidad: Decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ precio_unitario: Decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ subtotal: Decimal&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ save(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ calcularSubtotal(): Decimal&lt;/p&gt;" vertex="1">
+      <mxGeometry height="190" width="230" x="900" y="575" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-mp" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;MateriaPrima&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_materia_prima: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ nombre: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ unidad_medida: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ stock_minimo: Decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ fecha_registro: DateTime&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ activo: Boolean&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ findById(id)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ estaActiva(): Boolean&lt;/p&gt;" vertex="1">
+      <mxGeometry height="190" width="230" x="900" y="825" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-hist" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;HistorialPrecioMateriaPrima&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_historial: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_materia_prima: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ precio: Decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ fecha_inicio: DateTime&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ obtenerUltimoPrecio(): Decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ save(): void&lt;/p&gt;" vertex="1">
+      <mxGeometry height="160" width="230" x="900" y="1075" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-inv" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;InventarioMateriaPrima&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_inventario: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_materia_prima: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ stock_actual: Decimal&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ bloquear(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ incrementarStock(cantidad): void&lt;/p&gt;" vertex="1">
+      <mxGeometry height="140" width="230" x="900" y="1295" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-mov" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;MovimientoMateriaPrima&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_movimiento: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_inventario: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_compra: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ fecha_hora: DateTime&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ tipo: TipoMovimiento&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ cantidad: Decimal&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ registrarEntrada(): void&lt;/p&gt;" vertex="1">
+      <mxGeometry height="175" width="230" x="900" y="1495" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-bit" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Bitacora&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_bitacora: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ usuario: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ accion: AccionBitacora&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ tabla_afectada: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ descripcion: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ agente_usuario: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ fecha_hora: DateTime&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ registrar(): void&lt;/p&gt;" vertex="1">
+      <mxGeometry height="190" width="230" x="900" y="1730" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== ENTIDADES / ENUM (columna secundaria) ===================== -->
+    <mxCell id="cu07a-usr" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Usuario&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_usuario: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ id_rol: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ nombre_usuario: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ nombre_completo: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ email: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ activo: Boolean&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ getPermisosNombres(): List&lt;/p&gt;" vertex="1">
+      <mxGeometry height="175" width="220" x="1280" y="291" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-tipo" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Enum&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;TipoMovimiento&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ entrada&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ salida&lt;/p&gt;" vertex="1">
+      <mxGeometry height="90" width="170" x="1280" y="1555" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== ACTOR - UI - CONTROLADOR ===================== -->
+    <mxCell id="cu07a-e-actor-ui" edge="1" parent="1" source="cu07a-actor" target="cu07a-ui" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-e-ui-ctrl" edge="1" parent="1" source="cu07a-ui" target="cu07a-ctrl" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=12;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== CONTROLADOR - ENTIDADES (abanico) ===================== -->
+    <mxCell id="cu07a-e-ctrl-prov" edge="1" parent="1" source="cu07a-ctrl" target="cu07a-prov" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.05;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-e-ctrl-compra" edge="1" parent="1" source="cu07a-ctrl" target="cu07a-compra" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.18;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-e-ctrl-det" edge="1" parent="1" source="cu07a-ctrl" target="cu07a-det" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.31;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-e-ctrl-mp" edge="1" parent="1" source="cu07a-ctrl" target="cu07a-mp" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.44;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-e-ctrl-hist" edge="1" parent="1" source="cu07a-ctrl" target="cu07a-hist" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.57;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-e-ctrl-inv" edge="1" parent="1" source="cu07a-ctrl" target="cu07a-inv" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-e-ctrl-mov" edge="1" parent="1" source="cu07a-ctrl" target="cu07a-mov" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.83;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-e-ctrl-bit" edge="1" parent="1" source="cu07a-ctrl" target="cu07a-bit" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.96;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <!-- ===================== ASOCIACIONES ENTRE ENTIDADES ===================== -->
+    <!-- Proveedor 1 — 0..* Compra -->
+    <mxCell id="cu07a-r-prov-compra" edge="1" parent="1" source="cu07a-prov" target="cu07a-compra" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-r-prov-compra-s" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-prov-compra">
+      <mxGeometry x="-0.6" relative="1" as="geometry"><mxPoint x="14" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu07a-r-prov-compra-t" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-prov-compra">
+      <mxGeometry x="0.6" relative="1" as="geometry"><mxPoint x="18" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- Compra 1 — 1..* DetalleCompra -->
+    <mxCell id="cu07a-r-compra-det" edge="1" parent="1" source="cu07a-compra" target="cu07a-det" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-r-compra-det-s" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-compra-det">
+      <mxGeometry x="-0.6" relative="1" as="geometry"><mxPoint x="14" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu07a-r-compra-det-t" value="1..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-compra-det">
+      <mxGeometry x="0.6" relative="1" as="geometry"><mxPoint x="18" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- MateriaPrima 1 — 0..* DetalleCompra -->
+    <mxCell id="cu07a-r-mp-det" edge="1" parent="1" source="cu07a-mp" target="cu07a-det" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-r-mp-det-s" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-mp-det">
+      <mxGeometry x="-0.6" relative="1" as="geometry"><mxPoint x="14" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu07a-r-mp-det-t" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-mp-det">
+      <mxGeometry x="0.6" relative="1" as="geometry"><mxPoint x="18" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- MateriaPrima 1 — 0..* HistorialPrecioMateriaPrima -->
+    <mxCell id="cu07a-r-mp-hist" edge="1" parent="1" source="cu07a-mp" target="cu07a-hist" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-r-mp-hist-s" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-mp-hist">
+      <mxGeometry x="-0.6" relative="1" as="geometry"><mxPoint x="14" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu07a-r-mp-hist-t" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-mp-hist">
+      <mxGeometry x="0.6" relative="1" as="geometry"><mxPoint x="18" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- MateriaPrima 1 — 1 InventarioMateriaPrima (carril derecho) -->
+    <mxCell id="cu07a-r-mp-inv" edge="1" parent="1" source="cu07a-mp" target="cu07a-inv" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1170" y="958" />
+          <mxPoint x="1170" y="1365" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="cu07a-r-mp-inv-s" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-mp-inv">
+      <mxGeometry x="-0.92" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu07a-r-mp-inv-t" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-mp-inv">
+      <mxGeometry x="0.92" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- InventarioMateriaPrima 1 — 0..* MovimientoMateriaPrima -->
+    <mxCell id="cu07a-r-inv-mov" edge="1" parent="1" source="cu07a-inv" target="cu07a-mov" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-r-inv-mov-s" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-inv-mov">
+      <mxGeometry x="-0.6" relative="1" as="geometry"><mxPoint x="14" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu07a-r-inv-mov-t" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-inv-mov">
+      <mxGeometry x="0.6" relative="1" as="geometry"><mxPoint x="18" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- Compra 0..1 — 0..* MovimientoMateriaPrima (carril derecho) -->
+    <mxCell id="cu07a-r-compra-mov" edge="1" parent="1" source="cu07a-compra" target="cu07a-mov" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.8;exitDx=0;exitDy=0;entryX=1;entryY=0.2;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1210" y="474" />
+          <mxPoint x="1210" y="1530" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="cu07a-r-compra-mov-s" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-compra-mov">
+      <mxGeometry x="-0.95" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu07a-r-compra-mov-t" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-compra-mov">
+      <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- Usuario 1 — 0..* Compra -->
+    <mxCell id="cu07a-r-usr-compra" edge="1" parent="1" source="cu07a-usr" target="cu07a-compra" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.343;exitDx=0;exitDy=0;entryX=1;entryY=0.2;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-r-usr-compra-s" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-usr-compra">
+      <mxGeometry x="-0.7" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu07a-r-usr-compra-t" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-usr-compra">
+      <mxGeometry x="0.7" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- Usuario 0..1 — 0..* Bitacora (carril exterior) -->
+    <mxCell id="cu07a-r-usr-bit" edge="1" parent="1" source="cu07a-usr" target="cu07a-bit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1560" y="378" />
+          <mxPoint x="1560" y="1825" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="cu07a-r-usr-bit-s" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-usr-bit">
+      <mxGeometry x="-0.96" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu07a-r-usr-bit-t" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-usr-bit">
+      <mxGeometry x="0.96" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+    </mxCell>
+
+    <!-- MovimientoMateriaPrima 0..* — 1 TipoMovimiento -->
+    <mxCell id="cu07a-r-mov-tipo" edge="1" parent="1" source="cu07a-mov" target="cu07a-tipo" style="edgeStyle=none;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.6;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu07a-r-mov-tipo-s" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-mov-tipo">
+      <mxGeometry x="-0.6" relative="1" as="geometry"><mxPoint y="10" as="offset" /></mxGeometry>
+    </mxCell>
+    <mxCell id="cu07a-r-mov-tipo-t" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" vertex="1" connectable="0" parent="cu07a-r-mov-tipo">
+      <mxGeometry x="0.6" relative="1" as="geometry"><mxPoint y="10" as="offset" /></mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>
+  </diagram>
+</mxfile>

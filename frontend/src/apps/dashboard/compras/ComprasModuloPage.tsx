@@ -35,7 +35,7 @@ export const ComprasModuloPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {disponibles.length > 1 && (
-        <div role="tablist" aria-label="Secciones de compras" className="mx-auto flex max-w-6xl gap-1 border-b border-slate-200">
+        <div role="tablist" aria-label="Secciones de compras" className="mx-auto flex max-w-6xl flex-wrap gap-x-1 gap-y-1 border-b border-slate-200">
           {disponibles.map(({ id, etiqueta, icono: Icono }) => {
             const seleccionada = id === activa;
             return (
