@@ -10,6 +10,7 @@ from apps.productos_inventario.materia_prima.models import (
     HistorialPrecioMateriaPrima,
     InventarioMateriaPrima,
     MateriaPrima,
+    MovimientoMateriaPrima,
 )
 from apps.usuarios_seguridad.bitacora.models import AccionBitacora, Bitacora
 from apps.usuarios_seguridad.permisos.models import Permiso
@@ -246,14 +247,17 @@ class PruebasAlertasBajoStock(TestCase):
         self.assertEqual(harina['stock_minimo'], '10.000')
         self.assertEqual(harina['faltante'], '7.000')
 
-    def test_stock_igual_al_minimo_no_genera_alerta(self):
+    def test_stock_igual_al_minimo_genera_alerta_con_faltante_cero(self):
         self.crear_materia('Sal', '5.000', '5.000')
 
         self.client.force_authenticate(user=self.propietario)
         respuesta = self.client.get(self.url)
 
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
-        self.assertEqual(respuesta.data, [])
+        self.assertEqual(len(respuesta.data), 1)
+        self.assertEqual(respuesta.data[0]['nombre'], 'Sal')
+        self.assertEqual(respuesta.data[0]['stock_actual'], '5.000')
+        self.assertEqual(respuesta.data[0]['faltante'], '0.000')
 
     def test_materia_inactiva_no_aparece(self):
         self.crear_materia(
@@ -333,10 +337,95 @@ class PruebasAlertasBajoStock(TestCase):
         self.client.force_authenticate(user=usuario)
         self.assertEqual(self.client.get(self.url).status_code, status.HTTP_200_OK)
 
-    def test_minimo_cero_sin_inventario_no_genera_alerta(self):
+    def test_minimo_cero_sin_inventario_genera_alerta_con_faltante_cero(self):
         MateriaPrima.objects.create(nombre='Agua', unidad_medida='l', stock_minimo=0)
         self.client.force_authenticate(user=self.propietario)
-        self.assertEqual(self.client.get(self.url).data, [])
+        respuesta = self.client.get(self.url)
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(respuesta.data), 1)
+        self.assertEqual(respuesta.data[0]['stock_actual'], '0.000')
+        self.assertEqual(respuesta.data[0]['stock_minimo'], '0.000')
+        self.assertEqual(respuesta.data[0]['faltante'], '0.000')
+
+    def test_filtro_cu08_y_alertas_cu09_identifican_los_mismos_insumos_activos(self):
+        menor = self.crear_materia('Harina', '3.000', '10.000')
+        igual = self.crear_materia('Sal', '5.000', '5.000')
+        self.crear_materia('Azucar', '15.000', '10.000')
+        self.crear_materia('Insumo inactivo', '1.000', '10.000', activo=False)
+        sin_inventario = MateriaPrima.objects.create(
+            nombre='Cacao', unidad_medida='kg', stock_minimo=Decimal('4.000'),
+        )
+        minimo_cero = MateriaPrima.objects.create(
+            nombre='Agua', unidad_medida='l', stock_minimo=Decimal('0.000'),
+        )
+        self.client.force_authenticate(user=self.propietario)
+
+        inventario = self.client.get(
+            reverse('productos_inventario:materias_primas_stock'),
+            {'bajo_minimo': 'true'},
+        )
+        alertas = self.client.get(self.url)
+
+        self.assertEqual(inventario.status_code, status.HTTP_200_OK)
+        self.assertEqual(alertas.status_code, status.HTTP_200_OK)
+        esperados = {menor.pk, igual.pk, sin_inventario.pk, minimo_cero.pk}
+        for respuesta in (inventario, alertas):
+            self.assertEqual(
+                {item['id_materia_prima'] for item in respuesta.data},
+                esperados,
+            )
+            for item in respuesta.data:
+                if item['id_materia_prima'] in (sin_inventario.pk, minimo_cero.pk):
+                    self.assertEqual(Decimal(item['stock_actual']), Decimal('0'))
+
+    def test_filtro_cu08_bajo_minimo_conserva_filtros_nombre_y_activo(self):
+        activo = self.crear_materia('Harina activa', '5.000', '5.000')
+        inactivo = self.crear_materia('Harina inactiva', '1.000', '10.000', activo=False)
+        self.crear_materia('Sal', '1.000', '10.000')
+        self.client.force_authenticate(user=self.propietario)
+        url = reverse('productos_inventario:materias_primas_stock')
+
+        for estado, esperados in (
+            ('true', {activo.pk}),
+            ('false', {inactivo.pk}),
+            ('all', {activo.pk, inactivo.pk}),
+        ):
+            with self.subTest(activo=estado):
+                respuesta = self.client.get(url, {
+                    'bajo_minimo': 'true', 'nombre': ' Harina ', 'activo': estado,
+                })
+                self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+                self.assertEqual(
+                    {item['id_materia_prima'] for item in respuesta.data},
+                    esperados,
+                )
+
+    def test_consultar_alertas_y_filtro_cu08_no_crea_inventario_ni_movimientos(self):
+        self.crear_materia('Harina', '3.000', '10.000')
+        MateriaPrima.objects.create(
+            nombre='Cacao', unidad_medida='kg', stock_minimo=Decimal('4.000'),
+        )
+        inventarios_antes = list(
+            InventarioMateriaPrima.objects.order_by('pk').values_list('pk', 'stock_actual')
+        )
+        movimientos_antes = MovimientoMateriaPrima.objects.count()
+        self.client.force_authenticate(user=self.propietario)
+
+        for url, filtros in (
+            (self.url, {}),
+            (reverse('productos_inventario:materias_primas_stock'), {'bajo_minimo': 'true'}),
+        ):
+            with self.subTest(url=url):
+                respuesta = self.client.get(url, filtros)
+                self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+                self.assertEqual(
+                    InventarioMateriaPrima.objects.count(), len(inventarios_antes),
+                )
+                self.assertEqual(MovimientoMateriaPrima.objects.count(), movimientos_antes)
+                self.assertEqual(
+                    list(InventarioMateriaPrima.objects.order_by('pk').values_list('pk', 'stock_actual')),
+                    inventarios_antes,
+                )
 
     def test_diferencia_de_una_milesima_genera_alerta(self):
         self.crear_materia('Harina fina', '4.999', '5.000')

@@ -20,7 +20,7 @@
 | CU26 | Gestionar bitácora | 🟢 Completo end-to-end | `bitacora/` + `src/apps/dashboard/usuarios/bitacora/` |
 | CU7 | Registrar compra de materia prima | 🟢 Completo end-to-end | `compra_materia_prima/` + `src/apps/dashboard/compras/` |
 | CU8 | Gestionar materia prima (CRUD+Stock) | 🟢 Completo end-to-end | `materia_prima/` + `src/apps/dashboard/productos/inventario/` |
-| CU9 | Consultar alertas de bajo stock | 🟢 Completo end-to-end | `materia_prima/` + `src/apps/dashboard/inventario/AlertasBajoStockPage.tsx` |
+| CU9 | Consultar alertas de bajo stock | 🟢 Completo y refinado | Regla <= compartida CU08, acceso y contador desde InventarioTab, KPI por unidad y búsqueda, precarga editable CU07 bajo registrar_compras |
 | CU11 | Consultar historial de producción | 🟢 Completo end-to-end | `produccion/` + `src/apps/dashboard/productos/produccion/` |
 | CU12 | Consultar existencias de pan | 🟢 Completo end-to-end | `productos_terminados/` + `src/apps/dashboard/productos/existencias/` |
 | CU10 | Registrar producción diaria | 🟢 Completo end-to-end | `produccion/` + `RegistrarProduccionModal.tsx` |
@@ -98,3 +98,13 @@ npm run dev
 cd ..\backend
 .\venv\Scripts\python.exe manage.py check
 ```
+
+### Refinamientos CU09 — 2026-10-13
+- Comprar abre el formulario CU07 existente con ID/cantidad editables y catálogo activo; exige registrar_compras y no registra automáticamente.
+- CU08/CU09 comparten selector stock_actual <= stock_minimo con inventario ausente como cero; igualdad genera faltante cero.
+- Acceso movido a Stock de materia prima, con contador del mismo endpoint CU09. Permisos personalizados CU09 conservan acceso de consulta; edición sigue exigiendo gestionar_materias_primas. CU12 y demás pestañas/rutas intactas.
+- KPI total/agotados/mayor faltante por unidad y buscador; estados carga/error/vacío/sin resultados/actualizar. Unidades heterogéneas no se suman ni comparan.
+- Verificación: 28 pruebas CU07/CU08/CU09 en SQLite memoria y PostgreSQL temporal aprobadas; check, build, lint de archivos modificados y diff check aprobados. 26 comprobaciones Chrome con API simulada sin excepciones JavaScript.
+- No se modificaron bases existentes ni se aplicaron migraciones locales. Base temporal eliminada. Sin modelos/migraciones nuevos ni dependencias añadidas a manifests; stash intacto, sin commit/push/merge.
+- Límite previo: compra CU07 rechaza un insumo sin inventario; este refinamiento no cambia ese servicio. Chrome y Vite de prueba cerrados; perfiles temporales externos conservados porque la revisión automática rechazó eliminarlos (blocked by policy).
+- Bitácora: docs/ai/sessions/2026-10-13-codex-cu09-refinamientos.md. Informe: docs/informes/CU09_mejoras_pendientes.md.

@@ -53,6 +53,12 @@ export interface CompraPayload {
   detalles: CompraDetallePayload[];
 }
 
+/** Datos editables que CU9 propone al abrir el formulario de CU7. */
+export interface CompraReposicion {
+  id_materia_prima: number;
+  cantidad: string;
+}
+
 // ---------- Catálogo para el selector de insumos ----------
 
 export interface MateriaPrima {
