@@ -74,9 +74,7 @@ export const ComercializacionPage: React.FC = () => {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <header className="flex flex-col gap-1">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
-          Comercialización · Ciclo 3
-        </p>
+
         <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-900">
           <TrendingUp className="h-7 w-7 text-amber-700" aria-hidden="true" />
           Ventas en mostrador
@@ -209,9 +207,8 @@ interface TarjetaCifraProps {
 function TarjetaCifra({ etiqueta, valor, detalle, icono: Icono, destacada = false }: TarjetaCifraProps) {
   return (
     <div
-      className={`rounded-2xl border p-5 ${
-        destacada ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white'
-      }`}
+      className={`rounded-2xl border p-5 ${destacada ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white'
+        }`}
     >
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{etiqueta}</p>

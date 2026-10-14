@@ -5,9 +5,18 @@ export interface DetalleVentaEntrada {
   cantidad: number;
 }
 
+export interface DatosTarjetaEntrada {
+  numero: string;
+  exp_mes: number;
+  exp_anio: number;
+  cvc: string;
+  titular?: string;
+}
+
 export interface RegistrarVentaPayload {
   metodo_pago: MetodoPago;
   id_transaccion_stripe?: string | null;
+  datos_tarjeta?: DatosTarjetaEntrada | null;
   detalles: DetalleVentaEntrada[];
 }
 

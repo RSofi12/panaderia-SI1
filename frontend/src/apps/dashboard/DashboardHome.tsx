@@ -84,7 +84,7 @@ export const DashboardHome: React.FC = () => {
             <Clock className="w-5 h-5" />
           </div>
           <p className="text-xs font-medium text-slate-500">Ciclo PUDS en curso</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">Ciclo 1</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">Ciclo 2</p>
         </div>
       </div>
 
