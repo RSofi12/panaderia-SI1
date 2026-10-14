@@ -4,15 +4,18 @@ Cobro con tarjeta vía Stripe (CU13).
 El efectivo no pasa por aquí. El id que devuelve Stripe se guarda en
 venta.id_transaccion_stripe.
 """
+import logging
 from decimal import Decimal
 
 import stripe
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
+logger = logging.getLogger(__name__)
+
 
 def _cliente():
-    clave = getattr(settings, 'STRIPE_SECRET_KEY', '') or ''
+    clave = (getattr(settings, 'STRIPE_SECRET_KEY', '') or '').strip().strip("'\"")
     if not clave:
         raise ValidationError({
             'id_transaccion_stripe': (
@@ -24,7 +27,7 @@ def _cliente():
 
 
 def moneda() -> str:
-    return getattr(settings, 'STRIPE_CURRENCY', 'bob') or 'bob'
+    return (getattr(settings, 'STRIPE_CURRENCY', 'bob') or 'bob').strip().lower()
 
 
 def centavos(monto: Decimal) -> int:
@@ -34,12 +37,31 @@ def centavos(monto: Decimal) -> int:
 def crear_intencion(*, monto: Decimal) -> dict:
     """Crea el cobro en Stripe. Todavía no existe la venta ni se tocó el stock."""
     cliente = _cliente()
-    intento = cliente.PaymentIntent.create(
-        amount=centavos(monto),
-        currency=moneda(),
-        automatic_payment_methods={'enabled': True},
-        metadata={'origen': 'cu13-mostrador'},
-    )
+    try:
+        intento = cliente.PaymentIntent.create(
+            amount=centavos(monto),
+            currency=moneda(),
+            automatic_payment_methods={'enabled': True},
+            metadata={'origen': 'cu13-mostrador'},
+        )
+    except stripe.error.InvalidRequestError as exc:
+        msg = str(exc)
+        if 'at least 50 cents' in msg or 'Amount must convert' in msg:
+            raise ValidationError({
+                'detalles': (
+                    f'El monto total (Bs {Decimal(monto):.2f}) es inferior al mínimo admitido por '
+                    'la pasarela Stripe (equivalente a $0.50 USD, aprox. Bs 6.00). '
+                    'Para compras menores, utiliza el pago en efectivo o añade más unidades.'
+                )
+            }) from exc
+        raise ValidationError({
+            'detalles': f'Error en pasarela Stripe: {getattr(exc, "user_message", None) or str(exc)}'
+        }) from exc
+    except stripe.error.StripeError as exc:
+        raise ValidationError({
+            'detalles': f'Error en pasarela Stripe: {getattr(exc, "user_message", None) or str(exc)}'
+        }) from exc
+
     return {
         'id_transaccion_stripe': intento.id,
         'client_secret': intento.client_secret,
@@ -60,7 +82,15 @@ def confirmar_cobro_tarjeta(*, id_transaccion_stripe: str, monto: Decimal) -> st
         })
 
     cliente = _cliente()
-    intento = cliente.PaymentIntent.retrieve(referencia)
+    try:
+        intento = cliente.PaymentIntent.retrieve(referencia)
+    except stripe.error.StripeError as exc:
+        raise ValidationError({
+            'id_transaccion_stripe': (
+                f'Error al verificar la transacción en Stripe: {getattr(exc, "user_message", None) or str(exc)}'
+            )
+        }) from exc
+
     if intento.status != 'succeeded':
         raise ValidationError({
             'id_transaccion_stripe': 'Stripe todavía no confirmó el cobro.'
@@ -76,5 +106,15 @@ def confirmar_cobro_tarjeta(*, id_transaccion_stripe: str, monto: Decimal) -> st
 
 def anular_cobro_tarjeta(id_transaccion_stripe: str) -> None:
     """Si el pan ya no alcanza después del cobro, se devuelve el dinero."""
+    referencia = (id_transaccion_stripe or '').strip()
+    if not referencia:
+        return
     cliente = _cliente()
-    cliente.Refund.create(payment_intent=id_transaccion_stripe)
+    try:
+        cliente.Refund.create(payment_intent=referencia)
+    except stripe.error.StripeError as exc:
+        logger.warning(
+            'No se pudo anular en Stripe el cobro %s: %s',
+            referencia,
+            exc,
+        )

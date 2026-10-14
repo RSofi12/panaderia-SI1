@@ -21,6 +21,20 @@ class VentaRegistroSerializer(serializers.Serializer):
     )
     detalles = VentaDetalleEntradaSerializer(many=True, allow_empty=False)
 
+    def validate(self, attrs):
+        metodo = attrs.get('metodo_pago')
+        stripe_id = (attrs.get('id_transaccion_stripe') or '').strip()
+        if metodo == MetodoPago.STRIPE and not stripe_id:
+            raise serializers.ValidationError({
+                'id_transaccion_stripe': 'La venta con Stripe requiere el id de la transacción.'
+            })
+        if metodo == MetodoPago.EFECTIVO and stripe_id:
+            raise serializers.ValidationError({
+                'id_transaccion_stripe': 'Una venta en efectivo no debe incluir id de transacción Stripe.'
+            })
+        attrs['id_transaccion_stripe'] = stripe_id or None
+        return attrs
+
     def create(self, validated_data):
         request = self.context['request']
         try:

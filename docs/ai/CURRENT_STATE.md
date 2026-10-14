@@ -61,7 +61,8 @@
 | **CU18**| Registrar baja de productos terminados | `apps.productos_inventario.productos_terminados` | ⚪ |
 | **CU19**| Consultar historial de precios | `apps.productos_inventario.productos` | ⚪ |
 
-**CU13 (2026-10-13):** venta de mostrador en `apps.comercializacion.ventas`. Métodos `efectivo` y `stripe`. El efectivo deja `id_transaccion_stripe` vacío. Stripe exige un PaymentIntent confirmado y, si falta stock después del cobro, se anula. El stock se descuenta en `productos_terminados/services/descontar_stock.py`. Pantalla: `/dashboard/comercializacion/ventas`.
+**CU13 (2026-10-13):** Venta de mostrador en `apps.comercializacion.ventas`. Métodos `efectivo` y `stripe`. El efectivo deja `id_transaccion_stripe` vacío. Stripe opera en modo de pruebas con validación en servidor de montos e intención (`PaymentIntent`), detección de mínimos en Bolivianos (`bob`), manejo resiliente de `StripeError` y auto-reembolso atómico (`Refund.create`) ante condiciones de carrera de inventario. 14 pruebas automatizadas en verde. Pantalla: `/dashboard/comercializacion/ventas`.
+
 
 ---
 

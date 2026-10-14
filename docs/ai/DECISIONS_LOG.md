@@ -548,5 +548,18 @@
 - **Motivo:** El DDL ya tenía `id_transaccion_stripe`. El equipo fijó esos dos métodos para el CU13. El script de población usa `stripe` en las filas que antes decían `qr`.
 - **Impacto:** `pedido` y `venta` documentan un `CHECK` con esos dos valores. Una venta Stripe no se guarda si el cobro no está confirmado. Si después falta stock, el cobro se anula.
 
+---
+
+### 48. 📅 2026-10-13 — CU13: Endurecimiento Backend del Pago con Tarjeta (Stripe PaymentIntent & Auto-Refund)
+- **Decisión:**
+  1. **Sanitización de Claves y Moneda:** Limpiar automáticamente espacios y comillas en `STRIPE_SECRET_KEY` y normalizar `STRIPE_CURRENCY` a minúsculas (`bob`).
+  2. **Captura Resiliente de Excepciones Stripe:** Envolver todas las operaciones del SDK de Stripe (`PaymentIntent.create`, `PaymentIntent.retrieve`, `Refund.create`) en bloques `try...except stripe.error.StripeError` para traducir fallos de red, autenticación o restricciones de la pasarela a `ValidationError` estructurados con código HTTP 400 en lugar de provocar excepciones 500 no controladas.
+  3. **Manejo del Monto Mínimo en Bolivianos:** Detectar la restricción de Stripe de monto mínimo convertible a $0.50 USD (~Bs 6.00 en modo prueba) e informar al usuario con mensaje amigable que oriente a cobrar en efectivo o sumar más unidades al ticket.
+  4. **Validación a Nivel de Serializador:** Agregar validación cruzada en `VentaRegistroSerializer.validate()` que verifique que si el método es `stripe`, el campo `id_transaccion_stripe` sea obligatorio y no vacío; y si es `efectivo`, dicho campo sea nulo.
+  5. **Protección de Reembolsos Silenciosa:** Si falla la transacción atómica de guardado por agotamiento de stock, la anulación en Stripe mediante `Refund.create` se ejecuta de forma segura registrando advertencia en log sin enmascarar la excepción de negocio del inventario.
+- **Motivo:** Garantizar máxima confiabilidad transaccional en el cobro con tarjeta, evitar discrepancias contables y prevenir caídas del servidor ante respuestas de la API de Stripe.
+- **Impacto:** Suite de pruebas de `apps.comercializacion.ventas` ampliada a 14 pruebas unitarias pasando al 100% en verde (0 fallos).
+
+
 
 
