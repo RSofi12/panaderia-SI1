@@ -271,4 +271,6 @@ PASSWORD_RESET_URL = config(
 
 # CU13: cobro con tarjeta. Vacío hasta que el equipo pegue las claves de prueba de Stripe.
 STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
+STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY', default='')
 STRIPE_CURRENCY = config('STRIPE_CURRENCY', default='bob')
+

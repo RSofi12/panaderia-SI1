@@ -578,6 +578,17 @@
 - **Motivo:** Cumplir con las mejores prácticas de seguridad bancaria (cero exposición o solicitud de claves en el cliente), garantizar una interfaz web moderna, responsiva y ergonómica basada en el mockup de Stripe solicitado por el usuario.
 - **Impacto:** Experiencia de cobro fluida y profesional. 16 pruebas unitarias backend en `apps.comercializacion.ventas.tests` en verde (100% éxito) y compilación de producción de Vite en 0 errores.
 
+---
+
+### 51. 📅 2026-10-14 — CU13: Integración Oficial de Stripe Elements (`CardElement`) y Preservación del Formato Estándar de Stripe
+- **Decisión:**
+  1. **Integración Oficial con `@stripe/react-stripe-js`:** Montar el componente oficial `<CardElement>` dentro de `<Elements stripe={stripePromise}>`. Esto delega la captura cifrada de la tarjeta a los iframes oficiales de Stripe, garantizando soporte normativo PCI-DSS y tokenización directa.
+  2. **Endpoint Seguro de Configuración (`StripeConfigView`):** Crear el endpoint `GET /api/ventas/stripe/config/` en `apps.comercializacion.ventas` para exponer la clave pública (`publishable_key`) del servidor con soporte a fallback de `frontend/.env` (`VITE_STRIPE_PUBLISHABLE_KEY`), eliminando que el cajero deba escribir manualmente claves de API.
+  3. **Preservación del Formato Estándar de Stripe (con Soporte Link):** Mantener las opciones nativas de `CardElement` con su botón de Link y encabezados de verificación oficial ("Datos de la tarjeta - Verificación oficial Stripe" con badge de conexión cifrada). En producción (bajo HTTPS / SSL), Link operará de forma transparente y sin advertencias, preservando la experiencia y estética original de Stripe.
+  4. **Experiencia de Pago con Tarjeta de Prueba:** El modal permite al cajero/cliente ingresar los datos de la tarjeta de prueba (`4242 4242 4242 4242`), fecha futura y CVC, con botón dinámico de confirmación `Pagar Bs X.XX`.
+- **Motivo:** Preservar la estética y capacidades completas del componente modal de Stripe según el diseño original, entendiendo que el aviso de HTTP local desaparece naturalmente en el entorno de despliegue con HTTPS.
+- **Impacto:** CU13 completamente implementado de extremo a extremo (Efectivo y Tarjeta Stripe) con 16 pruebas backend en verde y frontend Vite compilando limpiamente.
+
 
 
 

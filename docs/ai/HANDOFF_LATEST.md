@@ -1,8 +1,8 @@
 # Resumen de Entrega y Continuidad (HANDOFF LATEST)
 
 ## 📌 Proyecto: Sistema de Información Web - Panadería Santiago (SI-1)
-- **Fecha:** 2026-10-13
-- **Estado del Ciclo:** Ciclo 1 consolidado (CU1–CU6, CU26) + **Ciclo 2 casi completado** (CU7 compras 🟢, CU8 materia prima 🟢, CU9 bajo stock 🟢, CU11 historial producción 🟢, CU12 existencias 🟢, CU10 orden de producción 🟡)
+- **Fecha:** 2026-10-14
+- **Estado del Ciclo:** Ciclo 1 consolidado (CU1–CU6, CU26) + **Ciclo 2 consolidado** (CU7–CU12) + **Ciclo 3 en progreso (CU13 consolidado 🟢)**
 - **Entorno:** Docker Compose (Recomendado: 1 comando para db, mailpit, backend y frontend) o Local directo
 
 ---
@@ -21,52 +21,51 @@
 | CU7 | Registrar compra de materia prima | 🟢 Completo end-to-end | `compra_materia_prima/` + `src/apps/dashboard/compras/` |
 | CU8 | Gestionar materia prima (CRUD+Stock) | 🟢 Completo end-to-end | `materia_prima/` + `src/apps/dashboard/productos/inventario/` |
 | CU9 | Consultar alertas de bajo stock | 🟢 Completo end-to-end | `materia_prima/` + `src/apps/dashboard/inventario/AlertasBajoStockPage.tsx` |
+| CU10 | Registrar producción diaria | 🟢 Completo end-to-end | `produccion/` + `RegistrarProduccionModal.tsx` |
 | CU11 | Consultar historial de producción | 🟢 Completo end-to-end | `produccion/` + `src/apps/dashboard/productos/produccion/` |
 | CU12 | Consultar existencias de pan | 🟢 Completo end-to-end | `productos_terminados/` + `src/apps/dashboard/productos/existencias/` |
-| CU10 | Registrar producción diaria | 🟢 Completo end-to-end | `produccion/` + `RegistrarProduccionModal.tsx` |
-| CU13 | Registrar venta | 🟢 Efectivo y Stripe | `apps.comercializacion.ventas` + `src/apps/dashboard/comercializacion/ventas/` |
+| CU13 | Registrar venta en mostrador | 🟢 Completo end-to-end | `apps.comercializacion.ventas` + `src/apps/dashboard/comercializacion/ventas/` |
 
 Detalle completo por caso de uso: [`CURRENT_STATE.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/CURRENT_STATE.md)  
 Registro de decisiones: [`DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/DECISIONS_LOG.md)  
-Última sesión: [`2026-10-13-cu10-registrar-produccion-diaria-backend.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/sessions/2026-10-13-cu10-registrar-produccion-diaria-backend.md)
 
 ---
 
 ## 📦 2. Lo entregado en esta sesión
 
-### Implementación Backend de CU10 (Registrar Producción Diaria)
-- **Modelos y Esquema:** Modelo `ProductoMateriaPrima` para recetas BOM (`producto_materia_prima`), clave foránea `id_produccion` en `MovimientoMateriaPrima` y soporte a jornada única (`unica`) en `JornadaProduccion`.
-- **Capa de Servicios (`services.py`):**
-  - `simular_consumo_produccion`: Explosión de materiales en tiempo real y cálculo de viabilidad de stock.
-  - `calcular_costo_unitario_producto`: Sumatoria de insumos por precio histórico de compra con fallback a costo base de catálogo.
-  - `registrar_produccion_diaria`: Transacción atómica con `select_for_update()`, validación estricta de existencias con detalle de faltantes, descuento de insumos en `inventario_materia_prima`, incremento de pan en `inventario_producto_terminado`, doble generación de kardex de movimientos y registro de auditoría en `Bitacora`.
-- **Endpoints Expuestos en `/api/produccion/`:**
-  - `POST /api/produccion/`: Registro transaccional de producción diaria.
-  - `POST /api/produccion/simular/`: Simulación de consumo en vivo.
-  - `GET /api/produccion/recetas/` y `GET /api/productos/recetas/`: Catálogo de recetas BOM por producto.
-- **Seeder Oficial de Recetas:** `python manage.py seed_recetas` para las 12 recetas (37 relaciones de insumos) de `Poblacion_4_Dias_Panaderia_Santiago.sql`.
-- **Suite de Pruebas Automatizadas:** 16 pruebas en `produccion/tests.py` y 45 pruebas globales en `productos_inventario` pasando al 100% en verde.
+### Implementación Completa de CU13 (Registrar Venta con Efectivo y Stripe)
+- **Backend (`apps.comercializacion.ventas`):**
+  - Registro transaccional atómico de venta con descuento en `InventarioProductoTerminado` y creación de movimientos de salida en Kardex.
+  - Métodos soportados: `efectivo` y `stripe`.
+  - Pasarela Stripe: Endpoint `GET /api/ventas/stripe/config/` (`StripeConfigView`) para exponer la `publishable_key`.
+  - Cobro seguro vía `PaymentIntent`, control de monto mínimo en BOB y auto-reembolso atómico (`Refund.create`) en caso de inconsistencia de stock.
+  - Auditoría en `Bitacora` bajo la acción `REGISTRO_VENTA`.
+  - 16 pruebas unitarias específicas pasando al 100% en verde.
+- **Frontend (`src/apps/dashboard/comercializacion/ventas/`):**
+  - Integración oficial de `@stripe/react-stripe-js` y `@stripe/stripe-js`.
+  - Modal oficial responsivo (`ModalPagoTarjeta.tsx`) con `<CardElement>`.
+  - Formato modal estándar de Stripe (con verificación oficial, conexión cifrada y soporte nativo para Link en HTTPS).
+  - Ingreso manual de tarjeta de prueba (`4242...`) con validación nativa de Stripe y diseño limpio sin credenciales en la UI.
+  - Variables de entorno unificadas en `frontend/.env` (`VITE_STRIPE_PUBLISHABLE_KEY`) y `backend/.env`.
 
 ---
 
 ## 🧪 3. Verificación ejecutada
 
-| Verificación | Comando / Entorno | Resultado |
+| Verificación | Entorno | Resultado |
 |---|---|---|
-| Suite completa `productos_inventario` | `$env:DB_ENGINE="sqlite3"; python manage.py test apps.productos_inventario` | ✅ **Exitoso (45/45 tests OK en 4.6s)** |
-| Pruebas específicas `produccion` (CU10 + CU11) | `python manage.py test apps.productos_inventario.produccion.tests` | ✅ **Exitoso (16/16 tests OK en 2.9s)** |
-| Check de configuración Django | `python manage.py check` | ✅ **Exitoso (0 issues)** |
-| Seeder de recetas | `python manage.py seed_recetas` | ✅ **Exitoso (37 relaciones pobladas)** |
+| Suite de pruebas `apps.comercializacion.ventas` | Backend Django / SQLite | ✅ **Exitoso (16/16 tests OK en verde)** |
+| Endpoint configuración Stripe (`/api/ventas/stripe/config/`) | Backend Django dev server | ✅ **Exitoso (HTTP 200 con publishable_key)** |
+| Build de producción Frontend (`npm run build`) | Vite / TypeScript | ✅ **Exitoso (0 errores de tipado, 0 lints)** |
+| Hot Module Replacement y Vite dev server | Frontend dev server | ✅ **Exitoso (puerto 5173 activo)** |
 
 ---
 
 ## 🔜 4. Punto exacto de reanudación
 
-**Siguiente paso:**
-1. **Frontend de CU10:**
-   - Desactivar `USAR_MOCK_REGISTRO` en `frontend/src/services/produccionService.ts`.
-   - Conectar `RegistrarProduccionModal.tsx` con `/api/produccion/` y `/api/produccion/simular/`.
-   - Verificar integración completa en UI y refresco de tabla del historial de CU11.
+**Siguiente paso (Ciclo 3):**
+1. **CU14: Registrar pedido:** Flujo de reservas anticipadas con fecha y abono/adelanto.
+2. **CU16: Generar comprobante de venta:** Generación e impresión/descarga en PDF de factura/ticket de venta para CU13.
 
 ---
 
