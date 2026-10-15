@@ -128,13 +128,16 @@ export const LoginPage: React.FC = () => {
         <img
           src={photoBakery}
           alt="Panadería Santiago"
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          className="portal-foto absolute inset-0 h-full w-full object-cover object-center"
         />
         {/* Overlay degradado sutil */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/10" />
 
         {/* Marca en la esquina inferior izquierda */}
-        <div className="absolute bottom-8 left-8 xl:bottom-12 xl:left-12 z-10 text-white select-none">
+        <div
+          className="mostrador-aparecer absolute bottom-8 left-8 z-10 text-white select-none xl:bottom-12 xl:left-12"
+          style={{ animationDelay: '280ms' }}
+        >
           <h2 className="font-sugo text-3xl sm:text-4xl xl:text-5xl text-white tracking-wide drop-shadow-lg">
             Panadería Santiago
           </h2>
@@ -148,7 +151,10 @@ export const LoginPage: React.FC = () => {
       {/* LADO DERECHO: Formulario de inicio de sesión centrado y compacto      */}
       {/* ==================================================================== */}
       <div className="w-full lg:w-1/2 min-h-screen lg:h-screen flex flex-col justify-center items-center px-5 py-6 sm:px-10 lg:px-12 xl:px-16 bg-white overflow-y-auto">
-        <div className="w-full max-w-sm sm:max-w-md my-auto">
+        <div
+          className="mostrador-aparecer my-auto w-full max-w-sm sm:max-w-md"
+          style={{ animationDelay: '120ms' }}
+        >
           {/* Logo circular superior e Identidad */}
           <div className="text-center mb-4 sm:mb-5">
             <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-white shadow-md p-1.5 border-4 border-white flex items-center justify-center mb-2.5 transition-transform duration-300 hover:scale-105">
@@ -169,7 +175,7 @@ export const LoginPage: React.FC = () => {
 
           {/* Alerta de Error / Bloqueo */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-start gap-2 animate-shake">
+            <div className="portal-aviso mb-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-700">
               <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-500 mt-0.5" />
               <div className="flex-1">
                 <span>{error}</span>
@@ -279,7 +285,7 @@ export const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting || cuentaBloqueada}
-              className="w-full mt-1.5 py-2.5 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-md shadow-amber-600/20 hover:shadow-lg hover:shadow-amber-600/30 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+              className="group mt-1.5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-4 py-2.5 text-xs font-semibold text-white shadow-md shadow-amber-600/20 transition-all duration-200 hover:from-amber-700 hover:to-amber-800 hover:shadow-lg hover:shadow-amber-600/30 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 sm:text-sm"
             >
               {isSubmitting ? (
                 <>
@@ -294,7 +300,7 @@ export const LoginPage: React.FC = () => {
               ) : (
                 <>
                   <span>Iniciar Sesión</span>
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none" />
                 </>
               )}
             </button>

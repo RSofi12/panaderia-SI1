@@ -96,14 +96,14 @@ export const DashboardHome: React.FC = () => {
         </p>
 
         <ul className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-          {modulosHabilitados.map((modulo) => {
+          {modulosHabilitados.map((modulo, indice) => {
             // Un badge que dice "Disponible" y no lleva a ningún lado es un
             // callejón sin salida: obliga a volver al menú lateral a buscar
             // el módulo. Lo que sí tiene pantalla es un enlace; lo que no,
             // sigue siendo una tarjeta quieta.
             const contenido = (
               <>
-                <modulo.icon className="h-5 w-5 shrink-0 text-slate-400" />
+                <modulo.icon className="h-5 w-5 shrink-0 text-slate-400 transition duration-200 group-hover:translate-x-1 group-hover:text-amber-700 motion-reduce:transition-none" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-700">{modulo.label}</p>
                   <p className="truncate text-[11px] text-slate-400">{modulo.casosDeUso}</p>
@@ -113,11 +113,15 @@ export const DashboardHome: React.FC = () => {
             );
 
             return (
-              <li key={modulo.to}>
+              <li
+                key={modulo.to}
+                className="mostrador-aparecer"
+                style={{ animationDelay: `${indice * 55}ms` }}
+              >
                 {modulo.implemented ? (
                   <Link
                     to={modulo.to}
-                    className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 transition-colors hover:border-amber-200 hover:bg-amber-50/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2"
+                    className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 transition-colors duration-200 hover:border-amber-200 hover:bg-amber-50/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2"
                   >
                     {contenido}
                   </Link>
