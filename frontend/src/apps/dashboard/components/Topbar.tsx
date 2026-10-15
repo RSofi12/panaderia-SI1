@@ -5,10 +5,11 @@ import UserAvatar from './UserAvatar';
 
 interface TopbarProps {
   title: string;
-  onOpenSidebar: () => void;
+  menuAbierto: boolean;
+  onAlternarMenu: () => void;
 }
 
-export const Topbar: React.FC<TopbarProps> = ({ title, onOpenSidebar }) => {
+export const Topbar: React.FC<TopbarProps> = ({ title, menuAbierto, onAlternarMenu }) => {
   const { user } = useAuth();
 
   if (!user) return null;
@@ -19,11 +20,13 @@ export const Topbar: React.FC<TopbarProps> = ({ title, onOpenSidebar }) => {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={onOpenSidebar}
-            aria-label="Abrir menú de navegación"
-            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 cursor-pointer lg:hidden"
+            onClick={onAlternarMenu}
+            aria-expanded={menuAbierto}
+            aria-controls="menu-lateral"
+            aria-label={menuAbierto ? 'Cerrar menú de navegación' : 'Abrir menú de navegación'}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-[#2b1a10] transition-colors hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-200 cursor-pointer"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="h-5 w-5" />
           </button>
           <h1 className="truncate text-base font-bold text-slate-900 sm:text-lg">{title}</h1>
         </div>

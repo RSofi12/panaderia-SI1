@@ -300,7 +300,7 @@ export const UsuariosPage: React.FC = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
-      <header>
+      <header className="mostrador-aparecer">
         <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
           Usuarios y Seguridad
         </h1>

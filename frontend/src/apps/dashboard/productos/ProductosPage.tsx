@@ -234,7 +234,7 @@ export const ProductosPage: React.FC = () => {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Encabezado General del Módulo */}
-      <div>
+      <div className="mostrador-aparecer">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
           Productos e Inventario · {encabezado.cu}
         </p>

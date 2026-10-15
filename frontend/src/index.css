@@ -12,6 +12,21 @@
   font-family: 'Sugo', cursive, system-ui, sans-serif;
 }
 
+@keyframes pista-menu {
+  from {
+    opacity: 0;
+    transform: translate(-8px, -50%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}
+
+.pista-menu {
+  animation: pista-menu 180ms ease-out both;
+}
+
 @keyframes mostrador-aparecer {
   from {
     opacity: 0;
@@ -42,6 +57,37 @@
   animation: mostrador-sello 220ms ease-out both;
 }
 
+/* La foto del portal entra un poco más cerca y se asienta, una sola vez. */
+@keyframes portal-foto {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.portal-foto {
+  animation: portal-foto 1.4s ease-out both;
+}
+
+@keyframes portal-aviso {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  35% {
+    transform: translateX(-4px);
+  }
+  70% {
+    transform: translateX(4px);
+  }
+}
+
+.portal-aviso {
+  animation: portal-aviso 280ms ease-out;
+}
+
 /* Borde inferior dentado del ticket, como papel de caja cortado. */
 .ticket-dentado {
   --diente: 8px;
@@ -52,7 +98,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .mostrador-aparecer,
-  .mostrador-sello {
+  .mostrador-sello,
+  .pista-menu,
+  .portal-foto,
+  .portal-aviso {
     animation: none;
   }
 }

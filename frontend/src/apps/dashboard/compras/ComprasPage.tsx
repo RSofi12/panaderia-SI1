@@ -159,7 +159,7 @@ export const ComprasPage: React.FC = () => {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mostrador-aparecer flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
             Compras y Proveedores · CU7
