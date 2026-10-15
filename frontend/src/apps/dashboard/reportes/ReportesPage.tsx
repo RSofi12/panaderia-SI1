@@ -59,7 +59,7 @@ export const ReportesPage: React.FC = () => {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Encabezado General */}
-      <div>
+      <div className="mostrador-aparecer">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
           Reportes y Estadísticas · Ciclo 4 (CU21–CU25)
         </p>

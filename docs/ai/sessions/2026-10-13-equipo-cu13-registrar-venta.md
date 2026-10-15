@@ -59,6 +59,7 @@ Registrar una venta de mostrador que calcule el total, descuente el stock de pro
 - **`ventas/ChipMetodo.tsx`:** etiqueta Efectivo/Tarjeta compartida por las dos pantallas.
 - **`index.css`:** animaciones de entrada y borde dentado de ticket; respetan `prefers-reduced-motion`.
 - **Decisión:** el monto recibido y el cambio son solo ayuda en pantalla; no se envían al backend ni cambian el modelo `Venta`. El total válido sigue siendo el que calcula el servidor.
+- **Ajuste posterior:** se quitó la etiqueta «Comercialización · Ciclo 3» del encabezado de `ComercializacionPage.tsx`.
 - **Verificado en el navegador** con María: 3 marraquetas + 1 tortilla = Bs 3.55; con Bs 10 el cambio fue Bs 6.45; se registró el comprobante 4 y la tabla del día se actualizó. Tarjeta sin clave muestra el aviso de configuración. `tsc -b` y `eslint` sin errores.
 
 Verificación del 13-10-2026 en Docker: `POST /api/ventas/` con María (`mgonzales`) en efectivo respondió 201, comprobante 1, total 1.20 y stock 38. `qr` respondió 400, Stripe sin clave respondió 400 y Producción (`mrojas`) respondió 403. Vite compiló `RegistrarVentaPage.tsx` (el paquete de Stripe ya resuelve dentro del contenedor). La pantalla pide sesión: sin login redirige a `/login`.

@@ -234,7 +234,7 @@ export const ProductosPage: React.FC = () => {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Encabezado General del Módulo */}
-      <div>
+      <div className="mostrador-aparecer">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">
           Productos e Inventario · {encabezado.cu}
         </p>
@@ -260,7 +260,7 @@ export const ProductosPage: React.FC = () => {
         <div
           role="tablist"
           aria-label="Secciones de productos e inventario"
-          className="flex border-b border-slate-200 mt-5 gap-6"
+          className="flex flex-wrap border-b border-slate-200 mt-5 gap-x-6 gap-y-1"
         >
           {puedeVerCatalogo && (
             <button
