@@ -1,7 +1,8 @@
 # Estado Actual del Proyecto (CURRENT STATE)
 
 ## 📌 Proyecto: Sistema de Información Web — Panadería Santiago (SI-1)
-**Fecha de última actualización:** 2026-10-13  
+**Fecha de última actualización:** 2026-10-22
+
 **Fase PUDS actual:** Fase de Construcción — **Ciclo 1 consolidado / Ciclo 2 en desarrollo**
 
 ---
@@ -59,7 +60,7 @@
 | **CU16**| Generar comprobante de venta | `apps.comercializacion` | ⚪ |
 | **CU17**| Consultar disponibilidad de productos | `apps.comercializacion` | ⚪ |
 | **CU18**| Registrar baja de productos terminados | `apps.productos_inventario.productos_terminados` | ⚪ |
-| **CU19**| Consultar historial de precios | `apps.productos_inventario.productos` | ⚪ |
+| **CU19**| Consultar historial de precios | `apps.productos_inventario.productos` | 🟢 Implementado: precios de venta, consulta paginada y filtros, Propietario con gestionar_productos, productos inactivos incluidos. 28 pruebas CU19 y regresiones CU05/CU07/CU08/CU09 aprobadas en PostgreSQL temporal. |
 
 **CU13 (2026-10-14):** Venta de mostrador en `apps.comercializacion.ventas`. Métodos `efectivo` y `stripe`. Backend transaccional con descuento atómico de existencias en `InventarioProductoTerminado`, creación de movimientos de salida en Kardex y auditoría en `Bitacora`. Pasarela Stripe implementada de extremo a extremo: endpoint público de configuración `GET /api/ventas/stripe/config/` para `publishable_key`, cobro con Stripe `PaymentIntent` y auto-reembolso atómico (`Refund.create`) ante fallos de inventario (16 pruebas backend en verde al 100%). Frontend completado en `/dashboard/comercializacion/ventas` con modal oficial de Stripe Elements (`ModalPagoTarjeta.tsx`), integración con `@stripe/react-stripe-js` (`CardElement`) con formato modal estándar de Stripe, soporte nativo para Link en producción HTTPS, validación visual de tarjeta, soporte accesible WCAG y 0 errores en compilación Vite de producción (`npm run build`).
 
@@ -80,6 +81,9 @@
 ---
 
 ## 🎯 3. Próximos Pasos Inmediatos
+
+**CU19 — 2026-10-22:** tras el [análisis previo](../informes/CU19_analisis_tecnico.md), el usuario aprobó exclusivamente precios de venta de productos, rol Propietario y permiso existente gestionar_productos. Implementado `GET /api/productos/historial-precios/` y `/dashboard/productos/historial-precios`, con filtros de producto/fechas inclusivas en Bolivia, orden estable y páginas de 10. HistorialPrecioProducto existente; sin modelos/migraciones/dependencias nuevos ni cambios en los escritores de CU05/CU07, CU08/CU09 o pestaña CU11. Verificación: 61 pruebas PostgreSQL aisladas (28 CU19, 5 CU05, 8 CU07, 20 CU08/CU09), build y lint de archivos afectados correctos. El lint global conserva 14 errores y 1 advertencia preexistentes. Entrega técnica: [CU19_implementacion_tecnica.md](../informes/CU19_implementacion_tecnica.md). Rama feature/cu19-historial-precios, sin commit/push/merge.
+
 1. **Ciclo 1 completo (CU1–CU6 y CU26).** Integrar `feature/cu5-gestionar-productos` en `main` y corregir el error de lint pendiente en `usuarios/roles/RolesTab.tsx` (`setState` síncrono dentro de un efecto).
 2. **Iniciar Ciclo 2 con CU7 (Registrar compra)** en `apps.compras`, reutilizando el directorio de proveedores activos de CU6 en `/dashboard/compras`.
 3. **Probar el flujo completo con Mailpit** (CU2): agregar el bloque `EMAIL_*` a `backend/.env`, levantar Mailpit, y recorrer login → "¿Olvidaste tu contraseña?" → correo en `http://localhost:8025` → contraseña nueva → login.
