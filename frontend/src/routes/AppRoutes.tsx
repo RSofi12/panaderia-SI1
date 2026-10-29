@@ -14,6 +14,8 @@ import AlertasBajoStockPage from '../apps/dashboard/inventario/AlertasBajoStockP
 import ComercializacionPage from '../apps/dashboard/comercializacion/ComercializacionPage';
 import RegistrarVentaPage from '../apps/dashboard/comercializacion/ventas/RegistrarVentaPage';
 import RegistrarPedidoPage from '../apps/dashboard/comercializacion/pedidos/RegistrarPedidoPage';
+import PedidosEstadoPage from '../apps/dashboard/comercializacion/PedidosEstadoPage';
+import DisponibilidadPage from '../apps/dashboard/comercializacion/DisponibilidadPage';
 import ReportesPage from '../apps/dashboard/reportes/ReportesPage';
 import { ROLES_ALERTAS_BAJO_STOCK } from '../types/materiaPrima';
 
@@ -95,6 +97,8 @@ export const AppRoutes: React.FC = () => {
                 responde 403 al resto. */}
             <Route path="compras" element={<ComprasModuloPage />} />
             <Route path="comercializacion" element={<ComercializacionPage />} />
+            <Route path="comercializacion/pedidos/estado" element={<ProtectedRoute requiredPermission={['registrar_pedidos', 'registrar_produccion']}><PedidosEstadoPage /></ProtectedRoute>} />
+            <Route path="comercializacion/disponibilidad" element={<ProtectedRoute requiredPermission={['registrar_pedidos', 'registrar_ventas', 'gestionar_inventario', 'registrar_produccion']}><DisponibilidadPage /></ProtectedRoute>} />
             <Route
               path="comercializacion/ventas"
               element={
