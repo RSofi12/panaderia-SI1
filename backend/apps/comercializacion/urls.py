@@ -1,6 +1,6 @@
 from django.urls import include, path
 
-from .views import DisponibilidadProductosView, PedidoDetailView, PedidoListView
+from .views import DisponibilidadProductosView
 
 app_name = 'comercializacion'
 
