@@ -10,3 +10,17 @@ class PuedeRegistrarPedidos(BasePermission):
         if not user or not user.is_authenticated:
             return False
         return 'registrar_pedidos' in set(user.get_permisos_nombres())
+
+
+class PuedeConsultarPedidos(BasePermission):
+    """CU15: ventas y producción pueden consultar el estado de los pedidos."""
+
+    message = 'Tu rol no cuenta con permisos para consultar pedidos.'
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if user.is_superuser or getattr(user, 'is_staff', False):
+            return True
+        return bool(set(user.get_permisos_nombres()) & {'registrar_pedidos', 'registrar_produccion'})
