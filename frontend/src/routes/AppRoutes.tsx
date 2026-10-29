@@ -13,6 +13,7 @@ import ComprasModuloPage from '../apps/dashboard/compras/ComprasModuloPage';
 import AlertasBajoStockPage from '../apps/dashboard/inventario/AlertasBajoStockPage';
 import ComercializacionPage from '../apps/dashboard/comercializacion/ComercializacionPage';
 import RegistrarVentaPage from '../apps/dashboard/comercializacion/ventas/RegistrarVentaPage';
+import RegistrarPedidoPage from '../apps/dashboard/comercializacion/pedidos/RegistrarPedidoPage';
 import ReportesPage from '../apps/dashboard/reportes/ReportesPage';
 import { ROLES_ALERTAS_BAJO_STOCK } from '../types/materiaPrima';
 
@@ -99,6 +100,14 @@ export const AppRoutes: React.FC = () => {
               element={
                 <ProtectedRoute requiredPermission="registrar_ventas">
                   <RegistrarVentaPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="comercializacion/pedidos"
+              element={
+                <ProtectedRoute requiredPermission="registrar_pedidos">
+                  <RegistrarPedidoPage />
                 </ProtectedRoute>
               }
             />
