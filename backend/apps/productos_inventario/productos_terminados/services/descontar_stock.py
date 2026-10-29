@@ -12,7 +12,7 @@ from apps.productos_inventario.productos_terminados.models import (
 )
 
 
-def descontar_por_venta(*, inventario, cantidad: int, venta) -> None:
+def descontar_por_venta(*, inventario, cantidad: int, venta, pedido=None) -> None:
     """
     Resta unidades y deja la salida en el kardex.
     Se llama dentro de la transacción de la venta, con la fila ya bloqueada.
@@ -35,6 +35,7 @@ def descontar_por_venta(*, inventario, cantidad: int, venta) -> None:
     MovimientoProductoTerminado.objects.create(
         id_inventario=inventario,
         id_venta=venta,
+        id_pedido=pedido,
         tipo=TipoMovimientoProductoTerminado.SALIDA,
         cantidad=cantidad,
     )

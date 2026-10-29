@@ -42,6 +42,7 @@ type EstadoCarga = 'cargando' | 'listo' | 'error';
 export const ComercializacionPage: React.FC = () => {
   const { hasPermission } = useAuth();
   const puedeVender = hasPermission('registrar_ventas');
+  const puedePedir = hasPermission('registrar_pedidos');
   const [ventas, setVentas] = useState<VentaResumen[]>([]);
   const [estado, setEstado] = useState<EstadoCarga>('cargando');
 
@@ -107,19 +108,30 @@ export const ComercializacionPage: React.FC = () => {
               mostrador se descuenta al confirmar.
             </p>
           </div>
-          {puedeVender ? (
-            <Link
-              to="/dashboard/comercializacion/ventas"
-              className="group inline-flex shrink-0 items-center justify-center gap-3 rounded-2xl bg-amber-400 px-6 py-4 text-base font-bold text-[#2b1a10] shadow-md transition hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/50"
-            >
-              Abrir mostrador
-              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-            </Link>
-          ) : (
-            <p className="max-w-xs rounded-2xl bg-white/5 p-4 text-sm text-amber-100/80">
-              Tu rol no tiene el permiso para registrar ventas. Pídeselo al administrador.
-            </p>
-          )}
+          <div className="flex shrink-0 flex-col gap-3">
+            {puedeVender ? (
+              <Link
+                to="/dashboard/comercializacion/ventas"
+                className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-amber-400 px-6 py-4 text-base font-bold text-[#2b1a10] shadow-md transition hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/50"
+              >
+                Abrir mostrador
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+              </Link>
+            ) : (
+              <p className="max-w-xs rounded-2xl bg-white/5 p-4 text-sm text-amber-100/80">
+                Tu rol no tiene el permiso para registrar ventas. Pídeselo al administrador.
+              </p>
+            )}
+            {puedePedir ? (
+              <Link
+                to="/dashboard/comercializacion/pedidos"
+                className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-amber-100 px-6 py-4 text-base font-bold text-[#2b1a10] shadow-md transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/50"
+              >
+                Registrar pedido
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+              </Link>
+            ) : null}
+          </div>
         </div>
       </section>
 
