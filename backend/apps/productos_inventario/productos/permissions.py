@@ -15,3 +15,17 @@ class PuedeGestionarProductos(BasePermission):
         if request.method in SAFE_METHODS:
             return True
         return 'gestionar_productos' in user.get_permisos_nombres()
+
+
+class EsPropietarioCU19(BasePermission):
+    """CU19 es exclusivo del rol de negocio Propietario, sin bypass de superusuario."""
+
+    message = 'Solo el Propietario puede consultar el historial de precios.'
+
+    def has_permission(self, request, view):
+        usuario = request.user
+        return bool(
+            usuario
+            and usuario.is_authenticated
+            and usuario.rol_nombre == 'Propietario'
+        )

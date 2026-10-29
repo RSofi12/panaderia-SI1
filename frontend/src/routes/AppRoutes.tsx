@@ -9,6 +9,7 @@ import DashboardLayout from '../apps/dashboard/DashboardLayout';
 import DashboardHome from '../apps/dashboard/DashboardHome';
 import UsuariosPage from '../apps/dashboard/usuarios/UsuariosPage';
 import ProductosPage from '../apps/dashboard/productos/ProductosPage';
+import HistorialPreciosPage from '../apps/dashboard/productos/historial-precios/HistorialPreciosPage';
 import ComprasModuloPage from '../apps/dashboard/compras/ComprasModuloPage';
 import AlertasBajoStockPage from '../apps/dashboard/inventario/AlertasBajoStockPage';
 import ComercializacionPage from '../apps/dashboard/comercializacion/ComercializacionPage';
@@ -84,6 +85,14 @@ export const AppRoutes: React.FC = () => {
                 permite el backend a cualquier autenticado; la escritura exige
                 `gestionar_productos` y la controla la propia pantalla + API. */}
             <Route path="productos" element={<ProductosPage />} />
+            <Route
+              path="productos/historial-precios"
+              element={
+                <ProtectedRoute requiredPermission="gestionar_productos" requiredRole="Propietario">
+                  <HistorialPreciosPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="inventario/alertas-bajo-stock" element={
               <ProtectedRoute requiredPermission="gestionar_inventario" requiredRole={ROLES_ALERTAS_BAJO_STOCK}>
                 <AlertasBajoStockPage />
