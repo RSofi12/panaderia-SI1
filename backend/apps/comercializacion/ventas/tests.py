@@ -335,3 +335,69 @@ class PruebasVentaStripe(BaseVenta):
         self.assertEqual(Venta.objects.count(), 0)
         texto_error = str(respuesta.data).lower()
         self.assertTrue('declined' in texto_error or 'rechazada' in texto_error)
+
+
+class PruebasComprobanteVenta(BaseVenta):
+    """
+    Pruebas automatizadas del CU16 — Generar comprobante de venta.
+    Verifica consulta estructurada en JSON, generación de PDF, RBAC y auditoría.
+    """
+    def setUp(self):
+        super().setUp()
+        self.venta = Venta.objects.create(
+            id_usuario=self.vendedor,
+            numero_comprobante=1001,
+            metodo_pago='efectivo',
+            total=Decimal('5.00'),
+        )
+        self.detalle = DetalleVenta.objects.create(
+            id_venta=self.venta,
+            id_producto=self.marraqueta,
+            cantidad=10,
+            precio_unitario=Decimal('0.50'),
+            subtotal=Decimal('5.00'),
+        )
+
+    def test_comprobante_requiere_autenticacion(self):
+        respuesta = self.client.get(f'/api/ventas/{self.venta.pk}/comprobante/')
+        self.assertEqual(respuesta.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_comprobante_requiere_permiso_adecuado(self):
+        self.client.force_authenticate(self.produccion)
+        respuesta = self.client.get(f'/api/ventas/{self.venta.pk}/comprobante/')
+        self.assertEqual(respuesta.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_comprobante_json_exitoso(self):
+        self.client.force_authenticate(self.vendedor)
+        respuesta = self.client.get(f'/api/ventas/{self.venta.pk}/comprobante/')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data['numero_comprobante'], 1001)
+        self.assertEqual(respuesta.data['total'], '5.00')
+        self.assertEqual(respuesta.data['cajero'], 'María Gonzales')
+        self.assertEqual(respuesta.data['empresa']['nombre'], 'Panadería Santiago')
+        self.assertEqual(len(respuesta.data['detalles']), 1)
+        self.assertEqual(respuesta.data['detalles'][0]['nombre_producto'], 'Marraqueta')
+        self.assertEqual(respuesta.data['detalles'][0]['cantidad'], 10)
+
+    def test_comprobante_venta_inexistente_retorna_404(self):
+        self.client.force_authenticate(self.vendedor)
+        respuesta = self.client.get('/api/ventas/99999/comprobante/')
+        self.assertEqual(respuesta.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_comprobante_pdf_exitoso(self):
+        self.client.force_authenticate(self.vendedor)
+        respuesta = self.client.get(f'/api/ventas/{self.venta.pk}/comprobante/pdf/')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta['Content-Type'], 'application/pdf')
+        self.assertTrue(respuesta.content.startswith(b'%PDF-1.4'))
+        self.assertTrue(len(respuesta.content) > 100)
+
+    def test_comprobante_audita_emision_en_bitacora(self):
+        self.client.force_authenticate(self.vendedor)
+        self.client.get(f'/api/ventas/{self.venta.pk}/comprobante/')
+        bitacoras = Bitacora.objects.filter(
+            accion=AccionBitacora.EMISION_COMPROBANTE,
+            usuario=self.vendedor,
+        )
+        self.assertTrue(bitacoras.exists())
+

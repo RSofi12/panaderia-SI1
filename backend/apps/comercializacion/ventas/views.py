@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from datetime import datetime
 
 from django.conf import settings
@@ -8,13 +9,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.comercializacion.ventas.models import Venta
-from apps.comercializacion.ventas.permissions import PuedeRegistrarVentas
-from apps.comercializacion.ventas.selectors import listar_ventas
+from apps.comercializacion.ventas.permissions import PuedeConsultarComprobante, PuedeRegistrarVentas
+from apps.comercializacion.ventas.selectors import listar_ventas, obtener_comprobante_venta
 from apps.comercializacion.ventas.serializers import (
     DetallesCotizacionSerializer,
     VentaListSerializer,
     VentaRegistroSerializer,
     VentaSerializer,
+    ComprobanteVentaSerializer,
 )
 from apps.comercializacion.ventas.services.registrar_venta import (
     asegurar_stock_disponible,
@@ -107,4 +109,74 @@ class StripeConfigView(APIView):
         ).strip().strip("'\"")
         return Response({'publishable_key': pk})
 
+
+class VentaComprobanteView(APIView):
+    """
+    GET /api/ventas/<pk>/comprobante/
+    Retorna la estructura de datos completa del comprobante de venta (CU16).
+    Audita la consulta en la bitácora del sistema (CU26).
+    """
+    permission_classes = [PuedeConsultarComprobante]
+
+    def get(self, request, pk):
+        venta = obtener_comprobante_venta(pk)
+        if not venta:
+            return Response(
+                {'detail': 'No se encontró la venta o comprobante especificado.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        data = ComprobanteVentaSerializer(venta).data
+
+        # Auditoría CU26
+        try:
+            from apps.usuarios_seguridad.bitacora.models import AccionBitacora, Bitacora
+            Bitacora.objects.create(
+                usuario=request.user if request.user.is_authenticated else None,
+                accion=AccionBitacora.EMISION_COMPROBANTE,
+                tabla_afectada='venta',
+                agente_usuario=(request.META.get('HTTP_USER_AGENT') or '')[:255],
+            )
+        except Exception:
+            pass
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class VentaComprobantePdfView(APIView):
+    """
+    GET /api/ventas/<pk>/comprobante/pdf/
+    Genera y transmite el comprobante en formato binario PDF para impresión o descarga.
+    """
+    permission_classes = [PuedeConsultarComprobante]
+
+    def get(self, request, pk):
+        venta = obtener_comprobante_venta(pk)
+        if not venta:
+            return Response(
+                {'detail': 'No se encontró la venta o comprobante especificado.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        from apps.comercializacion.ventas.services.comprobante_pdf import generar_ticket_pdf_bytes
+
+        data = ComprobanteVentaSerializer(venta).data
+        pdf_bytes = generar_ticket_pdf_bytes(data)
+
+        # Auditoría CU26
+        try:
+            from apps.usuarios_seguridad.bitacora.models import AccionBitacora, Bitacora
+            Bitacora.objects.create(
+                usuario=request.user if request.user.is_authenticated else None,
+                accion=AccionBitacora.EMISION_COMPROBANTE,
+                tabla_afectada='venta',
+                agente_usuario=(request.META.get('HTTP_USER_AGENT') or '')[:255],
+            )
+        except Exception:
+            pass
+
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        filename = f'comprobante_{venta.numero_comprobante}.pdf'
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        return response
 
