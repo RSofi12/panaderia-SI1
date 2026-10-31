@@ -589,15 +589,6 @@
 - **Motivo:** Preservar la estética y capacidades completas del componente modal de Stripe según el diseño original, entendiendo que el aviso de HTTP local desaparece naturalmente en el entorno de despliegue con HTTPS.
 - **Impacto:** CU13 completamente implementado de extremo a extremo (Efectivo y Tarjeta Stripe) con 16 pruebas backend en verde y frontend Vite compilando limpiamente.
 
-### 52. 2026-10-22 — CU19: consulta de precios de venta sin escrituras
-
-- **Decisión aprobada por el usuario:** CU19 consulta exclusivamente HistorialPrecioProducto en `productos_inventario.productos`; no incorpora compras, materias primas ni proveedores.
-- **Autorización:** autenticación, permiso existente gestionar_productos y rol Propietario simultáneamente, tanto en API como en ruta y enlace frontend. Administrador/superusuario de otro rol no obtiene excepción.
-- **Contrato:** GET `/api/productos/historial-precios/`, filtros producto/fechas dentro del intervalo inclusivo de America/La_Paz, orden por fecha e ID descendentes, páginas de 10 y Decimal serializado como string. Se incluyen productos inactivos sin crear registros históricos artificiales.
-- **Capas:** selector optimizado, serializers de filtros/representación, permiso local, vista paginada y nueva ruta. Frontend propio en Productos, sin reemplazar la pestaña historial de CU11 ni alterar el catálogo CU05.
-- **Motivo:** aprovechar el historial ya generado, mantener una consulta de solo lectura y evitar relaciones de procedencia o autorizaciones que no existen.
-- **Impacto:** no requiere modelos, migraciones, asignaciones de permisos o dependencias nuevas. Los escritores y contratos de CU05/CU07/CU08/CU09 permanecen operativos. Pruebas de backend exclusivamente en PostgreSQL temporal y revisión independiente de implementación.
-
 
 
 

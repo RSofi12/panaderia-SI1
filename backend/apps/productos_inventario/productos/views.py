@@ -3,13 +3,13 @@ from django.db.models import F
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.generics import ListAPIView
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.usuarios_seguridad.bitacora.models import AccionBitacora, Bitacora
 from apps.productos_inventario.productos.models import CategoriaProducto, HistorialPrecioProducto, Producto
+from apps.productos_inventario.productos.pagination import PaginacionHistorialPrecios
 from apps.productos_inventario.productos.permissions import (
     EsPropietarioCU19,
     PuedeGestionarProductos,
@@ -28,7 +28,7 @@ class HistorialPreciosListView(ListAPIView):
     """GET /api/productos/historial-precios/ — Consulta de solo lectura (CU19)."""
 
     serializer_class = HistorialPrecioProductoSerializer
-    pagination_class = PageNumberPagination
+    pagination_class = PaginacionHistorialPrecios
     http_method_names = ['get', 'head', 'options']
 
     def get_permissions(self):
