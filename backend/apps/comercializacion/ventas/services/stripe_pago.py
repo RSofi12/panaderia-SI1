@@ -34,7 +34,7 @@ def centavos(monto: Decimal) -> int:
     return int((Decimal(monto) * Decimal('100')).quantize(Decimal('1')))
 
 
-def crear_intencion(*, monto: Decimal) -> dict:
+def crear_intencion(*, monto: Decimal, origen: str = 'cu13-mostrador') -> dict:
     """Crea el cobro en Stripe. Todavía no existe la venta ni se tocó el stock."""
     cliente = _cliente()
     try:
@@ -42,7 +42,7 @@ def crear_intencion(*, monto: Decimal) -> dict:
             amount=centavos(monto),
             currency=moneda(),
             automatic_payment_methods={'enabled': True},
-            metadata={'origen': 'cu13-mostrador'},
+            metadata={'origen': origen},
         )
     except stripe.error.InvalidRequestError as exc:
         msg = str(exc)

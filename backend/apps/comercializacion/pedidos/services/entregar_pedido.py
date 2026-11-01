@@ -39,6 +39,9 @@ def entregar_pedido(
         })
     if pedido.metodo_pago not in (MetodoPago.EFECTIVO, MetodoPago.STRIPE):
         raise ValidationError({'metodo_pago': 'El pedido no tiene un método de pago previsto.'})
+    if pedido.id_transaccion_stripe:
+        datos_tarjeta = None
+        id_transaccion_stripe = pedido.id_transaccion_stripe
 
     lineas = _lineas_congeladas(pedido)
     total = sum((linea['subtotal'] for linea in lineas), Decimal('0'))

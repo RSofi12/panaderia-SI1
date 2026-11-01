@@ -4,10 +4,12 @@ Alta de un pedido anticipado (CU14).
 El pedido nace en pendiente. El precio sale del catálogo.
 No cobra, no crea una venta y no descuenta stock.
 """
+from datetime import time
 from decimal import ROUND_HALF_UP, Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils import timezone
 
 from apps.comercializacion.pedidos.models import (
     Cliente,
@@ -16,28 +18,87 @@ from apps.comercializacion.pedidos.models import (
     Pedido,
 )
 from apps.comercializacion.ventas.models import MetodoPago
+from apps.comercializacion.ventas.services.stripe_pago import (
+    anular_cobro_tarjeta,
+    confirmar_cobro_tarjeta,
+    crear_intencion,
+)
 from apps.productos_inventario.productos.models import Producto
 from apps.usuarios_seguridad.bitacora.models import AccionBitacora, Bitacora
 
 CENTAVO = Decimal('0.01')
+APERTURA = time(8, 0)
+CIERRE = time(17, 0)
 
 
-def registrar_pedido(*, usuario, cliente, fecha_entrega, metodo_pago, detalles, agente_usuario=None):
-    if fecha_entrega is None:
-        raise ValidationError({'fecha_entrega': 'Indica la fecha de entrega prevista.'})
+def preparar_cobro_tarjeta(*, detalles):
+    """Arma el PaymentIntent del carrito. Todavía no existe el pedido."""
+    forma = _validar_forma(detalles)
+    _, total = _cotizar(forma)
+    return crear_intencion(monto=total, origen='cu14-pedido')
+
+
+def registrar_pedido(
+    *,
+    usuario,
+    cliente,
+    fecha_entrega,
+    metodo_pago,
+    detalles,
+    agente_usuario=None,
+    id_transaccion_stripe=None,
+):
+    fecha_entrega = _validar_fecha_entrega(fecha_entrega)
     if metodo_pago not in (MetodoPago.EFECTIVO, MetodoPago.STRIPE):
         raise ValidationError({'metodo_pago': 'El método debe ser efectivo o stripe.'})
 
     forma = _validar_forma(detalles)
+    lineas, total = _cotizar(forma)
+    referencia = (id_transaccion_stripe or '').strip() or None
+    if metodo_pago == MetodoPago.EFECTIVO and referencia:
+        raise ValidationError({
+            'id_transaccion_stripe': 'Un pedido en efectivo no lleva cobro de tarjeta.',
+        })
+    id_stripe = None
+    if referencia:
+        id_stripe = confirmar_cobro_tarjeta(id_transaccion_stripe=referencia, monto=total)
+    try:
+        return _guardar_pedido(
+            usuario=usuario,
+            cliente=cliente,
+            fecha_entrega=fecha_entrega,
+            metodo_pago=metodo_pago,
+            lineas=lineas,
+            total=total,
+            id_stripe=id_stripe,
+            agente_usuario=agente_usuario,
+        )
+    except Exception:
+        if id_stripe:
+            anular_cobro_tarjeta(id_stripe)
+        raise
+
+
+def _guardar_pedido(
+    *,
+    usuario,
+    cliente,
+    fecha_entrega,
+    metodo_pago,
+    lineas,
+    total,
+    id_stripe,
+    agente_usuario,
+):
     with transaction.atomic():
         cliente_guardado = _resolver_cliente(cliente)
-        lineas, total = _cotizar(forma)
         pedido = Pedido.objects.create(
             id_cliente=cliente_guardado,
             id_usuario=usuario,
             fecha_entrega=fecha_entrega,
             estado=EstadoPedido.PENDIENTE,
             metodo_pago=metodo_pago,
+            id_transaccion_stripe=id_stripe,
             total=total,
         )
         DetallePedido.objects.bulk_create([
@@ -62,6 +123,29 @@ def registrar_pedido(*, usuario, cliente, fecha_entrega, metodo_pago, detalles, 
             agente_usuario=agente_usuario,
         )
     return pedido
+
+
+def _validar_fecha_entrega(fecha_entrega):
+    """La entrega es hoy o después, y solo dentro del horario de la panadería."""
+    if fecha_entrega is None:
+        raise ValidationError({'fecha_entrega': 'Indica la fecha de entrega prevista.'})
+    if timezone.is_naive(fecha_entrega):
+        fecha_entrega = timezone.make_aware(fecha_entrega, timezone.get_current_timezone())
+    local = timezone.localtime(fecha_entrega)
+    ahora = timezone.localtime()
+    if local.date() < ahora.date():
+        raise ValidationError({
+            'fecha_entrega': 'La entrega no puede ser en una fecha anterior a hoy.',
+        })
+    if not (APERTURA <= local.time() <= CIERRE):
+        raise ValidationError({
+            'fecha_entrega': 'El horario para retirar es de 08:00 a 17:00.',
+        })
+    if local <= ahora:
+        raise ValidationError({
+            'fecha_entrega': 'Esa hora de hoy ya pasó. Elige una hora más tarde u otro día.',
+        })
+    return local
 
 
 def _resolver_cliente(cliente: dict) -> Cliente:
