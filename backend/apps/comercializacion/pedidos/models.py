@@ -74,6 +74,13 @@ class Pedido(models.Model):
         null=True,
         verbose_name='Método de pago previsto',
     )
+    id_transaccion_stripe = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        unique=True,
+        verbose_name='Id de transacción Stripe',
+    )
     total = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -103,6 +110,13 @@ class Pedido(models.Model):
                     MetodoPago.STRIPE,
                 ]),
                 name='pedido_metodo_pago_valido',
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(metodo_pago=MetodoPago.STRIPE)
+                    | Q(id_transaccion_stripe__isnull=True)
+                ),
+                name='pedido_stripe_solo_con_tarjeta',
             ),
         ]
 

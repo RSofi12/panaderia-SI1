@@ -3,9 +3,12 @@ Pruebas del CU14 — alta de pedido.
 
 El pedido nace pendiente. No crea venta y no descuenta stock.
 """
+from datetime import datetime, time, timedelta
 from decimal import Decimal
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.test import TestCase, override_settings
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -71,18 +74,22 @@ class BasePedido(TestCase):
         self.client.force_authenticate(usuario)
         return self.client.post('/api/pedidos/', cuerpo, format='json')
 
-    def _cambiar(self, usuario, pedido_id, estado):
+    def _cambiar(self, usuario, pedido_id, estado, **extra):
         self.client.force_authenticate(usuario)
         return self.client.patch(
             f'/api/pedidos/{pedido_id}/',
-            {'estado': estado},
+            {'estado': estado, **extra},
             format='json',
         )
+
+    def _fecha_habil(self, hora=time(12, 0), dias=1):
+        dia = timezone.localdate() + timedelta(days=dias)
+        return timezone.make_aware(datetime.combine(dia, hora))
 
     def _cuerpo(self, **extra):
         cuerpo = {
             'cliente': {'nombre': 'Hotel Cortez', 'telefono': '33421100'},
-            'fecha_entrega': '2026-09-07T07:00:00Z',
+            'fecha_entrega': self._fecha_habil().isoformat(),
             'metodo_pago': 'efectivo',
             'detalles': [{'id_producto': self.marraqueta.id_producto, 'cantidad': 10}],
         }
@@ -131,6 +138,22 @@ class PruebasRegistrarPedido(BasePedido):
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         self.assertEqual(respuesta.data['estado'], 'pendiente')
         self.assertEqual(len(respuesta.data['detalles']), 1)
+
+    def test_rechaza_fecha_anterior_y_fuera_de_horario(self):
+        ayer = self._fecha_habil(dias=-1)
+        antes = self._pedir(self.vendedor, self._cuerpo(fecha_entrega=ayer.isoformat()))
+        self.assertEqual(antes.status_code, status.HTTP_400_BAD_REQUEST)
+        temprano = self._pedir(
+            self.vendedor,
+            self._cuerpo(fecha_entrega=self._fecha_habil(time(7, 0)).isoformat()),
+        )
+        self.assertEqual(temprano.status_code, status.HTTP_400_BAD_REQUEST)
+        tarde = self._pedir(
+            self.vendedor,
+            self._cuerpo(fecha_entrega=self._fecha_habil(time(17, 1)).isoformat()),
+        )
+        self.assertEqual(tarde.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Pedido.objects.count(), 0)
 
 
 class PruebasCambiarEstadoPedido(BasePedido):
@@ -227,3 +250,97 @@ class PruebasCambiarEstadoPedido(BasePedido):
         self.assertEqual(Venta.objects.count(), 0)
         self.stock.refresh_from_db()
         self.assertEqual(self.stock.stock_actual, 40)
+
+
+@override_settings(STRIPE_SECRET_KEY='sk_test_cu14', STRIPE_CURRENCY='bob', STRIPE_PUBLISHABLE_KEY='pk_test_cu14')
+class PruebasStripePedido(BasePedido):
+    def _dejar_listo_con_tarjeta(self):
+        alta = self._pedir(self.vendedor, self._cuerpo(metodo_pago='stripe'))
+        pedido_id = alta.data['id_pedido']
+        self._cambiar(self.vendedor, pedido_id, 'en_preparacion')
+        self._cambiar(self.vendedor, pedido_id, 'listo')
+        return pedido_id
+
+    def test_la_intencion_usa_el_total_congelado(self):
+        pedido_id = self._dejar_listo_con_tarjeta()
+        self.marraqueta.precio_venta = Decimal('9.00')
+        self.marraqueta.save(update_fields=['precio_venta'])
+        intento = MagicMock()
+        intento.id = 'pi_pedido_1'
+        intento.client_secret = 'pi_pedido_1_secret'
+        with patch('apps.comercializacion.ventas.services.stripe_pago.stripe') as stripe_mock:
+            stripe_mock.PaymentIntent.create.return_value = intento
+            respuesta = self.client.post(f'/api/pedidos/{pedido_id}/stripe/intencion/')
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(respuesta.data['id_transaccion_stripe'], 'pi_pedido_1')
+        self.assertEqual(respuesta.data['monto'], '6.00')
+        self.assertEqual(Pedido.objects.get(pk=pedido_id).estado, EstadoPedido.LISTO)
+        self.assertEqual(Venta.objects.count(), 0)
+        kwargs = stripe_mock.PaymentIntent.create.call_args.kwargs
+        self.assertEqual(kwargs['amount'], 600)
+        self.assertEqual(kwargs['metadata'], {'origen': 'cu14-pedido'})
+
+    def test_la_intencion_no_se_crea_si_el_pedido_no_esta_listo(self):
+        alta = self._pedir(self.vendedor, self._cuerpo(metodo_pago='stripe'))
+        respuesta = self.client.post(f"/api/pedidos/{alta.data['id_pedido']}/stripe/intencion/")
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Venta.objects.count(), 0)
+
+    def test_la_clave_publica_sale_en_la_configuracion(self):
+        self.client.force_authenticate(self.vendedor)
+        respuesta = self.client.get('/api/pedidos/stripe/config/')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data['publishable_key'], 'pk_test_cu14')
+
+    def test_entregar_con_el_id_de_stripe_guarda_la_venta(self):
+        pedido_id = self._dejar_listo_con_tarjeta()
+        intento = MagicMock()
+        intento.id = 'pi_pedido_1'
+        intento.status = 'succeeded'
+        intento.currency = 'bob'
+        intento.amount = 600
+        with patch('apps.comercializacion.ventas.services.stripe_pago.stripe') as stripe_mock:
+            stripe_mock.PaymentIntent.retrieve.return_value = intento
+            respuesta = self._cambiar(
+                self.vendedor,
+                pedido_id,
+                'entregado',
+                id_transaccion_stripe='pi_pedido_1',
+            )
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        venta = Venta.objects.get(id_pedido_id=pedido_id)
+        self.assertEqual(venta.id_transaccion_stripe, 'pi_pedido_1')
+        self.assertEqual(venta.total, Decimal('6.00'))
+        self.stock.refresh_from_db()
+        self.assertEqual(self.stock.stock_actual, 30)
+
+    def test_la_pasarela_del_carrito_no_guarda_el_pedido(self):
+        intento = MagicMock()
+        intento.id = 'pi_carrito_1'
+        intento.client_secret = 'pi_carrito_1_secret'
+        self.client.force_authenticate(self.vendedor)
+        with patch('apps.comercializacion.ventas.services.stripe_pago.stripe') as stripe_mock:
+            stripe_mock.PaymentIntent.create.return_value = intento
+            respuesta = self.client.post('/api/pedidos/stripe/intencion/', {
+                'detalles': [{'id_producto': self.marraqueta.id_producto, 'cantidad': 10}],
+            }, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(respuesta.data['monto'], '6.00')
+        self.assertEqual(respuesta.data['client_secret'], 'pi_carrito_1_secret')
+        self.assertEqual(Pedido.objects.count(), 0)
+
+    def test_guardar_con_tarjeta_deja_el_id_en_el_pedido(self):
+        intento = MagicMock()
+        intento.id = 'pi_alta_1'
+        intento.status = 'succeeded'
+        intento.currency = 'bob'
+        intento.amount = 600
+        cuerpo = self._cuerpo(metodo_pago='stripe', id_transaccion_stripe='pi_alta_1')
+        with patch('apps.comercializacion.ventas.services.stripe_pago.stripe') as stripe_mock:
+            stripe_mock.PaymentIntent.retrieve.return_value = intento
+            alta = self._pedir(self.vendedor, cuerpo)
+        self.assertEqual(alta.status_code, status.HTTP_201_CREATED)
+        pedido = Pedido.objects.get(pk=alta.data['id_pedido'])
+        self.assertEqual(pedido.id_transaccion_stripe, 'pi_alta_1')
+        self.assertEqual(pedido.estado, EstadoPedido.PENDIENTE)
+        self.assertEqual(Venta.objects.count(), 0)

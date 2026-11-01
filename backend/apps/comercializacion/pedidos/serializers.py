@@ -5,7 +5,10 @@ from rest_framework import serializers
 from apps.comercializacion.pedidos.models import DetallePedido, EstadoPedido, Pedido
 from apps.comercializacion.ventas.serializers import DatosTarjetaEntradaSerializer
 from apps.comercializacion.pedidos.services.cambiar_estado_pedido import cambiar_estado_pedido
-from apps.comercializacion.pedidos.services.registrar_pedido import registrar_pedido
+from apps.comercializacion.pedidos.services.registrar_pedido import (
+    preparar_cobro_tarjeta,
+    registrar_pedido,
+)
 from apps.comercializacion.ventas.models import MetodoPago
 
 
@@ -28,12 +31,31 @@ class PedidoDetalleEntradaSerializer(serializers.Serializer):
     cantidad = serializers.IntegerField(min_value=1)
 
 
+class PedidoCobroSerializer(serializers.Serializer):
+    """Cotiza el carrito y pide el PaymentIntent. No guarda el pedido."""
+    detalles = PedidoDetalleEntradaSerializer(many=True, allow_empty=False)
+
+    def create(self, validated_data):
+        try:
+            return preparar_cobro_tarjeta(detalles=validated_data['detalles'])
+        except DjangoValidationError as exc:
+            if getattr(exc, 'message_dict', None):
+                raise serializers.ValidationError(exc.message_dict) from exc
+            raise serializers.ValidationError(list(exc.messages)) from exc
+
+
 class PedidoRegistroSerializer(serializers.Serializer):
     """El precio y el total los calcula registrar_pedido()."""
     cliente = ClienteEntradaSerializer()
     fecha_entrega = serializers.DateTimeField()
     metodo_pago = serializers.ChoiceField(choices=MetodoPago.choices)
     detalles = PedidoDetalleEntradaSerializer(many=True, allow_empty=False)
+    id_transaccion_stripe = serializers.CharField(
+        max_length=100,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
 
     def create(self, validated_data):
         request = self.context['request']
@@ -45,6 +67,7 @@ class PedidoRegistroSerializer(serializers.Serializer):
                 metodo_pago=validated_data['metodo_pago'],
                 detalles=validated_data['detalles'],
                 agente_usuario=request.META.get('HTTP_USER_AGENT'),
+                id_transaccion_stripe=validated_data.get('id_transaccion_stripe'),
             )
         except DjangoValidationError as exc:
             if getattr(exc, 'message_dict', None):
@@ -113,6 +136,7 @@ class PedidoSerializer(serializers.ModelSerializer):
             'fecha_entrega',
             'estado',
             'metodo_pago',
+            'id_transaccion_stripe',
             'total',
             'numero_comprobante',
             'detalles',

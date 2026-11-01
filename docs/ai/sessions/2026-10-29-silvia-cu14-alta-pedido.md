@@ -83,3 +83,14 @@ Resultado de esta sesión: 5 pruebas OK. Con María (`mgonzales`) y `seed_produc
 - **Pruebas:** `apps.comercializacion.pedidos` y `apps.comercializacion.ventas` en SQLite: 28 OK. La entrega deja el stock en 30 (había 40 y se pidieron 10), una sola venta de Bs 6.00 aunque el catálogo ya valga Bs 5.00, y el kardex guarda el pedido.
 - **PostgreSQL:** aplicadas `ventas.0002_venta_id_pedido` y `productos_terminados.0003_movimientoproductoterminado_id_pedido`.
 - **Navegador:** con María, el pedido 1 (listo, efectivo, Bs 6.00) muestra el botón Entregar. No se pulsó: eso descontaría 10 marraquetas del stock real (hoy 33).
+
+---
+
+## Corte 6 — cancelación, horario y catálogo (misma fecha, quinta entrada)
+
+- **Objetivo:** la pantalla de pedido se parece al mostrador y cierra tres huecos del CU14: confirmar la cancelación, no aceptar fechas pasadas y solo ofrecer el horario de 08:00 a 17:00.
+- **Backend:** `registrar_pedido` rechaza una entrega anterior a hoy, una hora que ya pasó y cualquier hora fuera de 08:00–17:00 (zona America/La_Paz). Guardar el pedido sigue sin cobrar ni bajar stock.
+- **Frontend:** `RegistrarPedidoPage.tsx` muestra los panes en tarjetas, el ticket al lado, y el pago previsto como Efectivo o QR. El QR sigue guardándose como `stripe` y se cobra recién al entregar. Cancelar abre «¿Está seguro de cancelar?» y explica que no hay venta ni movimiento de stock.
+- **Decisión:** el horario es una lista de horas en punto, no un reloj libre, para que las horas fuera de turno no aparezcan.
+- **Pendiente:** no se pulsó Entregar sobre los pedidos reales. CU15 y CU16 siguen fuera.
+- **Navegador, verificado:** con María, a las 13:10 de Bolivia, el día de hoy solo ofrece 14:00, 15:00, 16:00 y 17:00. El catálogo muestra los 12 panes y tocar Marraqueta la suma al pedido. Cancelar abre «¿Está seguro de cancelar?» con la consecuencia (sin venta y sin stock). Se eligió «No, volver»; el pedido 6 sigue pendiente. No se guardó el pedido de prueba.
