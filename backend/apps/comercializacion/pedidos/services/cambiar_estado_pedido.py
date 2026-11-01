@@ -32,6 +32,11 @@ def cambiar_estado_pedido(
         except Pedido.DoesNotExist as exc:
             raise ValidationError({'estado': f'No existe el pedido {pedido_id}.'}) from exc
 
+        if estado_nuevo != EstadoPedido.CANCELADO and not pedido.pagado:
+            raise ValidationError({
+                'pago': 'Primero se debe pagar el pedido.',
+            })
+
         if estado_nuevo == EstadoPedido.ENTREGADO:
             return entregar_pedido(
                 usuario=usuario,

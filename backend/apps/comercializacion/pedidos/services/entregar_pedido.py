@@ -3,7 +3,8 @@ Entrega de un pedido listo (CU14).
 
 Crea una sola venta con el precio congelado en el detalle del pedido,
 la enlaza con venta.id_pedido y descuenta el stock con la misma función
-del mostrador. El efectivo no llama a Stripe. La tarjeta se cobra aquí.
+del mostrador. El cobro ya ocurrió: el efectivo no llama a Stripe
+y la tarjeta reutiliza el id guardado al pagar.
 """
 from decimal import Decimal
 
@@ -37,6 +38,8 @@ def entregar_pedido(
         raise ValidationError({
             'estado': f'No se puede pasar de {pedido.estado} a entregado.',
         })
+    if not pedido.pagado:
+        raise ValidationError({'pago': 'Primero se debe pagar el pedido.'})
     if pedido.metodo_pago not in (MetodoPago.EFECTIVO, MetodoPago.STRIPE):
         raise ValidationError({'metodo_pago': 'El pedido no tiene un método de pago previsto.'})
     if pedido.id_transaccion_stripe:
