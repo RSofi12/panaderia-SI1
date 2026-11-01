@@ -18,15 +18,15 @@ from apps.productos_inventario.productos_terminados.models import (
 
 # Stock inicial realista para los 12 tipos de pan tradicionales de Panadería Santiago
 STOCK_INICIAL_MAP = {
-    'Marraqueta tradicional': 140,
-    'Pan Arani': 80,
-    'Pan Chama': 95,
-    'Pan Casero': 110,
-    'Pan Tortilla': 65,
-    'Pan Integral': 30,
-    'Pan Gusanito': 45,
+    'Marraqueta': 140,
+    'Arani': 80,
+    'Chama': 95,
+    'Casero': 110,
+    'Tortilla': 65,
+    'Integral': 30,
+    'Gusanito': 45,
     'Pan con Azúcar': 25,
-    'Pan Dulce Especial': 15,    # Stock crítico (<20) para probar alertas
+    'Pan Dulce': 15,             # Stock crítico (<20) para probar alertas
     'Pan Mollete': 18,           # Stock crítico (<20)
     'Pan Galleta': 0,            # Stock agotado (0) para probar estado agotado
     'Pan de Leche': 50,
