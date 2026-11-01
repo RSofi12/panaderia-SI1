@@ -82,6 +82,8 @@ docker compose exec backend python manage.py migrate
 docker compose exec backend python manage.py seed_usuarios      # CU1-CU4: roles, permisos y usuarios de prueba
 docker compose exec backend python manage.py seed_productos     # CU5: categorías y catálogo base de productos
 docker compose exec backend python manage.py seed_proveedores   # CU6: catálogo maestro de proveedores
+docker compose exec backend python manage.py seed_existencias   # CU12/CU17: stock demostrativo de productos terminados
+docker compose exec backend python manage.py seed_comercializacion # CU15: pedidos demostrativos para consultar estados
 ```
 
 #### 3. URLs de acceso
@@ -124,6 +126,8 @@ python manage.py migrate
 python manage.py seed_usuarios
 python manage.py seed_productos
 python manage.py seed_proveedores
+python manage.py seed_existencias
+python manage.py seed_comercializacion
 
 # Iniciar servidor API
 python manage.py runserver
