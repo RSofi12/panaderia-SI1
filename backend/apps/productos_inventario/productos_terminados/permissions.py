@@ -21,6 +21,7 @@ PERMISOS_CONSULTA_EXISTENCIAS = {
     'gestionar_productos',
     'registrar_ventas',
     'registrar_pedidos',
+    'registrar_produccion',
 }
 
 

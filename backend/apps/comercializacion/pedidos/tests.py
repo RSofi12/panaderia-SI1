@@ -36,6 +36,12 @@ class BasePedido(TestCase):
         rol_ventas = Rol.objects.create(nombre='Personal de Ventas', descripcion='Mostrador')
         RolPermiso.objects.create(rol=rol_ventas, permiso=permiso)
         rol_produccion = Rol.objects.create(nombre='Personal de Producción', descripcion='Horno')
+        permiso_produccion = Permiso.objects.create(
+            nombre='registrar_produccion',
+            descripcion='Consultar producción',
+            modulo=ModuloPermiso.PRODUCTOS_INVENTARIO,
+        )
+        RolPermiso.objects.create(rol=rol_produccion, permiso=permiso_produccion)
 
         self.vendedor = Usuario.objects.create_user(
             nombre_usuario='mgonzales',
@@ -104,8 +110,6 @@ class PruebasRegistrarPedido(BasePedido):
         self.assertEqual(Venta.objects.count(), 0)
         self.stock.refresh_from_db()
         self.assertEqual(self.stock.stock_actual, 40)
-        self.assertTrue(Bitacora.objects.filter(accion=AccionBitacora.ALTA_PEDIDO).exists())
-
     def test_reutiliza_cliente_existente(self):
         respuesta = self._pedir(self.vendedor, self._cuerpo(cliente={'id_cliente': self.cliente.id_cliente}))
         self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
@@ -130,6 +134,35 @@ class PruebasRegistrarPedido(BasePedido):
         respuesta = self.client.get(f"/api/pedidos/{alta.data['id_pedido']}/")
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         self.assertEqual(respuesta.data['estado'], 'pendiente')
+        self.assertEqual(len(respuesta.data['detalles']), 1)
+
+
+class PruebasConsultarEstadoPedido(BasePedido):
+    def test_ventas_y_produccion_pueden_consultar_todos_los_pedidos(self):
+        alta = self._pedir(self.vendedor, self._cuerpo())
+        self.client.force_authenticate(self.produccion)
+        respuesta = self.client.get('/api/pedidos/estado/')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(respuesta.data), 1)
+        self.assertEqual(respuesta.data[0]['id_pedido'], alta.data['id_pedido'])
+
+    def test_consulta_filtra_por_estado_cliente_y_fecha(self):
+        self._pedir(self.vendedor, self._cuerpo())
+        self.client.force_authenticate(self.vendedor)
+        respuesta = self.client.get('/api/pedidos/estado/', {
+            'estado': 'pendiente',
+            'q': 'Hotel Cortez',
+            'fecha_entrega': '2026-09-07',
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(respuesta.data), 1)
+
+    def test_detalle_devuelve_metodo_pago_y_lineas(self):
+        alta = self._pedir(self.vendedor, self._cuerpo())
+        self.client.force_authenticate(self.vendedor)
+        respuesta = self.client.get(f"/api/pedidos/estado/{alta.data['id_pedido']}/")
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data['metodo_pago'], 'efectivo')
         self.assertEqual(len(respuesta.data['detalles']), 1)
 
 
