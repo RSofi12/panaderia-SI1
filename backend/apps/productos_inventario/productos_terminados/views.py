@@ -1,9 +1,9 @@
 """
 Vistas de API para Existencias de Productos Terminados (CU12) y Bajas/Mermas (CU18).
-Autor de la implementación CU12: Roberto (Equipo Panadería Santiago).
+Autor: Roberto (Equipo Panaderia Santiago).
 """
 from decimal import Decimal
-from django.db.models import Sum, Q, F
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
@@ -14,13 +14,18 @@ from .models import (
     MovimientoProductoTerminado,
     NotaPerdidaProducto,
 )
-from .permissions import PuedeConsultarExistenciasTerminados
+from .permissions import (
+    PuedeConsultarExistenciasTerminados,
+    PuedeRegistrarBajaProducto,
+)
 from .serializers import (
     InventarioProductoTerminadoSerializer,
     MovimientoProductoTerminadoSerializer,
+    NotaPerdidaProductoCreateSerializer,
     NotaPerdidaProductoSerializer,
     ResumenExistenciasSerializer,
 )
+from .services import registrar_baja_producto
 
 
 class ExistenciasListView(APIView):
@@ -30,13 +35,6 @@ class ExistenciasListView(APIView):
     Caso de Uso CU12: Consultar existencias de productos terminados.
     Permite consultar en tiempo real las existencias disponibles de cada tipo de pan listo
     para la venta en mostrador.
-
-    Parámetros de consulta (Query Params):
-      - q: Búsqueda insensible a mayúsculas por nombre del pan.
-      - categoria: ID numérico de la categoría de producto.
-      - estado_stock: Filtro de disponibilidad ('disponible', 'critico', 'agotado').
-      - solo_activos: 'true' (por defecto) para mostrar solo panes activos, 'false' para incluir inactivos.
-      - ordenar_por: Criterio de ordenamiento ('nombre_asc', 'nombre_desc', 'stock_asc', 'stock_desc', 'precio_asc', 'precio_desc').
     """
     permission_classes = [PuedeConsultarExistenciasTerminados]
 
@@ -46,12 +44,10 @@ class ExistenciasListView(APIView):
             'id_producto__id_categoria',
         )
 
-        # 1. Filtro por estado activo del producto (por defecto solo productos activos)
         solo_activos = request.query_params.get('solo_activos', 'true').lower()
         if solo_activos != 'false':
             queryset = queryset.filter(id_producto__activo=True)
 
-        # 2. Búsqueda por texto (nombre o descripción)
         q = request.query_params.get('q', '').strip()
         if q:
             queryset = queryset.filter(
@@ -59,12 +55,10 @@ class ExistenciasListView(APIView):
                 Q(id_producto__descripcion__icontains=q)
             )
 
-        # 3. Filtro por categoría
         categoria_id = request.query_params.get('categoria')
         if categoria_id and categoria_id.isdigit():
             queryset = queryset.filter(id_producto__id_categoria_id=int(categoria_id))
 
-        # 4. Filtro por estado de stock
         estado_stock = request.query_params.get('estado_stock', '').strip().lower()
         if estado_stock == 'agotado':
             queryset = queryset.filter(stock_actual__lte=0)
@@ -73,7 +67,6 @@ class ExistenciasListView(APIView):
         elif estado_stock == 'disponible':
             queryset = queryset.filter(stock_actual__gt=20)
 
-        # 5. Ordenamiento
         ordenar_por = request.query_params.get('ordenar_por', 'nombre_asc').lower()
         if ordenar_por == 'nombre_desc':
             queryset = queryset.order_by('-id_producto__nombre')
@@ -86,7 +79,6 @@ class ExistenciasListView(APIView):
         elif ordenar_por == 'precio_desc':
             queryset = queryset.order_by('-id_producto__precio_venta', 'id_producto__nombre')
         else:
-            # nombre_asc por defecto
             queryset = queryset.order_by('id_producto__nombre')
 
         serializer = InventarioProductoTerminadoSerializer(queryset, many=True)
@@ -97,11 +89,11 @@ class ResumenExistenciasView(APIView):
     """
     GET /api/productos-terminados/existencias/resumen/
 
-    Retorna métricas consolidadas (KPIs) en tiempo real para las tarjetas de información:
-      - Total de variedades de pan en catálogo activo
+    Retorna metricas consolidadas (KPIs) en tiempo real para las tarjetas de informacion:
+      - Total de variedades de pan en catalogo activo
       - Total de piezas de pan listas en mostrador
       - Valor monetario total del stock en vitrina (Bs.)
-      - Conteo de productos agotados, críticos y con stock normal
+      - Conteo de productos agotados, criticos y con stock normal
     """
     permission_classes = [PuedeConsultarExistenciasTerminados]
 
@@ -148,7 +140,7 @@ class KardexProductoTerminadoView(APIView):
     GET /api/productos-terminados/existencias/<int:id_producto>/movimientos/
 
     Kardex / Historial de movimientos del producto terminado:
-    Permite auditar el flujo de un pan específico (entradas por horneado y salidas por venta/merma).
+    Permite auditar el flujo de un pan especifico (entradas por horneado y salidas por venta/merma).
     """
     permission_classes = [PuedeConsultarExistenciasTerminados]
 
@@ -177,14 +169,61 @@ class KardexProductoTerminadoView(APIView):
 
 class NotaPerdidaProductoListCreateView(APIView):
     """
-    GET  /api/productos-terminados/mermas/ — Historial de bajas de producto terminado (CU18).
-    POST /api/productos-terminados/mermas/ — Registrar baja/merma descontando stock (CU18 - Ciclo 3).
+    GET  /api/productos-terminados/mermas/ - Historial de bajas de producto terminado (CU18).
+    POST /api/productos-terminados/mermas/ - Registrar baja/merma descontando stock (CU18).
     """
-    permission_classes = [PuedeConsultarExistenciasTerminados]
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [PuedeRegistrarBajaProducto()]
+        return [PuedeConsultarExistenciasTerminados()]
 
     def get(self, request):
-        notas = NotaPerdidaProducto.objects.select_related(
+        queryset = NotaPerdidaProducto.objects.select_related(
             'id_detalle_produccion__id_producto',
+            'id_detalle_produccion__id_producto__id_categoria',
+            'id_detalle_produccion__id_produccion',
             'id_usuario',
-        ).order_by('-fecha_salida')
-        return Response(NotaPerdidaProductoSerializer(notas, many=True).data)
+        ).order_by('-fecha_salida', '-id_nota_perdida')
+
+        id_producto = request.query_params.get('id_producto')
+        if id_producto and id_producto.isdigit():
+            queryset = queryset.filter(id_detalle_produccion__id_producto_id=int(id_producto))
+
+        q = request.query_params.get('q', '').strip()
+        if q:
+            queryset = queryset.filter(
+                id_detalle_produccion__id_producto__nombre__icontains=q
+            )
+
+        fecha_desde = request.query_params.get('fecha_desde')
+        if fecha_desde:
+            queryset = queryset.filter(fecha_salida__date__gte=fecha_desde)
+
+        fecha_hasta = request.query_params.get('fecha_hasta')
+        if fecha_hasta:
+            queryset = queryset.filter(fecha_salida__date__lte=fecha_hasta)
+
+        serializer = NotaPerdidaProductoSerializer(queryset[:100], many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = NotaPerdidaProductoCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        nota = registrar_baja_producto(
+            id_producto=data['id_producto'],
+            cantidad=data['cantidad'],
+            usuario=request.user,
+            id_detalle_produccion=data.get('id_detalle_produccion'),
+            motivo=data.get('motivo', 'Merma / Defecto de elaboracion'),
+            observaciones=data.get('observaciones', ''),
+            costo_unitario=data.get('costo_unitario'),
+            agente_usuario=request.META.get('HTTP_USER_AGENT'),
+        )
+
+        return Response(
+            NotaPerdidaProductoSerializer(nota).data,
+            status=status.HTTP_201_CREATED,
+        )
