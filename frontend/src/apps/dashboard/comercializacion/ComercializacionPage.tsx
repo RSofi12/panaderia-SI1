@@ -44,7 +44,7 @@ export const ComercializacionPage: React.FC = () => {
   const puedeVender = hasPermission('registrar_ventas');
   const puedePedir = hasPermission('registrar_pedidos');
   const puedeConsultarPedidos = hasPermission('registrar_pedidos') || hasPermission('registrar_produccion');
-  const puedeConsultarDisponibilidad = hasPermission('registrar_pedidos') || hasPermission('registrar_ventas') || hasPermission('gestionar_inventario');
+  const puedeConsultarDisponibilidad = hasPermission('registrar_pedidos') || hasPermission('registrar_ventas') || hasPermission('gestionar_inventario') || hasPermission('registrar_produccion');
   const [ventas, setVentas] = useState<VentaResumen[]>([]);
   const [estado, setEstado] = useState<EstadoCarga>('cargando');
 

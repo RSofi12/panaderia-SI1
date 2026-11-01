@@ -28,13 +28,16 @@ export default function PedidosEstadoPage() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [estado, setEstado] = useState<EstadoPedido | ''>('');
   const [busqueda, setBusqueda] = useState('');
+  const [fechaEntrega, setFechaEntrega] = useState('');
+  const [pedidoSeleccionado, setPedidoSeleccionado] = useState<Pedido | null>(null);
+  const [cargandoDetalle, setCargandoDetalle] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     let vigente = true;
     setCargando(true);
-    pedidoService.listar({ estado, q: busqueda.trim() }).then((datos) => {
+    pedidoService.listar({ estado, q: busqueda.trim(), fecha_entrega: fechaEntrega }).then((datos) => {
       if (vigente) {
         setPedidos(datos);
         setError('');
@@ -47,7 +50,19 @@ export default function PedidosEstadoPage() {
       }
     });
     return () => { vigente = false; };
-  }, [estado, busqueda]);
+  }, [estado, busqueda, fechaEntrega]);
+
+  function verDetalle(idPedido: number) {
+    setCargandoDetalle(true);
+    pedidoService.obtener(idPedido).then(setPedidoSeleccionado).catch(() => setError('No se pudo cargar el detalle del pedido.')).finally(() => setCargandoDetalle(false));
+  }
+
+  function metodoPago(metodo: string | null) {
+    if (metodo === 'stripe') return 'Tarjeta Stripe';
+    if (metodo === 'efectivo') return 'Efectivo';
+    if (metodo === 'qr') return 'Código QR';
+    return 'No especificado';
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -68,9 +83,13 @@ export default function PedidosEstadoPage() {
         <select value={estado} onChange={(event) => setEstado(event.target.value as EstadoPedido | '')} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-amber-400">
           {ESTADOS.map((opcion) => <option key={opcion.value} value={opcion.value}>{opcion.label}</option>)}
         </select>
+        <label className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-500">
+          <span>Entrega</span>
+          <input type="date" value={fechaEntrega} onChange={(event) => setFechaEntrega(event.target.value)} className="text-slate-900 outline-none" />
+        </label>
       </section>
 
-      {error ? <p className="rounded-xl bg-red-50 p-4 text-sm text-red-800">{error}</p> : null}
+      {error ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 p-4 text-sm text-red-800"><span>{error}</span><button type="button" onClick={() => window.location.reload()} className="rounded-lg bg-red-100 px-3 py-1.5 font-semibold hover:bg-red-200">Reintentar</button></div> : null}
       {cargando ? <p className="text-sm text-slate-500">Cargando pedidos…</p> : null}
       {!cargando && !error && pedidos.length === 0 ? <p className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">No hay pedidos que coincidan con la búsqueda.</p> : null}
       <div className="grid gap-4 md:grid-cols-2">
@@ -89,11 +108,19 @@ export default function PedidosEstadoPage() {
             </div>
             <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-sm">
               <span className="text-slate-500">Entrega: {fecha(pedido.fecha_entrega)}</span>
-              <strong className="text-slate-900">Bs {Number(pedido.total).toFixed(2)}</strong>
+              <div className="text-right"><strong className="block text-slate-900">Bs {Number(pedido.total).toFixed(2)}</strong><button type="button" onClick={() => verDetalle(pedido.id_pedido)} className="mt-1 text-xs font-semibold text-amber-800 hover:underline">Ver detalle</button></div>
             </div>
           </article>
         ))}
       </div>
+      {cargandoDetalle ? <p className="text-sm text-slate-500">Cargando detalle…</p> : null}
+      {pedidoSeleccionado ? (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5" aria-label="Detalle del pedido">
+          <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-wide text-amber-800">Detalle del pedido #{pedidoSeleccionado.id_pedido}</p><h2 className="mt-1 text-lg font-bold text-slate-900">{pedidoSeleccionado.cliente}</h2></div><button type="button" onClick={() => setPedidoSeleccionado(null)} className="text-sm font-semibold text-amber-900 hover:underline">Cerrar</button></div>
+          <div className="mt-4 grid gap-2 text-sm text-slate-700 sm:grid-cols-3"><span>Estado: <strong>{ETIQUETAS_ESTADO[pedidoSeleccionado.estado]}</strong></span><span>Pago: <strong>{metodoPago(pedidoSeleccionado.metodo_pago)}</strong></span><span>Total: <strong>Bs {Number(pedidoSeleccionado.total).toFixed(2)}</strong></span></div>
+          <ul className="mt-4 space-y-1 border-t border-amber-200 pt-3 text-sm text-slate-700">{pedidoSeleccionado.detalles.map((detalle) => <li key={detalle.id_detalle_pedido}>{detalle.cantidad} × {detalle.nombre_producto} — Bs {Number(detalle.subtotal).toFixed(2)}</li>)}</ul>
+        </section>
+      ) : null}
     </div>
   );
 }
