@@ -1,8 +1,8 @@
 # VARIABLES DE ESTE PEDIDO
-{{CICLO}} = ...
-{{CU_ID}} = ...
-{{CU_NOMBRE}} = ...
-{{POR_QUE_ES_COMPLEJO}} = ...
+{{CICLO}} = 3
+{{CU_ID}} = CU16
+{{CU_NOMBRE}} = GENERAR_COMPROBANTE_DE_VENTA
+{{POR_QUE_ES_COMPLEJO}} = 
 
 
 # CONTEXTO
@@ -20,7 +20,7 @@ Metodología: PUDS iterativo-incremental, modelado con UML.
 2. panaderia-SI1\docs\ → arquitectura y convenciones del proyecto.
 3. panaderia-SI1\docs\informes\Database_Panaderia_Santiago.sql → DDL vigente.
 4. El código ya existente en backend\apps\ y frontend\ (para respetar
-   nombres, estilo, estructura y lo que ya implementó el Ciclo 1).
+   nombres, estilo, estructura y lo que ya implementó el Ciclo 1 y 2).
 Si algún archivo no existe o no lo puedes leer, dímelo; no lo inventes.
 
 # REGLAS DE ARQUITECTURA (obligatorias)

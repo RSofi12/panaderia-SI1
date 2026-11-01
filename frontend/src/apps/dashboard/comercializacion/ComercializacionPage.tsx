@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import type { VentaResumen } from '../../../types/venta';
 import { ChipMetodo } from './ventas/ChipMetodo';
+import { ComprobanteVentaModal } from './ventas/ComprobanteVentaModal';
 import { ventaService } from './ventas/ventaService';
 
 function bolivianos(valor: number): string {
@@ -47,6 +48,7 @@ export const ComercializacionPage: React.FC = () => {
   const puedeConsultarDisponibilidad = hasPermission('registrar_pedidos') || hasPermission('registrar_ventas') || hasPermission('gestionar_inventario');
   const [ventas, setVentas] = useState<VentaResumen[]>([]);
   const [estado, setEstado] = useState<EstadoCarga>('cargando');
+  const [idVentaComprobante, setIdVentaComprobante] = useState<number | null>(null);
 
   useEffect(() => {
     if (!puedeVender) return;
@@ -200,9 +202,20 @@ export const ComercializacionPage: React.FC = () => {
                       <span className="tabular-nums text-slate-500">{hora(venta.fecha_hora)}</span>
                       <ChipMetodo metodo={venta.metodo_pago} />
                     </div>
-                    <span className="font-semibold tabular-nums text-slate-900">
-                      {bolivianos(Number(venta.total))}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold tabular-nums text-slate-900">
+                        {bolivianos(Number(venta.total))}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIdVentaComprobante(venta.id_venta)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100 transition"
+                        title="Ver / Imprimir Comprobante (CU16)"
+                      >
+                        <Receipt className="h-3.5 w-3.5" />
+                        <span>Ticket</span>
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -210,6 +223,11 @@ export const ComercializacionPage: React.FC = () => {
           </section>
         </>
       ) : null}
+      <ComprobanteVentaModal
+        idVenta={idVentaComprobante}
+        abierto={idVentaComprobante !== null}
+        onCerrar={() => setIdVentaComprobante(null)}
+      />
     </div>
   );
 };

@@ -7,6 +7,7 @@ import {
   Loader2,
   Minus,
   Plus,
+  Receipt,
   RefreshCw,
   Search,
   ShoppingBasket,
@@ -24,6 +25,7 @@ import type {
   VentaResumen,
 } from '../../../../types/venta';
 import { ChipMetodo } from './ChipMetodo';
+import { ComprobanteVentaModal } from './ComprobanteVentaModal';
 import { ModalPagoTarjeta } from './ModalPagoTarjeta';
 import { ventaService } from './ventaService';
 
@@ -101,6 +103,7 @@ export default function RegistrarVentaPage() {
   const cerrarDialogo = useCallback(() => setCerrada(null), []);
 
   const [modalTarjetaAbierto, setModalTarjetaAbierto] = useState(false);
+  const [idVentaComprobante, setIdVentaComprobante] = useState<number | null>(null);
 
   const aplicarCarga = useCallback((resultado: Awaited<ReturnType<typeof pedirMostrador>>) => {
     if (resultado) {
@@ -553,9 +556,24 @@ export default function RegistrarVentaPage() {
         </aside>
       </div>
 
-      <VentasDelDia ventas={ventasHoy} />
+      <VentasDelDia
+        ventas={ventasHoy}
+        onVerComprobante={(id) => setIdVentaComprobante(id)}
+      />
 
-      {cerrada ? <DialogoVentaRegistrada cerrada={cerrada} onCerrar={cerrarDialogo} /> : null}
+      {cerrada ? (
+        <DialogoVentaRegistrada
+          cerrada={cerrada}
+          onCerrar={cerrarDialogo}
+          onVerComprobante={(id) => setIdVentaComprobante(id)}
+        />
+      ) : null}
+
+      <ComprobanteVentaModal
+        idVenta={idVentaComprobante}
+        abierto={idVentaComprobante !== null}
+        onCerrar={() => setIdVentaComprobante(null)}
+      />
 
       <ModalPagoTarjeta
         abierto={modalTarjetaAbierto}
@@ -734,7 +752,12 @@ function EsqueletoCatalogo() {
   );
 }
 
-function VentasDelDia({ ventas }: { ventas: VentaResumen[] }) {
+interface VentasDelDiaProps {
+  ventas: VentaResumen[];
+  onVerComprobante: (idVenta: number) => void;
+}
+
+function VentasDelDia({ ventas, onVerComprobante }: VentasDelDiaProps) {
   return (
     <section aria-labelledby="titulo-ventas-dia" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
       <h2 id="titulo-ventas-dia" className="text-sm font-bold text-slate-900">
@@ -751,7 +774,8 @@ function VentasDelDia({ ventas }: { ventas: VentaResumen[] }) {
                 <th className="py-2 pr-4 font-semibold">Hora</th>
                 <th className="py-2 pr-4 font-semibold">Pago</th>
                 <th className="py-2 pr-4 font-semibold">Cajero</th>
-                <th className="py-2 text-right font-semibold">Total</th>
+                <th className="py-2 pr-4 text-right font-semibold">Total</th>
+                <th className="py-2 text-right font-semibold">Comprobante</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -763,8 +787,19 @@ function VentasDelDia({ ventas }: { ventas: VentaResumen[] }) {
                     <ChipMetodo metodo={venta.metodo_pago} />
                   </td>
                   <td className="py-2.5 pr-4 text-slate-600">{venta.registrado_por}</td>
-                  <td className="py-2.5 text-right font-semibold tabular-nums text-slate-900">
+                  <td className="py-2.5 pr-4 text-right font-semibold tabular-nums text-slate-900">
                     {bolivianos(venta.total)}
+                  </td>
+                  <td className="py-2.5 text-right">
+                    <button
+                      type="button"
+                      onClick={() => onVerComprobante(venta.id_venta)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100"
+                      title="Ver / Imprimir Comprobante (CU16)"
+                    >
+                      <Receipt className="h-3.5 w-3.5" />
+                      <span>Ticket</span>
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -779,9 +814,10 @@ function VentasDelDia({ ventas }: { ventas: VentaResumen[] }) {
 interface DialogoVentaRegistradaProps {
   cerrada: VentaCerrada;
   onCerrar: () => void;
+  onVerComprobante: (idVenta: number) => void;
 }
 
-function DialogoVentaRegistrada({ cerrada, onCerrar }: DialogoVentaRegistradaProps) {
+function DialogoVentaRegistrada({ cerrada, onCerrar, onVerComprobante }: DialogoVentaRegistradaProps) {
   const { venta, recibido, cambio } = cerrada;
   const botonRef = useRef<HTMLButtonElement>(null);
 
@@ -856,14 +892,24 @@ function DialogoVentaRegistrada({ cerrada, onCerrar }: DialogoVentaRegistradaPro
           ) : null}
         </dl>
 
-        <button
-          ref={botonRef}
-          type="button"
-          onClick={onCerrar}
-          className="mt-6 w-full rounded-2xl bg-amber-700 px-4 py-3.5 text-base font-bold text-white hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
-        >
-          Nueva venta
-        </button>
+        <div className="mt-6 flex flex-col gap-2.5">
+          <button
+            type="button"
+            onClick={() => onVerComprobante(venta.id_venta)}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-amber-700 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-900 transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
+          >
+            <Receipt className="h-4 w-4 text-amber-700" />
+            <span>Ver / Imprimir Comprobante (CU16)</span>
+          </button>
+          <button
+            ref={botonRef}
+            type="button"
+            onClick={onCerrar}
+            className="w-full rounded-2xl bg-amber-700 px-4 py-3 text-sm font-bold text-white hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300"
+          >
+            Nueva venta
+          </button>
+        </div>
       </div>
     </div>
   );

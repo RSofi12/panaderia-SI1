@@ -125,3 +125,63 @@ class VentaListSerializer(serializers.ModelSerializer):
             'registrado_por',
             'cantidad_lineas',
         ]
+
+
+class ComprobanteDetalleSerializer(serializers.ModelSerializer):
+    nombre_producto = serializers.CharField(source='id_producto.nombre', read_only=True)
+
+    class Meta:
+        model = DetalleVenta
+        fields = [
+            'id_detalle_venta',
+            'id_producto',
+            'nombre_producto',
+            'cantidad',
+            'precio_unitario',
+            'subtotal',
+        ]
+
+
+class ComprobanteVentaSerializer(serializers.ModelSerializer):
+    """
+    Serializer enriquecido para la emisión y visualización del Comprobante de Venta (CU16).
+    Incluye datos de la empresa, cajero, líneas detalladas y metadatos del cobro.
+    """
+    cajero = serializers.SerializerMethodField()
+    detalles = ComprobanteDetalleSerializer(many=True, read_only=True)
+    empresa = serializers.SerializerMethodField()
+    total_articulos = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Venta
+        fields = [
+            'id_venta',
+            'numero_comprobante',
+            'fecha_hora',
+            'metodo_pago',
+            'id_transaccion_stripe',
+            'total',
+            'cajero',
+            'total_articulos',
+            'empresa',
+            'detalles',
+        ]
+
+    def get_cajero(self, obj):
+        if obj.id_usuario:
+            return obj.id_usuario.nombre_completo or obj.id_usuario.nombre_usuario
+        return 'Cajero no asignado'
+
+    def get_total_articulos(self, obj):
+        return sum(d.cantidad for d in obj.detalles.all())
+
+    def get_empresa(self, obj):
+        return {
+            'nombre': 'Panadería Santiago',
+            'propietario': 'Carlos Santiago Vargas',
+            'actividad': 'Elaboración y Venta de Productos de Panadería',
+            'direccion': 'Santa Cruz de la Sierra, Bolivia',
+            'telefono': '3-3456789',
+            'mensaje_pie': '¡Gracias por su preferencia!',
+        }
+

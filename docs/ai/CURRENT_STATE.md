@@ -57,7 +57,7 @@
 | **CU13**| Registrar venta | `apps.comercializacion.ventas` | 🟢 |
 | **CU14**| Registrar pedido | `apps.comercializacion` | ⚪ |
 | **CU15**| Consultar estado de pedido | `apps.comercializacion` | ⚪ |
-| **CU16**| Generar comprobante de venta | `apps.comercializacion` | ⚪ |
+| **CU16**| Generar comprobante de venta | `apps.comercializacion.ventas` | 🟢 |
 | **CU17**| Consultar disponibilidad de productos | `apps.comercializacion` | ⚪ |
 | **CU18**| Registrar baja de productos terminados | `apps.productos_inventario.productos_terminados` | ⚪ |
 | **CU19**| Consultar historial de precios | `apps.productos_inventario.productos` | 🟢 Implementado: precios de venta, consulta paginada y filtros, Propietario con gestionar_productos, productos inactivos incluidos. 28 pruebas CU19 y regresiones CU05/CU07/CU08/CU09 aprobadas en PostgreSQL temporal. |
@@ -65,6 +65,8 @@
 **CU13 (2026-10-14):** Venta de mostrador en `apps.comercializacion.ventas`. Métodos `efectivo` y `stripe`. Backend transaccional con descuento atómico de existencias en `InventarioProductoTerminado`, creación de movimientos de salida en Kardex y auditoría en `Bitacora`. Pasarela Stripe implementada de extremo a extremo: endpoint público de configuración `GET /api/ventas/stripe/config/` para `publishable_key`, cobro con Stripe `PaymentIntent` y auto-reembolso atómico (`Refund.create`) ante fallos de inventario (16 pruebas backend en verde al 100%). Frontend completado en `/dashboard/comercializacion/ventas` con modal oficial de Stripe Elements (`ModalPagoTarjeta.tsx`), integración con `@stripe/react-stripe-js` (`CardElement`) con formato modal estándar de Stripe, soporte nativo para Link en producción HTTPS, validación visual de tarjeta, soporte accesible WCAG y 0 errores en compilación Vite de producción (`npm run build`).
 
 
+
+**CU16 (2026-10-31):** Generación de comprobante de venta de mostrador (ticket térmico 80mm y PDF oficial descargable/imprimible). Backend: endpoints `GET /api/ventas/<pk>/comprobante/` y `GET /api/ventas/<pk>/comprobante/pdf/`, selector optimizado `obtener_comprobante_venta` con soporte por `id_venta` o `numero_comprobante`, generador ligero de PDF 1.4 puro en Python (`comprobante_pdf.py`) sin dependencias externas pesadas, RBAC con `PuedeConsultarComprobante` y auditoría en `Bitacora` (`AccionBitacora.EMISION_COMPROBANTE`). 6 pruebas backend en verde al 100%. Frontend: modal accesible `ComprobanteVentaModal.tsx` con vista `ComprobanteTicketView.tsx`, botón de impresión directa en ventana emergente aislada (`window.print()`), descarga de PDF binario vía Blob y botón integrado en diálogo post-venta y tabla de ventas de hoy (`RegistrarVentaPage.tsx` y `ComercializacionPage.tsx`). Build Vite verificado con 0 errores TypeScript.
 
 ---
 

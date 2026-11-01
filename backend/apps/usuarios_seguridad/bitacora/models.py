@@ -85,6 +85,9 @@ class AccionBitacora(models.TextChoices):
     # --- CU10: Registrar producción diaria ---
     REGISTRO_PRODUCCION = 'REGISTRO_PRODUCCION', 'Registro de producción diaria'
 
+    # --- CU16: Generar comprobante de venta ---
+    EMISION_COMPROBANTE = 'EMISION_COMPROBANTE', 'Emisión de comprobante de venta'
+
 
 class Bitacora(models.Model):
     """
