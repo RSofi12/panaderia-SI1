@@ -104,6 +104,7 @@ class PruebasRegistrarPedido(BasePedido):
         self.assertEqual(respuesta.data['estado'], EstadoPedido.PENDIENTE)
         self.assertEqual(respuesta.data['total'], '6.00')
         self.assertEqual(respuesta.data['cliente'], 'Hotel Cortez')
+        self.assertTrue(respuesta.data['pagado'])
         self.assertEqual(respuesta.data['detalles'][0]['precio_unitario'], '0.60')
         self.assertEqual(Cliente.objects.filter(nombre='Hotel Cortez').count(), 1)
         self.assertEqual(Pedido.objects.count(), 1)
@@ -238,31 +239,49 @@ class PruebasCambiarEstadoPedido(BasePedido):
         self.assertEqual(repetido.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(Venta.objects.filter(id_pedido_id=pedido_id).count(), 1)
 
-    def test_tarjeta_sin_datos_no_entrega_ni_crea_venta(self):
+    def test_sin_pagar_no_prepara_ni_entrega(self):
         alta = self._pedir(self.vendedor, self._cuerpo(metodo_pago='stripe'))
         pedido_id = alta.data['id_pedido']
-        self._cambiar(self.vendedor, pedido_id, 'en_preparacion')
-        self._cambiar(self.vendedor, pedido_id, 'listo')
-        respuesta = self._cambiar(self.vendedor, pedido_id, 'entregado')
-        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(alta.data['pagado'])
+        preparar = self._cambiar(self.vendedor, pedido_id, 'en_preparacion')
+        self.assertEqual(preparar.status_code, status.HTTP_400_BAD_REQUEST)
+        entregar = self._cambiar(self.vendedor, pedido_id, 'entregado')
+        self.assertEqual(entregar.status_code, status.HTTP_400_BAD_REQUEST)
         pedido = Pedido.objects.get(pk=pedido_id)
-        self.assertEqual(pedido.estado, EstadoPedido.LISTO)
+        self.assertEqual(pedido.estado, EstadoPedido.PENDIENTE)
         self.assertEqual(Venta.objects.count(), 0)
         self.stock.refresh_from_db()
         self.assertEqual(self.stock.stock_actual, 40)
+        cancelado = self._cambiar(self.vendedor, pedido_id, 'cancelado')
+        self.assertEqual(cancelado.status_code, status.HTTP_200_OK)
 
 
 @override_settings(STRIPE_SECRET_KEY='sk_test_cu14', STRIPE_CURRENCY='bob', STRIPE_PUBLISHABLE_KEY='pk_test_cu14')
 class PruebasStripePedido(BasePedido):
-    def _dejar_listo_con_tarjeta(self):
+    def _dejar_listo_con_tarjeta(self, stripe_mock):
         alta = self._pedir(self.vendedor, self._cuerpo(metodo_pago='stripe'))
         pedido_id = alta.data['id_pedido']
+        intento = MagicMock()
+        intento.id = 'pi_pedido_1'
+        intento.status = 'succeeded'
+        intento.currency = 'bob'
+        intento.amount = 600
+        intento.client_secret = 'pi_pedido_1_secret'
+        stripe_mock.PaymentIntent.retrieve.return_value = intento
+        stripe_mock.PaymentIntent.create.return_value = intento
+        pago = self.client.post(
+            f'/api/pedidos/{pedido_id}/pago/',
+            {'id_transaccion_stripe': 'pi_pedido_1'},
+            format='json',
+        )
+        self.assertEqual(pago.status_code, status.HTTP_200_OK, pago.data)
         self._cambiar(self.vendedor, pedido_id, 'en_preparacion')
         self._cambiar(self.vendedor, pedido_id, 'listo')
         return pedido_id
 
     def test_la_intencion_usa_el_total_congelado(self):
-        pedido_id = self._dejar_listo_con_tarjeta()
+        alta = self._pedir(self.vendedor, self._cuerpo(metodo_pago='stripe'))
+        pedido_id = alta.data['id_pedido']
         self.marraqueta.precio_venta = Decimal('9.00')
         self.marraqueta.save(update_fields=['precio_venta'])
         intento = MagicMock()
@@ -274,14 +293,14 @@ class PruebasStripePedido(BasePedido):
         self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
         self.assertEqual(respuesta.data['id_transaccion_stripe'], 'pi_pedido_1')
         self.assertEqual(respuesta.data['monto'], '6.00')
-        self.assertEqual(Pedido.objects.get(pk=pedido_id).estado, EstadoPedido.LISTO)
+        self.assertEqual(Pedido.objects.get(pk=pedido_id).estado, EstadoPedido.PENDIENTE)
         self.assertEqual(Venta.objects.count(), 0)
         kwargs = stripe_mock.PaymentIntent.create.call_args.kwargs
         self.assertEqual(kwargs['amount'], 600)
         self.assertEqual(kwargs['metadata'], {'origen': 'cu14-pedido'})
 
-    def test_la_intencion_no_se_crea_si_el_pedido_no_esta_listo(self):
-        alta = self._pedir(self.vendedor, self._cuerpo(metodo_pago='stripe'))
+    def test_la_intencion_no_se_crea_si_el_pedido_ya_esta_pagado(self):
+        alta = self._pedir(self.vendedor, self._cuerpo())
         respuesta = self.client.post(f"/api/pedidos/{alta.data['id_pedido']}/stripe/intencion/")
         self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(Venta.objects.count(), 0)
@@ -293,20 +312,9 @@ class PruebasStripePedido(BasePedido):
         self.assertEqual(respuesta.data['publishable_key'], 'pk_test_cu14')
 
     def test_entregar_con_el_id_de_stripe_guarda_la_venta(self):
-        pedido_id = self._dejar_listo_con_tarjeta()
-        intento = MagicMock()
-        intento.id = 'pi_pedido_1'
-        intento.status = 'succeeded'
-        intento.currency = 'bob'
-        intento.amount = 600
         with patch('apps.comercializacion.ventas.services.stripe_pago.stripe') as stripe_mock:
-            stripe_mock.PaymentIntent.retrieve.return_value = intento
-            respuesta = self._cambiar(
-                self.vendedor,
-                pedido_id,
-                'entregado',
-                id_transaccion_stripe='pi_pedido_1',
-            )
+            pedido_id = self._dejar_listo_con_tarjeta(stripe_mock)
+            respuesta = self._cambiar(self.vendedor, pedido_id, 'entregado')
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         venta = Venta.objects.get(id_pedido_id=pedido_id)
         self.assertEqual(venta.id_transaccion_stripe, 'pi_pedido_1')
@@ -342,5 +350,21 @@ class PruebasStripePedido(BasePedido):
         self.assertEqual(alta.status_code, status.HTTP_201_CREATED)
         pedido = Pedido.objects.get(pk=alta.data['id_pedido'])
         self.assertEqual(pedido.id_transaccion_stripe, 'pi_alta_1')
+        self.assertTrue(pedido.pagado)
         self.assertEqual(pedido.estado, EstadoPedido.PENDIENTE)
+        self.assertEqual(Venta.objects.count(), 0)
+
+    def test_el_efectivo_viejo_se_paga_antes_de_preparar(self):
+        alta = self._pedir(self.vendedor, self._cuerpo())
+        pedido_id = alta.data['id_pedido']
+        Pedido.objects.filter(pk=pedido_id).update(pagado=False)
+        bloqueado = self._cambiar(self.vendedor, pedido_id, 'en_preparacion')
+        self.assertEqual(bloqueado.status_code, status.HTTP_400_BAD_REQUEST)
+        pago = self.client.post(f'/api/pedidos/{pedido_id}/pago/', {}, format='json')
+        self.assertEqual(pago.status_code, status.HTTP_200_OK)
+        self.assertTrue(pago.data['pagado'])
+        self.assertEqual(pago.data['estado'], EstadoPedido.PENDIENTE)
+        self.assertTrue(Bitacora.objects.filter(accion=AccionBitacora.PAGO_PEDIDO).exists())
+        preparado = self._cambiar(self.vendedor, pedido_id, 'en_preparacion')
+        self.assertEqual(preparado.status_code, status.HTTP_200_OK)
         self.assertEqual(Venta.objects.count(), 0)

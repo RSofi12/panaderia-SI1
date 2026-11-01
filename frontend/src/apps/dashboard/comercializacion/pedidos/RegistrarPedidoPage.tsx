@@ -69,30 +69,41 @@ function isoEntrega(fecha: string, hora: string): string {
 }
 
 const PASOS_PEDIDO = [
-  { estado: 'pendiente', titulo: 'Pendiente', accion: 'Pendiente' },
+  { estado: 'pagar', titulo: 'Pagar', accion: 'Pagar' },
   { estado: 'en_preparacion', titulo: 'Preparar', accion: 'Preparar' },
   { estado: 'listo', titulo: 'Listo', accion: 'Marcar listo' },
   { estado: 'entregado', titulo: 'Entregar', accion: 'Entregar' },
 ] as const;
 
+const COCINA: Record<string, number> = { en_preparacion: 1, listo: 2, entregado: 3 };
+
 function LineaTiempoPedido({
   estado,
+  pagado,
   enviando,
   onAvanzar,
 }: {
   estado: string;
+  pagado: boolean;
   enviando: boolean;
   onAvanzar: (estado: string) => void;
 }) {
   const cancelado = estado === 'cancelado';
-  const indiceActual = PASOS_PEDIDO.findIndex((paso) => paso.estado === estado);
+  const posicionCocina = COCINA[estado] ?? -1;
+  const lineaHasta = posicionCocina >= 0 ? posicionCocina : pagado ? 0 : -1;
 
   return (
     <ol aria-label="Pasos del pedido" className="-mx-4 grid w-[calc(100%+2rem)] grid-cols-4 sm:mx-auto sm:w-full sm:max-w-md">
       {PASOS_PEDIDO.map((paso, indice) => {
-        const hecho = !cancelado && indiceActual > indice;
-        const actual = !cancelado && indiceActual === indice;
-        const siguiente = !cancelado && indice === indiceActual + 1;
+        const hecho = !cancelado && (paso.estado === 'pagar' ? pagado : posicionCocina > indice);
+        const actual = !cancelado && paso.estado !== 'pagar' && posicionCocina === indice;
+        const siguiente = !cancelado && (
+          (paso.estado === 'pagar' && !pagado)
+          || (pagado && paso.estado !== 'pagar' && (
+            (estado === 'pendiente' && indice === 1)
+            || (estado !== 'pendiente' && indice === posicionCocina + 1)
+          ))
+        );
         const pista = siguiente
           ? paso.accion === paso.titulo
             ? 'Toca aquí'
@@ -134,7 +145,7 @@ function LineaTiempoPedido({
           <span
             aria-hidden="true"
             className={`absolute top-[22px] right-1/2 h-0.5 w-full -translate-y-1/2 ${
-              !cancelado && indice <= indiceActual ? 'bg-amber-500' : 'bg-slate-200'
+              !cancelado && indice <= lineaHasta ? 'bg-amber-500' : 'bg-slate-200'
             }`}
           />
         );
@@ -201,6 +212,7 @@ export default function RegistrarPedidoPage() {
   const [cobrandoNuevo, setCobrandoNuevo] = useState(false);
   const [confirmarCancelacion, setConfirmarCancelacion] = useState(false);
   const [pedidoGuardado, setPedidoGuardado] = useState<PedidoRegistrado | null>(null);
+  const [pedidoPagado, setPedidoPagado] = useState<PedidoRegistrado | null>(null);
   const [pedidoEntregado, setPedidoEntregado] = useState<PedidoRegistrado | null>(null);
   const detalleRef = useRef<HTMLElement>(null);
 
@@ -354,23 +366,35 @@ export default function RegistrarPedidoPage() {
     }
   }
 
-  async function entregarConTarjeta(idTransaccionStripe: string) {
+  async function pagarConTarjeta(idTransaccionStripe: string) {
     if (!pedido) return;
     setError('');
     setEnviando(true);
     try {
-      const actualizado = await pedidoService.cambiarEstado(
-        pedido.id_pedido,
-        'entregado',
-        idTransaccionStripe,
-      );
+      const actualizado = await pedidoService.pagar(pedido.id_pedido, idTransaccionStripe);
       setPedido(actualizado);
-      setPedidoEntregado(actualizado);
+      setPedidoPagado(actualizado);
       setModalTarjetaAbierto(false);
       await cargarAbiertos();
     } catch (causa) {
       setError(mensajeDeError(causa));
       throw causa;
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  async function pagarEnEfectivo() {
+    if (!pedido) return;
+    setError('');
+    setEnviando(true);
+    try {
+      const actualizado = await pedidoService.pagar(pedido.id_pedido);
+      setPedido(actualizado);
+      setPedidoPagado(actualizado);
+      await cargarAbiertos();
+    } catch (causa) {
+      setError(mensajeDeError(causa));
     } finally {
       setEnviando(false);
     }
@@ -394,13 +418,14 @@ export default function RegistrarPedidoPage() {
 
   function avanzar(estadoDestino: string) {
     if (!pedido) return;
-    if (
-      estadoDestino === 'entregado' &&
-      pedido.metodo_pago === 'stripe' &&
-      !pedido.id_transaccion_stripe
-    ) {
+    if (estadoDestino === 'pagar') {
       setError('');
-      setModalTarjetaAbierto(true);
+      if (pedido.metodo_pago === 'stripe') {
+        setCobrandoNuevo(false);
+        setModalTarjetaAbierto(true);
+        return;
+      }
+      void pagarEnEfectivo();
       return;
     }
     void mover(estadoDestino);
@@ -438,7 +463,10 @@ export default function RegistrarPedidoPage() {
                   <span>
                     #{item.id_pedido} · {item.cliente}
                   </span>
-                  <span>{NOMBRE_ESTADO[item.estado] ?? item.estado}</span>
+                  <span>
+                    {item.pagado ? '' : 'Sin pagar · '}
+                    {NOMBRE_ESTADO[item.estado] ?? item.estado}
+                  </span>
                 </button>
               </li>
             ))}
@@ -451,20 +479,28 @@ export default function RegistrarPedidoPage() {
           <h3 className="text-xl font-bold text-slate-900">Pedido {pedido.id_pedido}</h3>
           <p className="text-sm text-slate-600">
             {pedido.cliente} · {NOMBRE_ESTADO[pedido.estado] ?? pedido.estado} · {bolivianos(pedido.total)}
+            {pedido.pagado ? ' · Pagado' : ' · Sin pagar'}
           </p>
-          <LineaTiempoPedido estado={pedido.estado} enviando={enviando} onAvanzar={avanzar} />
+          <LineaTiempoPedido
+            estado={pedido.estado}
+            pagado={Boolean(pedido.pagado)}
+            enviando={enviando}
+            onAvanzar={avanzar}
+          />
           <p className="text-sm text-slate-500">
-            {pedido.estado === 'entregado'
-              ? `Se registró la venta${pedido.numero_comprobante ? ` ${pedido.numero_comprobante}` : ''} y se descontó el stock.`
-              : pedido.estado === 'listo'
-                ? pedido.metodo_pago === 'stripe' && !pedido.id_transaccion_stripe
-                  ? 'El paso Entregar abre la ventana de Stripe para que el cliente ingrese su tarjeta. Eso crea la venta y baja el stock.'
-                  : pedido.metodo_pago === 'stripe'
-                    ? 'La tarjeta ya se cobró al guardar. El paso Entregar crea la venta y baja el stock.'
-                    : 'El paso Entregar cobra en efectivo, crea la venta y baja el stock.'
-                : pedido.estado === 'cancelado'
-                  ? 'El pedido quedó cancelado. No hay venta ni movimiento de stock.'
-                  : 'Solo se puede avanzar al paso siguiente. Eso no cobra ni descuenta stock.'}
+            {pedido.estado === 'cancelado'
+              ? 'El pedido quedó cancelado. No hay venta ni movimiento de stock.'
+              : !pedido.pagado
+                ? pedido.estado === 'listo'
+                  ? 'Primero se paga el pedido. Entregar queda bloqueado hasta el cobro.'
+                  : pedido.estado === 'en_preparacion'
+                    ? 'Primero se paga el pedido. Marcar listo queda bloqueado hasta el cobro.'
+                    : 'Primero se paga el pedido. Preparar queda bloqueado hasta el cobro.'
+                : pedido.estado === 'entregado'
+                  ? `Se registró la venta${pedido.numero_comprobante ? ` ${pedido.numero_comprobante}` : ''} y se descontó el stock.`
+                  : pedido.estado === 'listo'
+                    ? 'El cobro ya se hizo. El paso Entregar crea la venta y baja el stock.'
+                    : 'El pedido ya está pagado. Solo se puede avanzar al paso siguiente, y eso no descuenta stock.'}
           </p>
           {puedeCancelar ? (
             <button
@@ -483,7 +519,16 @@ export default function RegistrarPedidoPage() {
       {pedidoGuardado ? (
         <DialogoPedidoGuardado
           pedido={pedidoGuardado}
+          nuevo
           onCerrar={() => setPedidoGuardado(null)}
+        />
+      ) : null}
+
+      {pedidoPagado && !pedidoGuardado ? (
+        <DialogoPedidoGuardado
+          pedido={pedidoPagado}
+          nuevo={false}
+          onCerrar={() => setPedidoPagado(null)}
         />
       ) : null}
 
@@ -674,7 +719,7 @@ export default function RegistrarPedidoPage() {
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-700 px-4 py-4 text-base font-bold text-white disabled:bg-slate-300 disabled:text-slate-500"
               >
                 {enviando ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : null}
-                Guardar pedido
+                {`Pagar ${bolivianos((totalCentavos / 100).toFixed(2))} en efectivo`}
               </button>
             )}
           </form>
@@ -717,7 +762,7 @@ export default function RegistrarPedidoPage() {
           setCobrandoNuevo(false);
           setModalTarjetaAbierto(false);
         }}
-        onVentaConfirmada={cobrandoNuevo || !pedido ? guardarConTarjeta : entregarConTarjeta}
+        onVentaConfirmada={cobrandoNuevo || !pedido ? guardarConTarjeta : pagarConTarjeta}
       />
     </div>
   );
@@ -811,19 +856,23 @@ function OpcionMetodo({
 
 function DialogoPedidoGuardado({
   pedido,
+  nuevo,
   onCerrar,
 }: {
   pedido: PedidoRegistrado;
+  nuevo: boolean;
   onCerrar: () => void;
 }) {
+  const como = pedido.metodo_pago === 'stripe' ? 'con tarjeta' : 'en efectivo';
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="presentation">
       <div role="dialog" aria-modal="true" aria-labelledby="titulo-guardado" className="max-w-md rounded-3xl bg-white p-6 shadow-xl">
         <h3 id="titulo-guardado" className="text-xl font-bold text-slate-900">
-          El pedido ha sido guardado
+          {nuevo ? 'El pedido ha sido guardado' : 'El pedido ha sido pagado'}
         </h3>
         <p className="mt-3 text-sm leading-relaxed text-slate-600">
-          El pedido {pedido.id_pedido} de {pedido.cliente} quedó en pendiente, por {bolivianos(pedido.total)}.
+          El pedido {pedido.id_pedido} de {pedido.cliente} quedó {nuevo ? 'guardado y ' : ''}pagado {como}, por {bolivianos(pedido.total)}.
+          {pedido.estado === 'pendiente' ? ' El siguiente paso es Preparar.' : ' Ya se puede continuar con el paso siguiente.'}
         </p>
         <div className="mt-5 flex justify-end">
           <button

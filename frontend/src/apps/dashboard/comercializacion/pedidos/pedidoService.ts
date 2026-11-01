@@ -16,6 +16,7 @@ export interface PedidoRegistrado {
   total: string;
   metodo_pago?: string;
   id_transaccion_stripe?: string | null;
+  pagado?: boolean;
   numero_comprobante?: number | null;
 }
 
@@ -40,6 +41,15 @@ export const pedidoService = {
       cuerpo.id_transaccion_stripe = idTransaccionStripe;
     }
     const respuesta = await api.patch<PedidoRegistrado>(`/pedidos/${idPedido}/`, cuerpo);
+    return respuesta.data;
+  },
+
+  async pagar(idPedido: number, idTransaccionStripe?: string): Promise<PedidoRegistrado> {
+    const cuerpo: { id_transaccion_stripe?: string } = {};
+    if (idTransaccionStripe) {
+      cuerpo.id_transaccion_stripe = idTransaccionStripe;
+    }
+    const respuesta = await api.post<PedidoRegistrado>(`/pedidos/${idPedido}/pago/`, cuerpo);
     return respuesta.data;
   },
 

@@ -9,6 +9,7 @@ from apps.comercializacion.pedidos.permissions import PuedeRegistrarPedidos
 from apps.comercializacion.pedidos.selectors import listar_pedidos_abiertos, obtener_pedido
 from apps.comercializacion.pedidos.serializers import (
     CambiarEstadoPedidoSerializer,
+    PagarPedidoSerializer,
     PedidoCobroSerializer,
     PedidoRegistroSerializer,
     PedidoSerializer,
@@ -61,6 +62,22 @@ class PedidoDetailView(APIView):
         return Response(PedidoSerializer(obtener_pedido(pedido.pk)).data)
 
 
+class PedidoPagoView(APIView):
+    """POST /api/pedidos/<id>/pago/ — cobra el pedido y lo deja en el mismo estado."""
+    permission_classes = [PuedeRegistrarPedidos]
+
+    def post(self, request, pk):
+        pedido = obtener_pedido(pk)
+        serializer = PagarPedidoSerializer(
+            instance=pedido,
+            data=request.data,
+            context={'request': request},
+        )
+        serializer.is_valid(raise_exception=True)
+        pedido = serializer.save()
+        return Response(PedidoSerializer(obtener_pedido(pedido.pk)).data)
+
+
 class PedidoStripeConfigView(APIView):
     """GET /api/pedidos/stripe/config/ — clave pública para el formulario de tarjeta."""
     permission_classes = [PuedeRegistrarPedidos]
@@ -89,9 +106,13 @@ class PedidoStripeIntencionView(APIView):
 
     def post(self, request, pk):
         pedido = obtener_pedido(pk)
-        if pedido.estado != EstadoPedido.LISTO or pedido.metodo_pago != MetodoPago.STRIPE:
+        if (
+            pedido.pagado
+            or pedido.metodo_pago != MetodoPago.STRIPE
+            or pedido.estado in (EstadoPedido.ENTREGADO, EstadoPedido.CANCELADO)
+        ):
             raise serializers.ValidationError({
-                'estado': 'La tarjeta se ingresa al entregar un pedido listo con pago Stripe.',
+                'pago': 'La tarjeta se ingresa para pagar un pedido que todavía no está cobrado.',
             })
         try:
             return Response(

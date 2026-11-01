@@ -23,9 +23,10 @@ class PedidoAdmin(admin.ModelAdmin):
         'fecha_registro',
         'fecha_entrega',
         'estado',
+        'pagado',
         'metodo_pago',
         'total',
         'id_usuario',
     )
-    list_filter = ('estado', 'metodo_pago')
+    list_filter = ('estado', 'pagado', 'metodo_pago')
     inlines = [DetallePedidoInline]

@@ -2,7 +2,8 @@
 Alta de un pedido anticipado (CU14).
 
 El pedido nace en pendiente. El precio sale del catálogo.
-No cobra, no crea una venta y no descuenta stock.
+El efectivo queda pagado al guardarlo. La tarjeta queda pagada solo si
+ya trae un cobro confirmado. No crea una venta y no descuenta stock.
 """
 from datetime import time
 from decimal import ROUND_HALF_UP, Decimal
@@ -99,6 +100,7 @@ def _guardar_pedido(
             estado=EstadoPedido.PENDIENTE,
             metodo_pago=metodo_pago,
             id_transaccion_stripe=id_stripe,
+            pagado=metodo_pago == MetodoPago.EFECTIVO or id_stripe is not None,
             total=total,
         )
         DetallePedido.objects.bulk_create([

@@ -75,6 +75,7 @@ class AccionBitacora(models.TextChoices):
 
     # --- CU14: Registrar pedido ---
     ALTA_PEDIDO = 'ALTA_PEDIDO', 'Registro de pedido'
+    PAGO_PEDIDO = 'PAGO_PEDIDO', 'Pago de pedido'
     CAMBIAR_ESTADO_PEDIDO = 'CAMBIAR_ESTADO_PEDIDO', 'Cambio de estado de pedido'
 
     # --- CU8: Gestionar materia prima ---
