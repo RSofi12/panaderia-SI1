@@ -43,6 +43,23 @@ Quitar el pago «QR» del registro de pedido y cobrar con el mismo formulario de
 
 - **Frontend:** al guardar en efectivo o después de cobrar con tarjeta, aparece el diálogo «El pedido ha sido guardado», con el número, el cliente y el total. El ticket se vacía para armar otro pedido.
 
+## Corte 7 — aviso al entregar
+
+- **Frontend:** al completar el paso Entregar, en efectivo o después de la tarjeta, aparece el diálogo «El pedido ha sido entregado», con el número, el cliente, el total y el comprobante de la venta.
+
+## Corte 6 — línea de tiempo horizontal
+
+- **Frontend:** los cuatro pasos quedan en una fila. El nombre vive dentro de su columna, el círculo del siguiente paso mide 44 px y el avance se ve por la línea, el check y el texto («Estás aquí», «Toca aquí», «Hecho»), no solo por el color.
+
+## Corte 5 — línea de tiempo del pedido
+
+- **Frontend:** al abrir un pedido, Preparar, Listo y Entregar se ven como pasos. El paso actual dice «Ahora» y solo el siguiente se puede tocar. Cancelar queda aparte, fuera de la línea.
+- Los pasos ya hechos no se pueden saltar ni volver atrás: el backend solo permite la transición siguiente.
+
+## Corte 4 — etiqueta del caso de uso
+
+- **Frontend:** al entrar a registrar pedido, arriba aparece la etiqueta «CU14 · Registrar pedido», del mismo modo que comercialización muestra «CU13 · Registrar venta».
+
 ## 4. ⚠️ Pendientes o siguientes pasos
 
 - No se pulsó Entregar con una tarjeta real de prueba en el navegador.

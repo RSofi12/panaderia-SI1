@@ -1,5 +1,5 @@
-import { ArrowLeft, Banknote, CreditCard, Loader2, Minus, Plus, ShoppingBasket, Trash2, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, Banknote, Check, CreditCard, Loader2, Minus, Plus, ShoppingBasket, Trash2, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ElementType } from 'react';
 import { Link } from 'react-router-dom';
 import productoService from '../../../../services/productoService';
@@ -68,6 +68,111 @@ function isoEntrega(fecha: string, hora: string): string {
   return new Date(anio, mes - 1, dia, hh, mm, 0, 0).toISOString();
 }
 
+const PASOS_PEDIDO = [
+  { estado: 'pendiente', titulo: 'Pendiente', accion: 'Pendiente' },
+  { estado: 'en_preparacion', titulo: 'Preparar', accion: 'Preparar' },
+  { estado: 'listo', titulo: 'Listo', accion: 'Marcar listo' },
+  { estado: 'entregado', titulo: 'Entregar', accion: 'Entregar' },
+] as const;
+
+function LineaTiempoPedido({
+  estado,
+  enviando,
+  onAvanzar,
+}: {
+  estado: string;
+  enviando: boolean;
+  onAvanzar: (estado: string) => void;
+}) {
+  const cancelado = estado === 'cancelado';
+  const indiceActual = PASOS_PEDIDO.findIndex((paso) => paso.estado === estado);
+
+  return (
+    <ol aria-label="Pasos del pedido" className="-mx-4 grid w-[calc(100%+2rem)] grid-cols-4 sm:mx-auto sm:w-full sm:max-w-md">
+      {PASOS_PEDIDO.map((paso, indice) => {
+        const hecho = !cancelado && indiceActual > indice;
+        const actual = !cancelado && indiceActual === indice;
+        const siguiente = !cancelado && indice === indiceActual + 1;
+        const pista = siguiente
+          ? paso.accion === paso.titulo
+            ? 'Toca aquí'
+            : paso.accion
+          : actual
+            ? 'Estás aquí'
+            : hecho
+              ? 'Hecho'
+              : 'Después';
+        const claseCirculo = cancelado
+          ? 'border-slate-200 bg-slate-100 text-slate-500'
+          : hecho
+            ? 'border-amber-600 bg-amber-600 text-white'
+            : actual
+              ? 'border-amber-500 bg-white text-amber-900 ring-4 ring-amber-100'
+              : siguiente
+                ? 'border-amber-500 bg-amber-400 text-[#2b1a10] group-hover:bg-amber-300'
+                : 'border-slate-200 bg-white text-slate-500';
+        const marca = (
+          <span className={`relative z-10 flex h-11 w-11 items-center justify-center rounded-full border-2 text-sm font-bold ${claseCirculo}`}>
+            {hecho ? <Check className="h-5 w-5" aria-hidden="true" /> : indice + 1}
+          </span>
+        );
+        const textos = (
+          <>
+            <span className={`mt-2 block w-full whitespace-nowrap text-xs font-bold leading-4 tracking-tight ${actual || siguiente ? 'text-slate-900' : 'text-slate-500'}`}>
+              {paso.titulo}
+            </span>
+            {cancelado ? (
+              <span className="mt-0.5 block min-h-8 w-full" />
+            ) : (
+              <span className={`mt-0.5 block min-h-8 w-full text-xs leading-4 ${siguiente || actual ? 'font-semibold text-amber-800' : 'text-slate-500'}`}>
+                {pista}
+              </span>
+            )}
+          </>
+        );
+        const conector = indice === 0 ? null : (
+          <span
+            aria-hidden="true"
+            className={`absolute top-[22px] right-1/2 h-0.5 w-full -translate-y-1/2 ${
+              !cancelado && indice <= indiceActual ? 'bg-amber-500' : 'bg-slate-200'
+            }`}
+          />
+        );
+
+        if (siguiente) {
+          return (
+            <li key={paso.estado} className="relative min-w-0">
+              {conector}
+              <button
+                type="button"
+                disabled={enviando}
+                onClick={() => onAvanzar(paso.estado)}
+                aria-label={`${paso.accion}. Paso ${indice + 1} de ${PASOS_PEDIDO.length}`}
+                className="group flex w-full cursor-pointer scroll-mt-24 flex-col items-center rounded-2xl px-0.5 py-1 text-center hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70 disabled:opacity-50"
+              >
+                {marca}
+                {textos}
+              </button>
+            </li>
+          );
+        }
+
+        return (
+          <li
+            key={paso.estado}
+            className="relative flex min-w-0 flex-col items-center px-0.5 py-1 text-center"
+            aria-current={actual ? 'step' : undefined}
+          >
+            {conector}
+            {marca}
+            {textos}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 function mensajeDeError(error: unknown): string {
   const datos = (error as { response?: { data?: unknown } })?.response?.data;
   if (!datos || typeof datos !== 'object') {
@@ -96,6 +201,8 @@ export default function RegistrarPedidoPage() {
   const [cobrandoNuevo, setCobrandoNuevo] = useState(false);
   const [confirmarCancelacion, setConfirmarCancelacion] = useState(false);
   const [pedidoGuardado, setPedidoGuardado] = useState<PedidoRegistrado | null>(null);
+  const [pedidoEntregado, setPedidoEntregado] = useState<PedidoRegistrado | null>(null);
+  const detalleRef = useRef<HTMLElement>(null);
 
   const horas = useMemo(() => horasDisponibles(fecha), [fecha]);
 
@@ -212,6 +319,7 @@ export default function RegistrarPedidoPage() {
     try {
       const actualizado = await pedidoService.cambiarEstado(pedido.id_pedido, estado, idTransaccionStripe);
       setPedido(actualizado);
+      if (estado === 'entregado') setPedidoEntregado(actualizado);
       setConfirmarCancelacion(false);
       setModalTarjetaAbierto(false);
       await cargarAbiertos();
@@ -257,6 +365,7 @@ export default function RegistrarPedidoPage() {
         idTransaccionStripe,
       );
       setPedido(actualizado);
+      setPedidoEntregado(actualizado);
       setModalTarjetaAbierto(false);
       await cargarAbiertos();
     } catch (causa) {
@@ -268,15 +377,47 @@ export default function RegistrarPedidoPage() {
   }
 
   const acciones = pedido ? (ACCIONES[pedido.estado] ?? []) : [];
+  const puedeCancelar = acciones.some((accion) => accion.estado === 'cancelado');
   const cantidadPorProducto = new Map(lineas.map((linea) => [linea.id_producto, linea.cantidad]));
+
+  function abrirPedido(item: PedidoRegistrado) {
+    setPedido(item);
+    setConfirmarCancelacion(false);
+    const reducirMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    requestAnimationFrame(() => {
+      detalleRef.current?.scrollIntoView({
+        behavior: reducirMovimiento ? 'auto' : 'smooth',
+        block: 'nearest',
+      });
+    });
+  }
+
+  function avanzar(estadoDestino: string) {
+    if (!pedido) return;
+    if (
+      estadoDestino === 'entregado' &&
+      pedido.metodo_pago === 'stripe' &&
+      !pedido.id_transaccion_stripe
+    ) {
+      setError('');
+      setModalTarjetaAbierto(true);
+      return;
+    }
+    void mover(estadoDestino);
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <Link to="/dashboard/comercializacion" className="inline-flex items-center gap-2 text-sm text-slate-500">
-        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-        Comercialización
-      </Link>
-      <h2 className="text-2xl font-bold text-slate-900">Registrar pedido</h2>
+      <header className="flex flex-col gap-1">
+        <Link to="/dashboard/comercializacion" className="inline-flex w-fit items-center gap-2 text-sm text-slate-500">
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Comercialización
+        </Link>
+        <span className="mt-2 inline-flex w-fit items-center rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-800">
+          CU14 · Registrar pedido
+        </span>
+        <h2 className="mt-2 text-2xl font-bold text-slate-900">Registrar pedido</h2>
+      </header>
 
       <section className="rounded-3xl bg-white p-6 shadow-sm">
         <h3 className="text-sm font-semibold text-slate-700">Pedidos abiertos</h3>
@@ -288,11 +429,11 @@ export default function RegistrarPedidoPage() {
               <li key={item.id_pedido}>
                 <button
                   type="button"
-                  onClick={() => {
-                    setPedido(item);
-                    setConfirmarCancelacion(false);
-                  }}
-                  className="flex w-full justify-between py-2 text-left"
+                  onClick={() => abrirPedido(item)}
+                  aria-current={pedido?.id_pedido === item.id_pedido ? 'true' : undefined}
+                  className={`flex min-h-11 w-full items-center justify-between rounded-xl px-2 text-left ${
+                    pedido?.id_pedido === item.id_pedido ? 'bg-amber-50' : ''
+                  }`}
                 >
                   <span>
                     #{item.id_pedido} · {item.cliente}
@@ -306,56 +447,35 @@ export default function RegistrarPedidoPage() {
       </section>
 
       {pedido ? (
-        <section className="space-y-3 rounded-3xl bg-white p-6 shadow-sm">
+        <section ref={detalleRef} className="space-y-4 rounded-3xl bg-white p-6 shadow-sm">
           <h3 className="text-xl font-bold text-slate-900">Pedido {pedido.id_pedido}</h3>
           <p className="text-sm text-slate-600">
             {pedido.cliente} · {NOMBRE_ESTADO[pedido.estado] ?? pedido.estado} · {bolivianos(pedido.total)}
           </p>
+          <LineaTiempoPedido estado={pedido.estado} enviando={enviando} onAvanzar={avanzar} />
           <p className="text-sm text-slate-500">
             {pedido.estado === 'entregado'
               ? `Se registró la venta${pedido.numero_comprobante ? ` ${pedido.numero_comprobante}` : ''} y se descontó el stock.`
               : pedido.estado === 'listo'
                 ? pedido.metodo_pago === 'stripe' && !pedido.id_transaccion_stripe
-                  ? 'Entregar abre la ventana de Stripe para que el cliente ingrese su tarjeta. Eso crea la venta y baja el stock.'
+                  ? 'El paso Entregar abre la ventana de Stripe para que el cliente ingrese su tarjeta. Eso crea la venta y baja el stock.'
                   : pedido.metodo_pago === 'stripe'
-                    ? 'La tarjeta ya se cobró al guardar. Entregar crea la venta y baja el stock.'
-                    : 'Entregar cobra en efectivo, crea la venta y baja el stock.'
+                    ? 'La tarjeta ya se cobró al guardar. El paso Entregar crea la venta y baja el stock.'
+                    : 'El paso Entregar cobra en efectivo, crea la venta y baja el stock.'
                 : pedido.estado === 'cancelado'
                   ? 'El pedido quedó cancelado. No hay venta ni movimiento de stock.'
-                  : 'Cambiar el estado no cobra ni descuenta stock.'}
+                  : 'Solo se puede avanzar al paso siguiente. Eso no cobra ni descuenta stock.'}
           </p>
-          <div className="flex flex-wrap gap-2">
-            {acciones.map((accion) => (
-              <button
-                key={accion.estado}
-                type="button"
-                disabled={enviando}
-                onClick={() => {
-                  if (accion.estado === 'cancelado') {
-                    setConfirmarCancelacion(true);
-                    return;
-                  }
-                  if (
-                    accion.estado === 'entregado' &&
-                    pedido.metodo_pago === 'stripe' &&
-                    !pedido.id_transaccion_stripe
-                  ) {
-                    setError('');
-                    setModalTarjetaAbierto(true);
-                    return;
-                  }
-                  void mover(accion.estado);
-                }}
-                className={
-                  accion.estado === 'cancelado'
-                    ? 'rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 disabled:opacity-50'
-                    : 'rounded-xl bg-amber-400 px-4 py-2 text-sm font-bold text-[#2b1a10] disabled:opacity-50'
-                }
-              >
-                {accion.etiqueta}
-              </button>
-            ))}
-          </div>
+          {puedeCancelar ? (
+            <button
+              type="button"
+              disabled={enviando}
+              onClick={() => setConfirmarCancelacion(true)}
+              className="min-h-11 rounded-xl border border-red-200 px-4 text-sm font-semibold text-red-700 disabled:opacity-50"
+            >
+              Cancelar pedido
+            </button>
+          ) : null}
           {error ? <p className="text-sm text-red-700">{error}</p> : null}
         </section>
       ) : null}
@@ -364,6 +484,13 @@ export default function RegistrarPedidoPage() {
         <DialogoPedidoGuardado
           pedido={pedidoGuardado}
           onCerrar={() => setPedidoGuardado(null)}
+        />
+      ) : null}
+
+      {pedidoEntregado ? (
+        <DialogoPedidoEntregado
+          pedido={pedidoEntregado}
+          onCerrar={() => setPedidoEntregado(null)}
         />
       ) : null}
 
@@ -703,6 +830,38 @@ function DialogoPedidoGuardado({
             type="button"
             onClick={onCerrar}
             className="rounded-xl bg-amber-700 px-4 py-2 text-sm font-bold text-white"
+          >
+            Aceptar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DialogoPedidoEntregado({
+  pedido,
+  onCerrar,
+}: {
+  pedido: PedidoRegistrado;
+  onCerrar: () => void;
+}) {
+  const comprobante = pedido.numero_comprobante ? ` La venta quedó registrada como ${pedido.numero_comprobante}.` : '';
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" role="presentation">
+      <div role="dialog" aria-modal="true" aria-labelledby="titulo-entregado" className="max-w-md rounded-3xl bg-white p-6 shadow-xl">
+        <h3 id="titulo-entregado" className="text-xl font-bold text-slate-900">
+          El pedido ha sido entregado
+        </h3>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          El pedido {pedido.id_pedido} de {pedido.cliente} quedó entregado, por {bolivianos(pedido.total)}.
+          Se descontó el stock.{comprobante}
+        </p>
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            onClick={onCerrar}
+            className="min-h-11 rounded-xl bg-amber-700 px-4 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/70"
           >
             Aceptar
           </button>
