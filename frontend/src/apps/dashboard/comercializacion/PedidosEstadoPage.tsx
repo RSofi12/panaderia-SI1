@@ -1,5 +1,7 @@
 import { ClipboardList, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Paginacion } from '../components/Paginacion';
+import { paginar, usePagina } from '../components/paginar';
 import { pedidoService } from '../../../services/pedidoService';
 import type { EstadoPedido, Pedido } from '../../../types/pedido';
 
@@ -49,6 +51,9 @@ export default function PedidosEstadoPage() {
     return () => { vigente = false; };
   }, [estado, busqueda]);
 
+  const [pagina, setPagina] = usePagina(`${estado}|${busqueda}`);
+  const listado = paginar(pedidos, pagina);
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <header>
@@ -74,7 +79,7 @@ export default function PedidosEstadoPage() {
       {cargando ? <p className="text-sm text-slate-500">Cargando pedidos…</p> : null}
       {!cargando && !error && pedidos.length === 0 ? <p className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">No hay pedidos que coincidan con la búsqueda.</p> : null}
       <div className="grid gap-4 md:grid-cols-2">
-        {pedidos.map((pedido) => (
+        {listado.items.map((pedido) => (
           <article key={pedido.id_pedido} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -94,6 +99,17 @@ export default function PedidosEstadoPage() {
           </article>
         ))}
       </div>
+      {!error && (
+        <div className="rounded-2xl border border-slate-200 bg-white">
+          <Paginacion
+            pagina={listado.pagina}
+            totalPaginas={listado.totalPaginas}
+            onCambiar={setPagina}
+            deshabilitado={cargando}
+            etiqueta="Paginación de pedidos"
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -18,6 +18,9 @@ import type {
 } from '../../../../types/produccion';
 import { JORNADAS_LABELS } from '../../../../types/produccion';
 import RegistrarProduccionModal from './RegistrarProduccionModal';
+import { Paginacion } from '../../components/Paginacion';
+import { paginar, usePagina } from '../../components/paginar';
+import DescargarProduccionMenu from './components/DescargarProduccionMenu';
 import ModalDetalleProduccion from './components/ModalDetalleProduccion';
 
 export const ProduccionTab: React.FC = () => {
@@ -41,6 +44,7 @@ export const ProduccionTab: React.FC = () => {
   const [fechaHasta, setFechaHasta] = useState('');
 
   const [aviso, setAviso] = useState<string | null>(null);
+  const [paginaHistorial, setPaginaHistorial] = usePagina(`${filtroJornada}|${fechaDesde}|${fechaHasta}`);
 
   const cargarHistorial = async () => {
     setCargando(true);
@@ -99,6 +103,7 @@ export const ProduccionTab: React.FC = () => {
     (acc, h) => acc + parseFloat(h.costo_total || '0'),
     0
   );
+  const listado = paginar(historial, paginaHistorial);
 
   return (
     <div className="space-y-6">
@@ -227,14 +232,24 @@ export const ProduccionTab: React.FC = () => {
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={cargarHistorial}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${cargando ? 'animate-spin' : ''}`} />
-          Actualizar
-        </button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <DescargarProduccionMenu
+            filtros={{
+              jornada: filtroJornada,
+              fecha_desde: fechaDesde,
+              fecha_hasta: fechaHasta,
+            }}
+            deshabilitado={cargando}
+          />
+          <button
+            type="button"
+            onClick={cargarHistorial}
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 cursor-pointer"
+          >
+            <RefreshCw className={`h-4 w-4 ${cargando ? 'animate-spin' : ''}`} aria-hidden="true" />
+            Actualizar
+          </button>
+        </div>
       </div>
 
       {/* Tabla de Historial (CU11) */}
@@ -272,7 +287,7 @@ export const ProduccionTab: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                historial.map((reg) => (
+                listado.items.map((reg) => (
                   <tr key={reg.id_produccion} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3 px-4 font-mono font-bold text-slate-900">
                       #{reg.id_produccion}
@@ -312,6 +327,22 @@ export const ProduccionTab: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="border-t border-slate-100">
+          <p className="px-4 pt-3 text-center text-xs text-slate-500">
+            {cargando
+              ? 'Cargando historial...'
+              : listado.total === 0
+                ? 'Sin jornadas para mostrar'
+                : `Mostrando ${listado.inicio + 1}–${listado.fin} de ${listado.total} jornadas`}
+          </p>
+          <Paginacion
+            pagina={listado.pagina}
+            totalPaginas={listado.totalPaginas}
+            onCambiar={setPaginaHistorial}
+            deshabilitado={cargando}
+            etiqueta="Paginación de producción"
+          />
         </div>
       </div>
 

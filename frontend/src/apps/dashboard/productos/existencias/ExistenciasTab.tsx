@@ -21,6 +21,8 @@ import type {
 } from '../../../../types/existencias';
 import type { CategoriaProducto } from '../../../../types/producto';
 import KardexProductoModal from './components/KardexProductoModal';
+import { Paginacion } from '../../components/Paginacion';
+import { paginar, usePagina } from '../../components/paginar';
 
 export const ExistenciasTab: React.FC = () => {
   // Estados de datos
@@ -133,6 +135,10 @@ export const ExistenciasTab: React.FC = () => {
 
   // Limpiar filtros activos
   const hayFiltrosActivos = busqueda !== '' || categoriaSeleccionada !== '' || estadoStockSeleccionado !== '';
+  const [paginaExistencias, setPaginaExistencias] = usePagina(
+    `${busqueda}|${categoriaSeleccionada}|${estadoStockSeleccionado}|${ordenSeleccionado}`,
+  );
+  const listado = paginar(existencias, paginaExistencias);
   const limpiarFiltros = () => {
     setBusqueda('');
     setCategoriaSeleccionada('');
@@ -345,7 +351,7 @@ export const ExistenciasTab: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
-                {existencias.map((item) => {
+                {listado.items.map((item) => {
                   const stock = item.stock_actual;
                   const porcentajeVisual = Math.min(100, Math.round((stock / 150) * 100));
 
@@ -448,6 +454,21 @@ export const ExistenciasTab: React.FC = () => {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+        {!cargando && (
+          <div className="border-t border-slate-100">
+            <p className="px-4 pt-3 text-center text-xs text-slate-500">
+              {existencias.length === 0
+                ? 'Sin existencias para mostrar'
+                : `Mostrando ${listado.inicio + 1}–${listado.fin} de ${listado.total} productos`}
+            </p>
+            <Paginacion
+              pagina={listado.pagina}
+              totalPaginas={listado.totalPaginas}
+              onCambiar={setPaginaExistencias}
+              etiqueta="Paginación de existencias"
+            />
           </div>
         )}
       </div>

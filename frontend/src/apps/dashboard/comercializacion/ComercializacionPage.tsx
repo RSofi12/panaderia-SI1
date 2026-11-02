@@ -5,6 +5,8 @@ import { useAuth } from '../../../contexts/AuthContext';
 import type { VentaResumen } from '../../../types/venta';
 import { ChipMetodo } from './ventas/ChipMetodo';
 import { ventaService } from './ventas/ventaService';
+import { Paginacion } from '../components/Paginacion';
+import { paginar, usePagina } from '../components/paginar';
 
 function bolivianos(valor: number): string {
   return `Bs ${valor.toFixed(2)}`;
@@ -67,7 +69,8 @@ export const ComercializacionPage: React.FC = () => {
   }, [puedeVender]);
 
   const resumen = resumir(ventas);
-  const ultimas = ventas.slice(0, 5);
+  const [paginaVentas, setPaginaVentas] = usePagina(String(ventas.length));
+  const listadoVentas = paginar(ventas, paginaVentas);
   const fechaHoy = new Date().toLocaleDateString('es-BO', {
     weekday: 'long',
     day: 'numeric',
@@ -168,15 +171,13 @@ export const ComercializacionPage: React.FC = () => {
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-bold text-slate-900">Últimas ventas de hoy</h3>
-              {ventas.length > ultimas.length ? (
-                <Link
-                  to="/dashboard/comercializacion/ventas"
-                  className="text-xs font-semibold text-amber-800 hover:underline"
-                >
-                  Ver las {ventas.length}
-                </Link>
-              ) : null}
+              <h3 className="text-sm font-bold text-slate-900">Ventas de hoy</h3>
+              <Link
+                to="/dashboard/comercializacion/ventas"
+                className="text-xs font-semibold text-amber-800 hover:underline"
+              >
+                Abrir mostrador
+              </Link>
             </div>
 
             {estado === 'cargando' ? (
@@ -191,9 +192,9 @@ export const ComercializacionPage: React.FC = () => {
               </p>
             ) : null}
 
-            {ultimas.length > 0 ? (
+            {listadoVentas.items.length > 0 ? (
               <ul className="mt-3 divide-y divide-slate-100">
-                {ultimas.map((venta) => (
+                {listadoVentas.items.map((venta) => (
                   <li key={venta.id_venta} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2.5 text-sm">
                     <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                       <span className="font-mono text-xs text-slate-400">#{venta.numero_comprobante}</span>
@@ -206,6 +207,14 @@ export const ComercializacionPage: React.FC = () => {
                   </li>
                 ))}
               </ul>
+            ) : null}
+            {estado === 'listo' ? (
+              <Paginacion
+                pagina={listadoVentas.pagina}
+                totalPaginas={listadoVentas.totalPaginas}
+                onCambiar={setPaginaVentas}
+                etiqueta="Paginación de ventas de hoy"
+              />
             ) : null}
           </section>
         </>

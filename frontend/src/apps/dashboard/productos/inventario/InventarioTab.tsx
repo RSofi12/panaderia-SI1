@@ -14,6 +14,8 @@ import type {
 } from '../../../../types/inventario';
 import { ROLES_ALERTAS_BAJO_STOCK } from '../../../../types/materiaPrima';
 import { useAlertasBajoStock } from '../../inventario/useAlertasBajoStock';
+import { Paginacion } from '../../components/Paginacion';
+import { paginar, usePagina } from '../../components/paginar';
 
 type EstadoFiltro = '' | 'bajo_minimo' | 'true' | 'false' | 'all';
 
@@ -104,6 +106,8 @@ export const InventarioTab: React.FC = () => {
   }, [busqueda, filtro, claveConsulta]);
 
   const materias = resultado?.materias ?? [];
+  const [paginaStock, setPaginaStock] = usePagina(`${busqueda}|${filtro}`);
+  const listado = paginar(materias, paginaStock);
   let bajoMinimo = 0;
   let agotadas = 0;
   let inactivas = 0;
@@ -287,7 +291,7 @@ export const InventarioTab: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {materias.map((materia) => {
+              {listado.items.map((materia) => {
                 const estado = ESTADOS[materia.estado];
                 return (
                   <tr key={materia.id_materia_prima}>
@@ -361,10 +365,19 @@ export const InventarioTab: React.FC = () => {
         </div>
       )}
 
-      <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
-        {cargando && !resultado
-          ? 'Cargando stock...'
-          : `Mostrando ${materias.length} materias primas · ${bajoMinimo} bajo el mínimo · ${agotadas} agotadas · ${inactivas} inactivas`}
+      <div className="border-t border-slate-100">
+        <p className="px-4 pt-3 text-center text-xs text-slate-500">
+          {cargando && !resultado
+            ? 'Cargando stock...'
+            : `Mostrando ${listado.total === 0 ? 0 : listado.inicio + 1}–${listado.fin} de ${listado.total} materias primas · ${bajoMinimo} bajo el mínimo · ${agotadas} agotadas · ${inactivas} inactivas`}
+        </p>
+        <Paginacion
+          pagina={listado.pagina}
+          totalPaginas={listado.totalPaginas}
+          onCambiar={setPaginaStock}
+          deshabilitado={cargando}
+          etiqueta="Paginación del stock"
+        />
       </div>
 
       {formularioAbierto && (

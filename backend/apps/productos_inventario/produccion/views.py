@@ -1,15 +1,16 @@
 """
 Vistas para Producción Diaria (CU10) e Historial de Producción (CU11).
 """
-from datetime import date
-
 from django.core.exceptions import ValidationError
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.productos_inventario.productos.models import Producto
+from .consulta import leer_filtros_historial
+from .exportar_produccion import csv_produccion, nombre_archivo, pdf_produccion, resumir_producciones
 from .models import Produccion
 from .permissions import PuedeConsultarHistorialProduccion, PuedeRegistrarProduccion
 from .selectors import get_historial_produccion
@@ -34,50 +35,11 @@ class ProduccionListView(APIView):
         return [PuedeConsultarHistorialProduccion()]
 
     def get(self, request):
-        fecha_desde = request.query_params.get('fecha_desde')
-        fecha_hasta = request.query_params.get('fecha_hasta')
-        jornada = request.query_params.get('jornada')
-        id_producto = request.query_params.get('id_producto')
+        filtros, error = leer_filtros_historial(request.query_params)
+        if error:
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
 
-        if fecha_desde:
-            try:
-                date.fromisoformat(fecha_desde)
-            except ValueError:
-                return Response(
-                    {'fecha_desde': 'Formato de fecha_desde inválido. Use AAAA-MM-DD.'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-        if fecha_hasta:
-            try:
-                date.fromisoformat(fecha_hasta)
-            except ValueError:
-                return Response(
-                    {'fecha_hasta': 'Formato de fecha_hasta inválido. Use AAAA-MM-DD.'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-        if fecha_desde and fecha_hasta and fecha_desde > fecha_hasta:
-            return Response(
-                {'fecha_desde': 'La fecha inicial no puede ser mayor que la fecha final.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if id_producto:
-            try:
-                int(id_producto)
-            except (ValueError, TypeError):
-                return Response(
-                    {'id_producto': 'El identificador de producto debe ser un número entero válido.'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-        producciones = get_historial_produccion(
-            fecha_desde=fecha_desde,
-            fecha_hasta=fecha_hasta,
-            jornada=jornada,
-            id_producto=id_producto,
-        )
+        producciones = get_historial_produccion(**filtros)
         return Response(ProduccionSerializer(producciones, many=True).data)
 
     def post(self, request):
@@ -108,6 +70,37 @@ class ProduccionListView(APIView):
             .get(id_produccion=produccion.id_produccion)
         )
         return Response(ProduccionSerializer(produccion_completa).data, status=status.HTTP_201_CREATED)
+
+
+class ProduccionExportarView(APIView):
+    """
+    GET /api/produccion/csv/ y /api/produccion/pdf/
+
+    Descarga las tarjetas y la tabla de Producción diaria. Usa los mismos
+    filtros que el listado: fecha_desde, fecha_hasta y jornada.
+    """
+
+    permission_classes = [PuedeConsultarHistorialProduccion]
+    formato = 'csv'
+
+    def get(self, request):
+        filtros, error = leer_filtros_historial(request.query_params)
+        if error:
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+
+        resumen = resumir_producciones(get_historial_produccion(**filtros), filtros)
+        if self.formato == 'pdf':
+            contenido = pdf_produccion(resumen)
+            tipo = 'application/pdf'
+            extension = 'pdf'
+        else:
+            contenido = csv_produccion(resumen)
+            tipo = 'text/csv; charset=utf-8'
+            extension = 'csv'
+
+        respuesta = HttpResponse(contenido, content_type=tipo)
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre_archivo(filtros, extension)}"'
+        return respuesta
 
 
 class ProduccionDetailView(APIView):

@@ -12,6 +12,8 @@ import {
 import { useAuth } from '../../../contexts/AuthContext';
 import proveedorService from '../../../services/proveedorService';
 import type { Proveedor, ProveedorFiltros } from '../../../types/proveedor';
+import { Paginacion } from '../components/Paginacion';
+import { paginar, usePagina } from '../components/paginar';
 import ProveedorFormModal from './components/ProveedorFormModal';
 import ConfirmarEstadoProveedorDialog from './components/ConfirmarEstadoProveedorDialog';
 
@@ -78,6 +80,8 @@ export const ProveedoresPage: React.FC = () => {
   }, [busqueda, estado, claveConsulta]);
 
   const proveedores = resultado?.proveedores ?? [];
+  const [paginaProveedores, setPaginaProveedores] = usePagina(`${busqueda}|${estado}`);
+  const listado = paginar(proveedores, paginaProveedores);
   let activos = 0;
   for (const proveedor of proveedores) {
     if (proveedor.activo) activos += 1;
@@ -186,7 +190,7 @@ export const ProveedoresPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {proveedores.map((proveedor) => (
+                {listado.items.map((proveedor) => (
                   <tr
                     key={proveedor.id_proveedor}
                     className={proveedor.activo ? '' : 'bg-slate-50/60 text-slate-400'}
@@ -257,10 +261,19 @@ export const ProveedoresPage: React.FC = () => {
           </div>
         )}
 
-        <div className="border-t border-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">
-          {cargando && !resultado
-            ? 'Cargando proveedores...'
-            : `Mostrando ${proveedores.length} proveedores · ${activos} activos · ${proveedores.length - activos} inactivos`}
+        <div className="border-t border-slate-100">
+          <p className="px-4 pt-3 text-center text-sm font-semibold text-slate-700">
+            {cargando && !resultado
+              ? 'Cargando proveedores...'
+              : `Mostrando ${listado.total === 0 ? 0 : listado.inicio + 1}–${listado.fin} de ${listado.total} proveedores · ${activos} activos · ${proveedores.length - activos} inactivos`}
+          </p>
+          <Paginacion
+            pagina={listado.pagina}
+            totalPaginas={listado.totalPaginas}
+            onCambiar={setPaginaProveedores}
+            deshabilitado={cargando}
+            etiqueta="Paginación de proveedores"
+          />
         </div>
       </section>
 

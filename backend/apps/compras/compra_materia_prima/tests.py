@@ -5,8 +5,12 @@ Cada clase responde una pregunta de defensa:
     PruebasRegistroCompra   ¿el POST crea compra, stock, precio, movimiento y bitácora?
     PruebasAccesoCompra     ¿quién puede llamar a /api/compras/?
     PruebasDatosInvalidos   ¿qué rechaza el API antes de tocar el inventario?
+    PruebasDescargaCompra   ¿el CSV y el PDF usan el mismo filtro que la tabla?
 """
+from datetime import datetime
 from decimal import Decimal
+
+from django.utils import timezone
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
@@ -236,3 +240,70 @@ class PruebasMejorasCU7(BasePruebaCU7):
         self.assertEqual(res_prov.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res_prov.data), 1)
         self.assertEqual(res_prov.data[0]['proveedor_nombre'], 'Molinos del Oriente')
+
+
+class PruebasDescargaCompra(BasePruebaCU7):
+    """La descarga no es otra consulta: recorta con los mismos filtros de la tabla."""
+
+    def _comprar(self, proveedor, dia, cantidad='10.000', precio='4.50'):
+        self.client.force_authenticate(user=self.propietario)
+        respuesta = self.client.post('/api/compras/', {
+            'id_proveedor': proveedor.id_proveedor,
+            'detalles': [{
+                'id_materia_prima': self.harina.id_materia_prima,
+                'cantidad': cantidad,
+                'precio_unitario': precio,
+            }],
+        }, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        compra = Compra.objects.get(pk=respuesta.data['id_compra'])
+        compra.fecha_hora = timezone.make_aware(datetime(2026, 10, dia, 9, 30))
+        compra.save(update_fields=['fecha_hora'])
+        return compra
+
+    def test_csv_respeta_proveedor_y_fecha(self):
+        otro = Proveedor.objects.create(nombre='Distribuidora Central', activo=True)
+        propia = self._comprar(self.proveedor, 13, cantidad='10.000', precio='4.50')
+        ajena = self._comprar(otro, 14, cantidad='2.000', precio='5.00')
+
+        respuesta = self.client.get(
+            f'/api/compras/csv/?id_proveedor={self.proveedor.id_proveedor}'
+            '&fecha_desde=2026-10-13&fecha_hasta=2026-10-13'
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertIn('text/csv', respuesta['Content-Type'])
+        self.assertIn(
+            f'compras_2026-10-13_2026-10-13_proveedor-{self.proveedor.id_proveedor}.csv',
+            respuesta['Content-Disposition'],
+        )
+        texto = respuesta.content.decode('utf-8-sig')
+        self.assertIn('Reporte de compras de materia prima', texto)
+        self.assertIn('Operaciones;1', texto)
+        self.assertIn('Total invertido (Bs);45,00', texto)
+        self.assertIn('Proveedor;Molinos del Oriente', texto)
+        self.assertIn(f'#{propia.id_compra};13/10/2026 09:30;Molinos del Oriente;csantiago;1;45,00', texto)
+        self.assertNotIn('Distribuidora Central', texto)
+        self.assertNotIn(f'#{ajena.id_compra}', texto)
+
+    def test_pdf_de_otro_dia_no_incluye_la_compra(self):
+        self._comprar(self.proveedor, 13)
+        respuesta = self.client.get('/api/compras/pdf/?fecha_desde=2026-10-20&fecha_hasta=2026-10-20')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta['Content-Type'], 'application/pdf')
+        self.assertTrue(respuesta.content.startswith(b'%PDF'))
+        self.assertIn(b'Reporte de compras de materia prima', respuesta.content)
+        self.assertNotIn(b'Molinos del Oriente', respuesta.content)
+        self.assertNotIn(b'csantiago', respuesta.content)
+
+    def test_rango_invertido_se_rechaza(self):
+        self.client.force_authenticate(user=self.propietario)
+        respuesta = self.client.get('/api/compras/csv/?fecha_desde=2026-10-20&fecha_hasta=2026-10-01')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_descarga_sin_sesion_o_sin_permiso_se_rechaza(self):
+        anonima = self.client.get('/api/compras/csv/')
+        self.assertEqual(anonima.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        self.client.force_authenticate(user=self.vendedor)
+        prohibida = self.client.get('/api/compras/pdf/')
+        self.assertEqual(prohibida.status_code, status.HTTP_403_FORBIDDEN)

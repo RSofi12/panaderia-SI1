@@ -12,6 +12,8 @@ import {
   Loader2,
   Save,
 } from 'lucide-react';
+import { Paginacion } from '../components/Paginacion';
+import { paginar, usePagina } from '../components/paginar';
 import {
   consultarReporteVentas,
   descargarCierrePdf,
@@ -97,6 +99,10 @@ function fechaLegible(iso: string): string {
 }
 
 function CifrasReporte({ reporte }: { reporte: ReporteVentas }) {
+  const claveProductos = `${reporte.desde}|${reporte.hasta}|${reporte.productos.map((producto) => producto.nombre).join('|')}`;
+  const [pagina, setPagina] = usePagina(claveProductos);
+  const listado = paginar(reporte.productos, pagina);
+
   return (
     <div className="space-y-4">
       <p className="text-xs text-slate-500">
@@ -120,16 +126,24 @@ function CifrasReporte({ reporte }: { reporte: ReporteVentas }) {
       {reporte.productos.length === 0 ? (
         <p className="text-sm text-slate-500">Ese periodo no tiene ventas.</p>
       ) : (
-        <ul className="divide-y divide-slate-100 text-sm">
-          {reporte.productos.map((producto) => (
-            <li key={producto.nombre} className="flex items-center justify-between py-2">
-              <span className="font-semibold text-slate-800">{producto.nombre}</span>
-              <span className="text-slate-500">
-                {producto.cantidad} u · {bolivianos(producto.subtotal)}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div>
+          <ul className="divide-y divide-slate-100 text-sm">
+            {listado.items.map((producto) => (
+              <li key={producto.nombre} className="flex items-center justify-between py-2">
+                <span className="font-semibold text-slate-800">{producto.nombre}</span>
+                <span className="text-slate-500">
+                  {producto.cantidad} u · {bolivianos(producto.subtotal)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <Paginacion
+            pagina={listado.pagina}
+            totalPaginas={listado.totalPaginas}
+            onCambiar={setPagina}
+            etiqueta="Paginación de productos del reporte"
+          />
+        </div>
       )}
     </div>
   );
@@ -155,6 +169,8 @@ function ReporteVentasCu21() {
   const [guardando, setGuardando] = useState(false);
   const [descargando, setDescargando] = useState<'csv' | 'pdf' | ''>('');
   const [error, setError] = useState('');
+  const [paginaCierres, setPaginaCierres] = usePagina(cierres.map((cierre) => cierre.id_cierre).join(','));
+  const listadoCierres = paginar(cierres, paginaCierres);
 
   const valorPeriodo = periodo === 'dia' ? dia : periodo === 'semana' ? semana : mes;
 
@@ -359,7 +375,7 @@ function ReporteVentasCu21() {
             <p className="text-sm text-slate-500">Todavía no hay cierres. Consulta un periodo y guárdalo.</p>
           ) : (
             <ul className="space-y-2">
-              {cierres.map((cierre) => (
+              {listadoCierres.items.map((cierre) => (
                 <li key={cierre.id_cierre}>
                   <button
                     type="button"
@@ -375,6 +391,13 @@ function ReporteVentasCu21() {
               ))}
             </ul>
           )}
+          <Paginacion
+            pagina={listadoCierres.pagina}
+            totalPaginas={listadoCierres.totalPaginas}
+            onCambiar={setPaginaCierres}
+            deshabilitado={cargando}
+            etiqueta="Paginación de cierres"
+          />
           {cierreAbierto ? (
             <div className="space-y-3 rounded-2xl border border-slate-200 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">

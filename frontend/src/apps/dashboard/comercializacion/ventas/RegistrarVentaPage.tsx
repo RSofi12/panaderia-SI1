@@ -16,6 +16,8 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { Paginacion } from '../../components/Paginacion';
+import { paginar, usePagina } from '../../components/paginar';
 import existenciasService from '../../../../services/existenciasService';
 import type { ExistenciaProducto } from '../../../../types/existencias';
 import type {
@@ -735,6 +737,9 @@ function EsqueletoCatalogo() {
 }
 
 function VentasDelDia({ ventas }: { ventas: VentaResumen[] }) {
+  const [pagina, setPagina] = usePagina(String(ventas.length));
+  const listado = paginar(ventas, pagina);
+
   return (
     <section aria-labelledby="titulo-ventas-dia" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
       <h2 id="titulo-ventas-dia" className="text-sm font-bold text-slate-900">
@@ -755,7 +760,7 @@ function VentasDelDia({ ventas }: { ventas: VentaResumen[] }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {ventas.map((venta) => (
+              {listado.items.map((venta) => (
                 <tr key={venta.id_venta}>
                   <td className="py-2.5 pr-4 font-mono text-xs text-slate-500">#{venta.numero_comprobante}</td>
                   <td className="py-2.5 pr-4 tabular-nums text-slate-600">{hora(venta.fecha_hora)}</td>
@@ -772,6 +777,12 @@ function VentasDelDia({ ventas }: { ventas: VentaResumen[] }) {
           </table>
         </div>
       )}
+      <Paginacion
+        pagina={listado.pagina}
+        totalPaginas={listado.totalPaginas}
+        onCambiar={setPagina}
+        etiqueta="Paginación de ventas de hoy"
+      />
     </section>
   );
 }

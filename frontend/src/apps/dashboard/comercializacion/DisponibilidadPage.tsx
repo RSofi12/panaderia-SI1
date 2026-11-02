@@ -1,5 +1,7 @@
 import { PackageSearch, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Paginacion } from '../components/Paginacion';
+import { paginar, usePagina } from '../components/paginar';
 import { disponibilidadService } from '../../../services/disponibilidadService';
 import type { ProductoDisponible } from '../../../types/disponibilidad';
 
@@ -20,6 +22,9 @@ export default function DisponibilidadPage() {
     return () => { vigente = false; };
   }, [busqueda]);
 
+  const [pagina, setPagina] = usePagina(busqueda);
+  const listado = paginar(productos, pagina);
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <header>
@@ -35,7 +40,7 @@ export default function DisponibilidadPage() {
       {cargando ? <p className="text-sm text-slate-500">Cargando disponibilidad…</p> : null}
       {!cargando && !error && productos.length === 0 ? <p className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">No hay productos disponibles.</p> : null}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {productos.map((producto) => (
+        {listado.items.map((producto) => (
           <article key={producto.id_producto} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
             <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">{producto.categoria}</p>
             <h2 className="mt-1 text-lg font-bold text-slate-900">{producto.nombre}</h2>
@@ -45,6 +50,17 @@ export default function DisponibilidadPage() {
           </article>
         ))}
       </div>
+      {!error && (
+        <div className="rounded-2xl border border-slate-200 bg-white">
+          <Paginacion
+            pagina={listado.pagina}
+            totalPaginas={listado.totalPaginas}
+            onCambiar={setPagina}
+            deshabilitado={cargando}
+            etiqueta="Paginación de disponibilidad"
+          />
+        </div>
+      )}
     </div>
   );
 }
