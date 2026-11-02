@@ -16,6 +16,8 @@ import type { GrupoModuloPermisos, RolDetalle, RolListado } from '../../../../ty
 import TarjetaRol from './TarjetaRol';
 import MatrizPermisosModal from './MatrizPermisosModal';
 import ModalRol from './ModalRol';
+import { Paginacion } from '../../components/Paginacion';
+import { paginar, usePagina } from '../../components/paginar';
 
 type FiltroTipoRol = 'todos' | 'sistema' | 'personalizados';
 
@@ -98,6 +100,9 @@ export const RolesTab: React.FC = () => {
       return nombreMatch || descMatch;
     });
   }, [roles, busqueda, filtroTipo]);
+
+  const [paginaRoles, setPaginaRoles] = usePagina(`${busqueda}|${filtroTipo}`);
+  const listadoRoles = paginar(rolesFiltrados, paginaRoles);
 
   const abrirMatriz = async (rolItem: RolListado) => {
     setCargandoDetalleId(rolItem.id_rol);
@@ -370,7 +375,7 @@ export const RolesTab: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {rolesFiltrados.map((rolItem) => (
+          {listadoRoles.items.map((rolItem) => (
             <div key={rolItem.id_rol} className="relative">
               <TarjetaRol
                 rol={rolItem}
@@ -388,6 +393,17 @@ export const RolesTab: React.FC = () => {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {!cargando && (
+        <div className="rounded-2xl border border-slate-200 bg-white">
+          <Paginacion
+            pagina={listadoRoles.pagina}
+            totalPaginas={listadoRoles.totalPaginas}
+            onCambiar={setPaginaRoles}
+            etiqueta="Paginación de roles"
+          />
         </div>
       )}
 

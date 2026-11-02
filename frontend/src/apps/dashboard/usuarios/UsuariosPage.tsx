@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, History, Search, ShieldCheck, Users, X } from 'lucide-react';
+import { History, Search, ShieldCheck, Users, X } from 'lucide-react';
+import { Paginacion } from '../components/Paginacion';
 import { useAuth } from '../../../contexts/AuthContext';
 import usuariosService from '../../../services/usuariosService';
 import { normalizarErrorApi } from '../../../services/erroresApi';
@@ -440,39 +441,18 @@ export const UsuariosPage: React.FC = () => {
             esUsuarioActual={esUsuarioActual}
           />
 
-          {totalPaginas > 1 && (
-            <nav
-              aria-label="Paginación del listado"
-              className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-3"
-            >
-              <p className="text-[11px] text-slate-500">
-                Página <span className="font-semibold text-slate-700">{pagina}</span> de{' '}
-                <span className="font-semibold text-slate-700">{totalPaginas}</span> · {total}{' '}
-                {total === 1 ? 'cuenta' : 'cuentas'} en total
-              </p>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPagina((p) => Math.max(1, p - 1))}
-                  disabled={pagina === 1 || cargando}
-                  className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
-                >
-                  <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                  Anterior
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-                  disabled={pagina === totalPaginas || cargando}
-                  className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
-                >
-                  Siguiente
-                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </div>
-            </nav>
-          )}
+          <div className="rounded-2xl border border-slate-200 bg-white">
+            <p className="px-4 pt-3 text-center text-[11px] text-slate-500">
+              {total} {total === 1 ? 'cuenta' : 'cuentas'} en total
+            </p>
+            <Paginacion
+              pagina={pagina}
+              totalPaginas={totalPaginas}
+              onCambiar={setPagina}
+              deshabilitado={cargando}
+              etiqueta="Paginación de usuarios"
+            />
+          </div>
 
           {modal?.tipo === 'usuario' && (
             <ModalUsuario

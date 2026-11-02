@@ -19,6 +19,9 @@ import type {
   ProduccionRegistro,
 } from '../../../../types/produccion';
 import { JORNADAS_LABELS } from '../../../../types/produccion';
+import { Paginacion } from '../../components/Paginacion';
+import { paginar, usePagina } from '../../components/paginar';
+import DescargarProduccionMenu from './components/DescargarProduccionMenu';
 import ModalDetalleProduccion from './components/ModalDetalleProduccion';
 
 const formatoFecha = (fecha: string) =>
@@ -39,6 +42,7 @@ export const HistorialProduccionPage: React.FC = () => {
   const [jornada, setJornada] = useState<JornadaProduccion | ''>('');
   const [idProducto, setIdProducto] = useState('');
   const [filtrosAplicados, setFiltrosAplicados] = useState<ProduccionFiltros>({});
+  const [paginaHistorial, setPaginaHistorial] = usePagina(JSON.stringify(filtrosAplicados));
 
   useEffect(() => {
     let vigente = true;
@@ -92,6 +96,10 @@ export const HistorialProduccionPage: React.FC = () => {
   };
 
   const totalUnidades = historial.reduce((total, item) => total + item.total_unidades, 0);
+  const listado = paginar(historial, paginaHistorial);
+  const nombreProductoAplicado = productos.find(
+    (producto) => producto.id_producto === filtrosAplicados.id_producto,
+  )?.nombre;
 
   return (
     <div className="space-y-6">
@@ -203,15 +211,22 @@ export const HistorialProduccionPage: React.FC = () => {
             <h2 className="text-sm font-semibold text-slate-900">Jornadas encontradas</h2>
             <p className="mt-0.5 text-xs text-slate-500">Más recientes primero</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setFiltrosAplicados({ ...filtrosAplicados })}
-            disabled={cargando}
-            className="inline-flex min-h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${cargando ? 'animate-spin' : ''}`} />
-            Actualizar
-          </button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <DescargarProduccionMenu
+              filtros={filtrosAplicados}
+              nombreProducto={nombreProductoAplicado}
+              deshabilitado={cargando}
+            />
+            <button
+              type="button"
+              onClick={() => setFiltrosAplicados({ ...filtrosAplicados })}
+              disabled={cargando}
+              className="inline-flex min-h-11 items-center gap-2 rounded-md px-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2 disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${cargando ? 'animate-spin' : ''}`} aria-hidden="true" />
+              Actualizar
+            </button>
+          </div>
         </div>
 
         {error ? (
@@ -255,7 +270,7 @@ export const HistorialProduccionPage: React.FC = () => {
                     </td>
                   </tr>
                 ) : (
-                  historial.map((registro) => (
+                  listado.items.map((registro) => (
                     <tr key={registro.id_produccion} className="transition-colors hover:bg-amber-50/50">
                       <td className="px-4 py-3">
                         <span className="block font-semibold text-slate-900">{formatoFecha(registro.fecha)}</span>
@@ -287,6 +302,22 @@ export const HistorialProduccionPage: React.FC = () => {
                 )}
               </tbody>
             </table>
+            <div className="border-t border-slate-100">
+              <p className="px-4 pt-3 text-center text-xs text-slate-500">
+                {cargando
+                  ? 'Cargando historial...'
+                  : listado.total === 0
+                    ? 'Sin jornadas para mostrar'
+                    : `Mostrando ${listado.inicio + 1}–${listado.fin} de ${listado.total} jornadas`}
+              </p>
+              <Paginacion
+                pagina={listado.pagina}
+                totalPaginas={listado.totalPaginas}
+                onCambiar={setPaginaHistorial}
+                deshabilitado={cargando}
+                etiqueta="Paginación del historial de producción"
+              />
+            </div>
           </div>
         )}
       </section>

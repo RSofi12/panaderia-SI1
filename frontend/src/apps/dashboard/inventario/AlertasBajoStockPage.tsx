@@ -4,6 +4,8 @@ import { AlertTriangle, PackageX, RefreshCw, Search, ShoppingCart } from 'lucide
 import { useAuth } from '../../../contexts/AuthContext';
 import { useAlertasBajoStock } from './useAlertasBajoStock';
 import { filtrarAlertas, resumirAlertas } from './resumenAlertas';
+import { Paginacion } from '../components/Paginacion';
+import { paginar, usePagina } from '../components/paginar';
 
 export default function AlertasBajoStockPage() {
   const { hasPermission } = useAuth();
@@ -13,6 +15,8 @@ export default function AlertasBajoStockPage() {
   const [busqueda, setBusqueda] = useState('');
   const resumen = resumirAlertas(alertas);
   const visibles = filtrarAlertas(alertas, busqueda);
+  const [pagina, setPagina] = usePagina(busqueda.trim());
+  const listado = paginar(visibles, pagina);
   const disponible = !cargando && !error;
 
   return (
@@ -74,7 +78,9 @@ export default function AlertasBajoStockPage() {
             <button type="button" onClick={() => setBusqueda('')} className="mt-2 min-h-11 font-semibold text-amber-800 underline cursor-pointer">Limpiar búsqueda</button>
           </div>
           : <>
-            <p role="status" className="mb-4 text-sm font-semibold text-amber-900">Mostrando {visibles.length} de {resumen.total} insumos en alerta.</p>
+            <p role="status" className="mb-4 text-sm font-semibold text-amber-900">
+              Mostrando {listado.inicio + 1}–{listado.fin} de {resumen.total} insumos en alerta.
+            </p>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <caption className="sr-only">Stock actual, mínimo y cantidad faltante por materia prima</caption>
@@ -82,7 +88,7 @@ export default function AlertasBajoStockPage() {
                   {['Materia prima', 'Unidad', 'Stock actual', 'Stock mínimo', 'Faltante'].map((label) => <th key={label} scope="col" className="px-3 py-3">{label}</th>)}
                   {puedeComprar && <th scope="col" className="px-3 py-3">Acciones</th>}
                 </tr></thead>
-                <tbody>{visibles.map((alerta) => <tr key={alerta.id_materia_prima} className="border-b border-slate-100 last:border-0">
+                <tbody>{listado.items.map((alerta) => <tr key={alerta.id_materia_prima} className="border-b border-slate-100 last:border-0">
                   <th scope="row" className="px-3 py-4 font-medium text-slate-900">{alerta.nombre}</th>
                   <td className="px-3 py-4 text-slate-700">{alerta.unidad_medida}</td>
                   <td className="px-3 py-4 tabular-nums">{alerta.stock_actual}</td>
@@ -98,6 +104,13 @@ export default function AlertasBajoStockPage() {
                 </tr>)}</tbody>
               </table>
             </div>
+            <Paginacion
+              pagina={listado.pagina}
+              totalPaginas={listado.totalPaginas}
+              onCambiar={setPagina}
+              deshabilitado={cargando}
+              etiqueta="Paginación de alertas"
+            />
           </>}
       </section>
     </div>

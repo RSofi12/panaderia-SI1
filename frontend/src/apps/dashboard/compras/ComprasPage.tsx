@@ -18,6 +18,9 @@ import compraService from '../../../services/compraService';
 import proveedorService from '../../../services/proveedorService';
 import type { Compra, CompraFiltros, CompraReposicion, CompraResumen } from '../../../types/compra';
 import type { Proveedor } from '../../../types/proveedor';
+import { Paginacion } from '../components/Paginacion';
+import { paginar, usePagina } from '../components/paginar';
+import DescargarComprasMenu from './components/DescargarComprasMenu';
 import RegistrarCompraModal from './components/RegistrarCompraModal';
 import DetalleCompraModal from './components/DetalleCompraModal';
 import { leerReposicion } from './reposicion';
@@ -100,6 +103,10 @@ export const ComprasPage: React.FC = () => {
   }, [version, filtros]);
 
   const compras = resultado?.compras ?? [];
+  const [paginaCompras, setPaginaCompras] = usePagina(
+    `${filtros.search ?? ''}|${filtros.id_proveedor ?? ''}|${filtros.fecha_desde ?? ''}|${filtros.fecha_hasta ?? ''}`,
+  );
+  const listado = paginar(compras, paginaCompras);
 
   // KPIs
   let totalGeneral = 0;
@@ -171,16 +178,25 @@ export const ComprasPage: React.FC = () => {
             Cada compra suma stock al inventario y actualiza el último precio del insumo.
           </p>
         </div>
-        {puedeRegistrar && (
-          <button
-            type="button"
-            onClick={() => setModal({ tipo: 'registrar' })}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-amber-600/20 hover:from-amber-700 hover:to-amber-800 transition-all cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            Registrar compra
-          </button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <DescargarComprasMenu
+            filtros={filtros}
+            nombreProveedor={proveedores.find(
+              (proveedor) => String(proveedor.id_proveedor) === String(filtros.id_proveedor),
+            )?.nombre}
+            deshabilitado={cargando}
+          />
+          {puedeRegistrar && (
+            <button
+              type="button"
+              onClick={() => setModal({ tipo: 'registrar' })}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-amber-600/20 hover:from-amber-700 hover:to-amber-800 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              Registrar compra
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Tarjetas KPI de Resumen */}
@@ -345,7 +361,7 @@ export const ComprasPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {compras.map((compra) => (
+                {listado.items.map((compra) => (
                   <tr key={compra.id_compra} className="hover:bg-amber-50/30 transition-colors">
                     <td className="px-4 py-3 font-semibold text-slate-900">#{compra.id_compra}</td>
                     <td className="px-4 py-3 text-slate-500">
@@ -401,15 +417,24 @@ export const ComprasPage: React.FC = () => {
           </div>
         )}
 
-        <div className="border-t border-slate-100 px-4 py-3 text-xs font-medium text-slate-500 flex items-center justify-between">
-          <span>
-            {cargando && !resultado
-              ? 'Cargando compras...'
-              : `Mostrando ${compras.length} compras registrad${compras.length === 1 ? 'a' : 'as'}`}
-          </span>
-          <span className="font-semibold text-slate-800">
-            Total periodo: Bs {totalGeneral.toFixed(2)}
-          </span>
+        <div className="border-t border-slate-100 px-4 pt-3 text-xs font-medium text-slate-500">
+          <div className="flex items-center justify-between gap-3">
+            <span>
+              {cargando && !resultado
+                ? 'Cargando compras...'
+                : `Mostrando ${listado.total === 0 ? 0 : listado.inicio + 1}–${listado.fin} de ${listado.total} compras`}
+            </span>
+            <span className="font-semibold text-slate-800">
+              Total periodo: Bs {totalGeneral.toFixed(2)}
+            </span>
+          </div>
+          <Paginacion
+            pagina={listado.pagina}
+            totalPaginas={listado.totalPaginas}
+            onCambiar={setPaginaCompras}
+            deshabilitado={cargando}
+            etiqueta="Paginación de compras"
+          />
         </div>
       </section>
 

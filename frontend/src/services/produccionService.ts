@@ -40,6 +40,35 @@ const normalizarJornadaBackend = (valor?: string): string | undefined => {
   return valor;
 };
 
+function parametrosHistorial(filtros: ProduccionFiltros): Record<string, string> {
+  const params: Record<string, string> = {};
+  if (filtros.fecha_desde) params.fecha_desde = filtros.fecha_desde;
+  if (filtros.fecha_hasta) params.fecha_hasta = filtros.fecha_hasta;
+  if (filtros.jornada) params.jornada = normalizarJornadaBackend(filtros.jornada) || '';
+  if (filtros.id_producto) params.id_producto = String(filtros.id_producto);
+  return params;
+}
+
+function guardarBlob(contenido: Blob, nombre: string) {
+  const url = URL.createObjectURL(contenido);
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombre;
+  document.body.appendChild(enlace);
+  enlace.click();
+  enlace.remove();
+  URL.revokeObjectURL(url);
+}
+
+function nombreDescarga(filtros: ProduccionFiltros, extension: 'csv' | 'pdf') {
+  const periodo = filtros.fecha_desde || filtros.fecha_hasta
+    ? `${filtros.fecha_desde || 'sin-inicio'}_${filtros.fecha_hasta || 'sin-fin'}`
+    : 'todas-las-fechas';
+  const jornada = filtros.jornada || 'todas-las-jornadas';
+  const producto = filtros.id_producto ? `_producto-${filtros.id_producto}` : '';
+  return `produccion-diaria_${periodo}_${jornada}${producto}.${extension}`;
+}
+
 const mapearProduccionBackend = (item: any): ProduccionRegistro => ({
   id_produccion: Number(item.id_produccion),
   fecha: item.fecha,
@@ -501,14 +530,20 @@ export const produccionService = {
       return lista;
     }
 
-    const params: Record<string, string> = {};
-    if (filtros.fecha_desde) params.fecha_desde = filtros.fecha_desde;
-    if (filtros.fecha_hasta) params.fecha_hasta = filtros.fecha_hasta;
-    if (filtros.jornada) params.jornada = normalizarJornadaBackend(filtros.jornada) || '';
-    if (filtros.id_producto) params.id_producto = String(filtros.id_producto);
-
-    const response = await api.get<any[]>('/produccion/', { params });
+    const response = await api.get<any[]>('/produccion/', { params: parametrosHistorial(filtros) });
     return response.data.map(mapearProduccionBackend);
+  },
+
+  /**
+   * Descarga el resumen visible de Producción diaria (tarjetas + tabla).
+   * Manda los mismos filtros que el listado.
+   */
+  async descargarHistorial(formato: 'csv' | 'pdf', filtros: ProduccionFiltros = {}): Promise<void> {
+    const response = await api.get<Blob>(`/produccion/${formato}/`, {
+      params: parametrosHistorial(filtros),
+      responseType: 'blob',
+    });
+    guardarBlob(response.data, nombreDescarga(filtros, formato));
   },
 
   /**

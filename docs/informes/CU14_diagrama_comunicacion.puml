@@ -1,0 +1,114 @@
+@startuml CU14_Registrar_pedido
+skinparam style strictuml
+skinparam handwritten false
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+
+title CU14. Registrar pedido
+
+actor ":PersonalVentas" as actor
+boundary ":RegistrarPedidoPage" as page
+control ":PedidoController" as ctrl
+boundary ":PasarelaStripe" as stripe
+entity ":Producto" as producto
+entity ":Cliente" as cliente
+entity ":Pedido" as pedido
+entity ":DetallePedido" as detalle
+entity ":Venta" as venta
+entity ":DetalleVenta" as detalleVenta
+entity ":InventarioProductoTerminado" as inventario
+entity ":MovimientoProductoTerminado" as movimiento
+entity ":Bitacora" as bitacora
+
+actor -[hidden]right- page
+page -[hidden]right- ctrl
+ctrl -[hidden]right- stripe
+stripe -[hidden]right- producto
+producto -[hidden]right- cliente
+cliente -[hidden]right- pedido
+pedido -[hidden]right- detalle
+detalle -[hidden]right- venta
+venta -[hidden]right- detalleVenta
+detalleVenta -[hidden]right- inventario
+inventario -[hidden]right- movimiento
+movimiento -[hidden]right- bitacora
+
+actor -- page : "1: consultarPedidosAbiertos()"
+page -- ctrl : "1.1: listarAbiertos()"
+ctrl -- pedido : "1.2: listarPedidosAbiertos()"
+ctrl -- page : "1.3: retornarPedidosAbiertos()"
+page -- actor : "1.4: renderizarPedidosAbiertos()"
+actor -- page : "2: guardar()"
+page -- ctrl : "2.1: registrar()"
+ctrl -- producto : "2.2: obtenerDatosProductos()"
+ctrl -- cliente : "2.3: resolverCliente()"
+ctrl -- pedido : "2.4: crearPedido()"
+ctrl -- detalle : "2.5: crearDetalles()"
+ctrl -- bitacora : "2.6: registrarAltaPedido()"
+ctrl -- page : "2.7: retornarPedidoRegistrado()"
+page -- actor : "2.8: mostrarPedidoGuardado()"
+actor -- page : "3: abrirPasarela()"
+page -- ctrl : "3.1: obtenerClavePublicaStripe()"
+ctrl -- page : "3.2: devolverClavePublica()"
+page -- ctrl : "3.3: crearIntencionDeLineas()"
+ctrl -- producto : "3.4: obtenerDatosProductos()"
+ctrl -- stripe : "3.5: crearIntencion()"
+ctrl -- page : "3.6: retornarClientSecret()"
+page -- stripe : "3.7: confirmCardPayment()"
+page -- ctrl : "3.8: registrar()"
+ctrl -- stripe : "3.9: confirmarCobroTarjeta()"
+ctrl -- producto : "3.10: obtenerDatosProductos()"
+ctrl -- cliente : "3.11: resolverCliente()"
+ctrl -- pedido : "3.12: crearPedido()"
+ctrl -- detalle : "3.13: crearDetalles()"
+ctrl -- bitacora : "3.14: registrarAltaPedido()"
+ctrl -- page : "3.15: retornarPedidoRegistrado()"
+page -- actor : "3.16: mostrarPedidoPagado()"
+ctrl -- stripe : "3.17: [error]: anularCobroTarjeta()"
+actor -- page : "4: pagarEnEfectivo()"
+page -- ctrl : "4.1: pagar()"
+ctrl -- pedido : "4.2: obtenerPedidoCobrable()"
+ctrl -- pedido : "4.3: marcarPagado()"
+ctrl -- bitacora : "4.4: registrarPagoPedido()"
+ctrl -- page : "4.5: retornarPedidoPagado()"
+page -- actor : "4.6: mostrarPedidoPagado()"
+actor -- page : "5: pagarConTarjeta()"
+page -- ctrl : "5.1: obtenerClavePublicaStripe()"
+ctrl -- page : "5.2: devolverClavePublica()"
+page -- ctrl : "5.3: crearIntencion()"
+ctrl -- pedido : "5.4: obtenerPedido()"
+ctrl -- stripe : "5.5: crearIntencion()"
+ctrl -- page : "5.6: retornarClientSecret()"
+page -- stripe : "5.7: confirmCardPayment()"
+page -- ctrl : "5.8: pagar()"
+ctrl -- stripe : "5.9: confirmarCobroTarjeta()"
+ctrl -- pedido : "5.10: marcarPagado()"
+ctrl -- bitacora : "5.11: registrarPagoPedido()"
+ctrl -- page : "5.12: retornarPedidoPagado()"
+page -- actor : "5.13: mostrarPedidoPagado()"
+ctrl -- stripe : "5.14: [error]: anularCobroTarjeta()"
+actor -- page : "6: mover()"
+page -- ctrl : "6.1: cambiarEstado()"
+ctrl -- pedido : "6.2: obtenerPedido()"
+ctrl -- pedido : "6.3: actualizarEstado()"
+ctrl -- bitacora : "6.4: registrarCambioEstado()"
+ctrl -- page : "6.5: retornarPedidoActualizado()"
+page -- actor : "6.6: renderizarEstadoPedido()"
+actor -- page : "7: entregarPedido()"
+page -- ctrl : "7.1: cambiarEstado()"
+ctrl -- pedido : "7.2: obtenerPedido()"
+ctrl -- detalle : "7.3: obtenerLineasCongeladas()"
+ctrl -- stripe : "7.4: [tarjeta]: confirmarCobroTarjeta()"
+ctrl -- venta : "7.5: crearVenta()"
+ctrl -- detalleVenta : "7.6: crearDetalleVenta()"
+ctrl -- inventario : "7.7: descontarPorVenta()"
+ctrl -- movimiento : "7.8: registrarSalida()"
+ctrl -- pedido : "7.9: marcarEntregado()"
+ctrl -- bitacora : "7.10: registrarCambioEstado()"
+ctrl -- bitacora : "7.11: registrarAltaVenta()"
+ctrl -- page : "7.12: retornarPedidoEntregado()"
+page -- actor : "7.13: renderizarComprobante()"
+ctrl -- stripe : "7.14: [error]: anularCobroTarjeta()"
+
+@enduml

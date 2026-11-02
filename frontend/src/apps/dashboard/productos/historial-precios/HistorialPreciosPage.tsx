@@ -3,14 +3,14 @@ import { Link } from 'react-router-dom';
 import {
   AlertCircle,
   ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
   Filter,
   History,
   Loader2,
   RefreshCw,
   Search,
 } from 'lucide-react';
+import { Paginacion } from '../../components/Paginacion';
+import { TAMANO_PAGINA } from '../../components/paginar';
 import type { HistorialPrecioFiltros } from '../../../../types/historialPrecio';
 import { formatearBs } from '../precios';
 import { useHistorialPrecios } from './useHistorialPrecios';
@@ -192,16 +192,17 @@ export default function HistorialPreciosPage() {
                 </tbody>
               </table>
             </div>
-            <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-              <p role="status" className="text-sm text-slate-600">{cargando ? 'Cargando resultados…' : `${datos?.count ?? 0} registros · Página ${consulta.pagina}`}</p>
-              <nav aria-label="Paginación del historial de precios" className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => cambiarPagina(consulta.pagina - 1)} disabled={cargando || !datos?.previous} className={claseBotonSecundario}>
-                  <ChevronLeft aria-hidden="true" className="h-4 w-4" />Anterior
-                </button>
-                <button type="button" onClick={() => cambiarPagina(consulta.pagina + 1)} disabled={cargando || !datos?.next} className={claseBotonSecundario}>
-                  Siguiente<ChevronRight aria-hidden="true" className="h-4 w-4" />
-                </button>
-              </nav>
+            <div className="border-t border-slate-200">
+              <p role="status" className="px-4 pt-3 text-center text-sm text-slate-600">
+                {cargando ? 'Cargando resultados…' : `${datos?.count ?? 0} registros`}
+              </p>
+              <Paginacion
+                pagina={consulta.pagina}
+                totalPaginas={Math.max(1, Math.ceil((datos?.count ?? 0) / TAMANO_PAGINA))}
+                onCambiar={cambiarPagina}
+                deshabilitado={cargando}
+                etiqueta="Paginación del historial de precios"
+              />
             </div>
           </div>
         )}

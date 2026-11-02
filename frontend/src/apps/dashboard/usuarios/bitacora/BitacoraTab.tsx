@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, ChevronLeft, ChevronRight, Eye, History, Search, X } from 'lucide-react';
+import { AlertCircle, Eye, History, Search, X } from 'lucide-react';
+import { Paginacion } from '../../components/Paginacion';
 import bitacoraService from '../../../../services/bitacoraService';
 import { normalizarErrorApi } from '../../../../services/erroresApi';
 import type { FiltrosBitacora, OpcionesBitacora, RegistroBitacora } from '../../../../types/bitacora';
@@ -276,35 +277,19 @@ export const BitacoraTab: React.FC = () => {
           </div>
         )}
 
-        <div className="flex flex-col gap-2 border-t border-slate-100 px-4 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <span>
+        <div className="border-t border-slate-100">
+          <p className="px-4 pt-3 text-center text-xs text-slate-500">
             {cargando && !resultado
               ? 'Cargando bitácora...'
               : `Mostrando ${desde}–${hasta} de ${total} registros`}
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setPagina((p) => Math.max(1, p - 1))}
-              disabled={pagina <= 1 || cargando}
-              aria-label="Página anterior"
-              className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <span className="tabular-nums">
-              Página {pagina} de {totalPaginas}
-            </span>
-            <button
-              type="button"
-              onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
-              disabled={pagina >= totalPaginas || cargando}
-              aria-label="Página siguiente"
-              className="rounded-lg border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-50 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
+          </p>
+          <Paginacion
+            pagina={pagina}
+            totalPaginas={totalPaginas}
+            onCambiar={setPagina}
+            deshabilitado={cargando}
+            etiqueta="Paginación de la bitácora"
+          />
         </div>
       </section>
 

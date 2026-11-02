@@ -167,7 +167,8 @@ class PruebasReporteVentas(TestCase):
         self.assertEqual(csv_respuesta.status_code, status.HTTP_200_OK)
         self.assertIn('text/csv', csv_respuesta['Content-Type'])
         texto = csv_respuesta.content.decode('utf-8-sig')
-        self.assertIn('9.00', texto)
+        self.assertIn('Reporte de ventas', texto)
+        self.assertIn('9,00', texto)
         self.assertIn('Marraqueta', texto)
         self.assertIn('attachment; filename="reporte-ventas-2026-10-01-2026-10-31.csv"', csv_respuesta['Content-Disposition'])
 

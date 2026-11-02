@@ -420,3 +420,86 @@ class PruebasBaseProduccion(TestCase):
         recetas_marraqueta = ProductoMateriaPrima.objects.filter(id_producto__nombre='Marraqueta')
         self.assertEqual(recetas_marraqueta.count(), 3)
         self.assertEqual(ProductoMateriaPrima.objects.count(), 37)
+
+    def _registrar(self, fecha, jornada, cantidad):
+        return self.client.post('/api/produccion/', data={
+            'fecha': fecha,
+            'jornada': jornada,
+            'detalles': [
+                {'id_producto': self.producto_marraqueta.id_producto, 'cantidad_producida': cantidad},
+            ],
+        }, format='json')
+
+    def test_descarga_csv_respeta_jornada_y_fechas(self):
+        self.client.force_authenticate(user=self.usuario)
+        manana = self._registrar('2026-10-13', 'Mañana', 100)
+        tarde = self._registrar('2026-10-14', 'Tarde', 40)
+        self.assertEqual(manana.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(tarde.status_code, status.HTTP_201_CREATED)
+
+        respuesta = self.client.get('/api/produccion/csv/?fecha_desde=2026-10-14&fecha_hasta=2026-10-14&jornada=Tarde')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertIn('text/csv', respuesta['Content-Type'])
+        self.assertIn('produccion-diaria_2026-10-14_2026-10-14_tarde.csv', respuesta['Content-Disposition'])
+
+        texto = respuesta.content.decode('utf-8-sig')
+        self.assertIn('Reporte de producción diaria', texto)
+        self.assertIn('Panes producidos;40', texto)
+        self.assertIn('Jornadas;1', texto)
+        self.assertIn('Jornada;Tarde', texto)
+        self.assertIn(f'#{tarde.data["id_produccion"]};14/10/2026;Tarde;panadero;40;1;', texto)
+        self.assertNotIn('Mañana', texto)
+        self.assertNotIn('13/10/2026', texto)
+
+    def test_descarga_csv_respeta_el_producto(self):
+        self.client.force_authenticate(user=self.usuario)
+        marraqueta = self._registrar('2026-10-13', 'Mañana', 20)
+        casero = self.client.post('/api/produccion/', data={
+            'fecha': '2026-10-14',
+            'jornada': 'Tarde',
+            'detalles': [
+                {'id_producto': self.producto_casero.id_producto, 'cantidad_producida': 15},
+            ],
+        }, format='json')
+        self.assertEqual(marraqueta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(casero.status_code, status.HTTP_201_CREATED)
+
+        respuesta = self.client.get(
+            f'/api/produccion/csv/?id_producto={self.producto_casero.id_producto}'
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertIn(
+            f'producto-{self.producto_casero.id_producto}.csv',
+            respuesta['Content-Disposition'],
+        )
+        texto = respuesta.content.decode('utf-8-sig')
+        self.assertIn('Producto;Casero', texto)
+        self.assertIn('14/10/2026', texto)
+        self.assertNotIn('13/10/2026', texto)
+
+    def test_descarga_pdf_usa_el_mismo_filtro(self):
+        self.client.force_authenticate(user=self.usuario)
+        self._registrar('2026-10-13', 'Mañana', 80)
+
+        respuesta = self.client.get('/api/produccion/pdf/?jornada=Noche')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta['Content-Type'], 'application/pdf')
+        self.assertTrue(respuesta.content.startswith(b'%PDF'))
+        self.assertIn(b'/Subtype /Image', respuesta.content)
+        self.assertIn(b'Reporte de producci', respuesta.content)
+        self.assertIn('todas-las-fechas_noche.pdf', respuesta['Content-Disposition'])
+        self.assertNotIn(b'panadero', respuesta.content)
+
+    def test_descarga_sin_sesion_o_sin_permiso_se_rechaza(self):
+        anonima = self.client.get('/api/produccion/csv/')
+        self.assertEqual(anonima.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        self.client.force_authenticate(user=self.usuario_sin_permiso)
+        prohibida = self.client.get('/api/produccion/pdf/')
+        self.assertEqual(prohibida.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_descarga_con_fecha_invalida_responde_400(self):
+        self.client.force_authenticate(user=self.usuario)
+        respuesta = self.client.get('/api/produccion/csv/?fecha_desde=2026-10-20&fecha_hasta=2026-10-01')
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('fecha_desde', respuesta.data)

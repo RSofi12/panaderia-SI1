@@ -16,6 +16,8 @@ import {
 import { useAuth } from '../../../contexts/AuthContext';
 import productoService from '../../../services/productoService';
 import type { CategoriaProducto, Producto, ProductoFiltros } from '../../../types/producto';
+import { Paginacion } from '../components/Paginacion';
+import { paginar, usePagina } from '../components/paginar';
 import ProductoFormModal from './components/ProductoFormModal';
 import ConfirmarEstadoDialog from './components/ConfirmarEstadoDialog';
 import { formatearBs } from './precios';
@@ -187,6 +189,8 @@ export const ProductosPage: React.FC = () => {
   }, [busqueda, categoria, estado, claveConsulta]);
 
   const productos = resultado?.productos ?? [];
+  const [paginaCatalogo, setPaginaCatalogo] = usePagina(`${busqueda}|${categoria}|${estado}`);
+  const catalogo = paginar(productos, paginaCatalogo);
   let activos = 0;
   for (const producto of productos) {
     if (producto.activo) activos += 1;
@@ -425,7 +429,7 @@ export const ProductosPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {productos.map((producto) => (
+                    {catalogo.items.map((producto) => (
                       <tr key={producto.id_producto} className={producto.activo ? '' : 'bg-slate-50/60 text-slate-400'}>
                         <td className="px-4 py-3">
                           <p className={`font-semibold ${producto.activo ? 'text-slate-900' : 'text-slate-500'}`}>
@@ -493,10 +497,19 @@ export const ProductosPage: React.FC = () => {
                 </table>
               </div>
             )}
-            <div className="border-t border-slate-100 px-4 py-3 text-xs text-slate-500">
-              {cargando && !resultado
-                ? 'Cargando catálogo...'
-                : `Mostrando ${productos.length} productos · ${activos} activos · ${productos.length - activos} inactivos`}
+            <div className="border-t border-slate-100">
+              <p className="px-4 pt-3 text-center text-xs text-slate-500">
+                {cargando && !resultado
+                  ? 'Cargando catálogo...'
+                  : `Mostrando ${catalogo.total === 0 ? 0 : catalogo.inicio + 1}–${catalogo.fin} de ${catalogo.total} productos · ${activos} activos · ${productos.length - activos} inactivos`}
+              </p>
+              <Paginacion
+                pagina={catalogo.pagina}
+                totalPaginas={catalogo.totalPaginas}
+                onCambiar={setPaginaCatalogo}
+                deshabilitado={cargando}
+                etiqueta="Paginación del catálogo"
+              />
             </div>
           </section>
         </>

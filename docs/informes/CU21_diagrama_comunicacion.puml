@@ -1,0 +1,94 @@
+@startuml CU21_Diagrama_de_Comunicacion
+' ==========================================
+' Estilos y Configuración General
+' ==========================================
+skinparam style strictuml
+skinparam handwritten false
+skinparam shadowing false
+skinparam defaultFontName "Helvetica"
+skinparam defaultFontSize 12
+
+title CU21. Generar reporte de ventas
+
+' ==========================================
+' Participantes (distribución horizontal:
+' Actor -> Boundary -> Control -> Entities)
+' ==========================================
+actor ":Propietario" as propietario
+boundary ":ReportesPage" as ui
+control ":ReporteVentasController" as ctrl
+entity ":Venta" as venta
+entity ":DetalleVenta" as detalle
+entity ":Producto" as producto
+entity ":CierreReporteVentas" as cierre
+entity ":LineaCierreReporteVentas" as linea
+entity ":Usuario" as usuario
+entity ":Bitacora" as bitacora
+
+' Enlaces ocultos para forzar el orden horizontal de izquierda a derecha
+propietario -[hidden]right- ui
+ui -[hidden]right- ctrl
+ctrl -[hidden]right- venta
+venta -[hidden]right- detalle
+detalle -[hidden]right- producto
+producto -[hidden]right- cierre
+cierre -[hidden]right- linea
+linea -[hidden]right- usuario
+usuario -[hidden]right- bitacora
+
+' ==========================================
+' Mensajes numerados (funciones reales, sin parámetros)
+' Los retornos de las entidades son implícitos (UML 2.5+,
+' las entidades no envían mensajes de vuelta al controlador)
+' Cada número mayor es un recorrido distinto del mismo caso de uso.
+' ==========================================
+
+' 1. Reporte dinámico: vuelve a sumar venta
+propietario -- ui : "1: consultar()"
+ui -- ctrl : "1.1: consultarReporteVentas()"
+ctrl -- venta : "1.2: obtenerVentasDelPeriodo()"
+ctrl -- detalle : "1.3: obtenerProductosVendidos()"
+ctrl -- producto : "1.4: obtenerNombreProducto()"
+ctrl -- ui : "1.5: mostrarReporteVentas()"
+ui -- propietario : "1.6: renderizarReporteVentas()"
+
+' 2. CSV del mismo cálculo dinámico. No lee el cierre.
+propietario -- ui : "2: descargarCsv()"
+ui -- ctrl : "2.1: descargarReporteCsv()"
+ctrl -- venta : "2.2: obtenerVentasDelPeriodo()"
+ctrl -- detalle : "2.3: obtenerProductosVendidos()"
+ctrl -- producto : "2.4: obtenerNombreProducto()"
+ctrl -- ui : "2.5: entregarCsv()"
+ui -- propietario : "2.6: descargarArchivoCsv()"
+
+' 3. Cierre estático: congela el cálculo y deja bitácora
+propietario -- ui : "3: guardar()"
+ui -- ctrl : "3.1: guardarCierreVentas()"
+ctrl -- venta : "3.2: obtenerVentasDelPeriodo()"
+ctrl -- detalle : "3.3: obtenerProductosVendidos()"
+ctrl -- producto : "3.4: obtenerNombreProducto()"
+ctrl -- cierre : "3.5: crearCierre()"
+ctrl -- linea : "3.6: crearLineas()"
+ctrl -- bitacora : "3.7: registrarCierreReporteVentas()"
+ctrl -- ui : "3.8: retornarCierreGuardado()"
+ui -- propietario : "3.9: mostrarCierreGuardado()"
+
+' 4. Modo estático: lee la copia, no vuelve a sumar venta
+propietario -- ui : "4: verCierres()"
+ui -- ctrl : "4.1: listarCierresVentas()"
+ctrl -- cierre : "4.2: listarCierres()"
+ctrl -- linea : "4.3: obtenerLineas()"
+ctrl -- usuario : "4.4: obtenerNombreUsuario()"
+ctrl -- ui : "4.5: retornarCierres()"
+ui -- propietario : "4.6: renderizarCierres()"
+
+' 5. PDF del cierre guardado. No toca Venta ni Producto.
+propietario -- ui : "5: descargarPdf()"
+ui -- ctrl : "5.1: descargarCierrePdf()"
+ctrl -- cierre : "5.2: obtenerCierre()"
+ctrl -- linea : "5.3: obtenerLineas()"
+ctrl -- usuario : "5.4: obtenerNombreUsuario()"
+ctrl -- ui : "5.5: entregarPdf()"
+ui -- propietario : "5.6: descargarArchivoPdf()"
+
+@enduml

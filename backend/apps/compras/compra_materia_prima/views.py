@@ -1,9 +1,11 @@
-from django.db.models import Count, Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .consulta import compras_filtradas, leer_filtros_compra
+from .exportar_compra import csv_compras, nombre_archivo, pdf_compras, resumir_compras
 from .models import Compra
 from .permissions import PuedeRegistrarCompras
 from .serializers import (
@@ -21,35 +23,10 @@ class CompraListCreateView(APIView):
     permission_classes = [PuedeRegistrarCompras]
 
     def get(self, request):
-        queryset = (
-            Compra.objects.select_related('id_proveedor', 'id_usuario')
-            .annotate(cantidad_lineas=Count('detalles'))
-            .order_by('-fecha_hora', '-id_compra')
-        )
-
-        id_proveedor = request.query_params.get('id_proveedor')
-        if id_proveedor:
-            queryset = queryset.filter(id_proveedor_id=id_proveedor)
-
-        fecha_desde = request.query_params.get('fecha_desde')
-        if fecha_desde:
-            queryset = queryset.filter(fecha_hora__date__gte=fecha_desde)
-
-        fecha_hasta = request.query_params.get('fecha_hasta')
-        if fecha_hasta:
-            queryset = queryset.filter(fecha_hora__date__lte=fecha_hasta)
-
-        search = request.query_params.get('search') or request.query_params.get('q')
-        if search:
-            search = search.strip()
-            if search.isdigit():
-                queryset = queryset.filter(
-                    Q(id_compra=int(search)) | Q(id_proveedor__nombre__icontains=search)
-                )
-            else:
-                queryset = queryset.filter(id_proveedor__nombre__icontains=search)
-
-        return Response(CompraListSerializer(queryset, many=True).data)
+        filtros, error = leer_filtros_compra(request.query_params)
+        if error:
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        return Response(CompraListSerializer(compras_filtradas(filtros), many=True).data)
 
     def post(self, request):
         serializer = CompraRegistroSerializer(
@@ -65,6 +42,37 @@ class CompraListCreateView(APIView):
         ).prefetch_related('detalles__id_materia_prima').get(pk=compra.pk)
         compra.advertencias = advertencias
         return Response(CompraSerializer(compra).data, status=status.HTTP_201_CREATED)
+
+
+class CompraExportarView(APIView):
+    """
+    GET /api/compras/csv/ y /api/compras/pdf/
+
+    Descarga las tarjetas y la tabla de Compras. Usa los mismos filtros
+    que el listado: proveedor, rango de fechas y texto de búsqueda.
+    """
+
+    permission_classes = [PuedeRegistrarCompras]
+    formato = 'csv'
+
+    def get(self, request):
+        filtros, error = leer_filtros_compra(request.query_params)
+        if error:
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+
+        resumen = resumir_compras(filtros)
+        if self.formato == 'pdf':
+            contenido = pdf_compras(resumen)
+            tipo = 'application/pdf'
+            extension = 'pdf'
+        else:
+            contenido = csv_compras(resumen)
+            tipo = 'text/csv; charset=utf-8'
+            extension = 'csv'
+
+        respuesta = HttpResponse(contenido, content_type=tipo)
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre_archivo(filtros, extension)}"'
+        return respuesta
 
 
 class CompraDetailView(APIView):

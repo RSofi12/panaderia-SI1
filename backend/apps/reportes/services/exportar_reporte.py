@@ -4,15 +4,13 @@ Archivos del CU21.
 El CSV se arma con el reporte dinámico: cada descarga vuelve a sumar.
 El PDF se arma con el cierre ya guardado: no vuelve a leer venta.
 """
-import csv
-import io
 from decimal import Decimal
 
 from django.utils import timezone
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
 
 from apps.comercializacion.ventas.models import MetodoPago
+from apps.comun.csv_reporte import archivo_csv, dinero_local
+from apps.comun.pdf_reporte import HojaReporte, anchos_de, fecha_visible
 
 
 def _dinero(valor) -> str:
@@ -32,54 +30,73 @@ def _periodo(periodo: str) -> str:
 
 
 def csv_reporte(reporte: dict, metodo_pago=None) -> bytes:
-    buffer = io.StringIO()
-    writer = csv.writer(buffer, delimiter=';')
-    writer.writerow(['tipo', 'dinamico'])
-    writer.writerow(['desde', reporte['desde'].isoformat()])
-    writer.writerow(['hasta', reporte['hasta'].isoformat()])
-    writer.writerow(['metodo', _metodo(metodo_pago)])
-    writer.writerow(['ventas', reporte['cantidad']])
-    writer.writerow(['total', _dinero(reporte['total'])])
-    writer.writerow(['efectivo', _dinero(reporte['efectivo'])])
-    writer.writerow(['tarjeta', _dinero(reporte['tarjeta'])])
-    writer.writerow([])
-    writer.writerow(['producto', 'cantidad', 'subtotal'])
-    for producto in reporte['productos']:
-        writer.writerow([producto['nombre'], producto['cantidad'], _dinero(producto['subtotal'])])
-    return buffer.getvalue().encode('utf-8-sig')
+    """Ventas del periodo, vueltas a sumar. No es el cierre congelado."""
+    generado = timezone.localtime(timezone.now()).strftime('%d/%m/%Y %H:%M')
+    return archivo_csv(
+        'Reporte de ventas',
+        [
+            ('Desde', fecha_visible(reporte['desde'])),
+            ('Hasta', fecha_visible(reporte['hasta'])),
+            ('Método', _metodo(metodo_pago)),
+            ('Generado el', generado),
+        ],
+        [
+            ('Ventas', reporte['cantidad']),
+            ('Total (Bs)', dinero_local(reporte['total'])),
+            ('Efectivo (Bs)', dinero_local(reporte['efectivo'])),
+            ('Tarjeta (Bs)', dinero_local(reporte['tarjeta'])),
+        ],
+        'Productos vendidos',
+        ['Producto', 'Cantidad', 'Subtotal (Bs)'],
+        [
+            [producto['nombre'], producto['cantidad'], dinero_local(producto['subtotal'])]
+            for producto in reporte['productos']
+        ],
+        'Este archivo vuelve a sumar las ventas del periodo. No es el cierre guardado.',
+        vacio='Este periodo no tiene ventas.',
+    )
 
 
 def pdf_cierre(cierre: dict) -> bytes:
-    buffer = io.BytesIO()
-    hoja = canvas.Canvas(buffer, pagesize=A4, pageCompression=0)
-    hoja.setTitle(f'Cierre de ventas {cierre["id_cierre"]}')
-    y = 800
-
-    def linea(texto, tamano=11, negrita=False):
-        nonlocal y
-        hoja.setFont('Helvetica-Bold' if negrita else 'Helvetica', tamano)
-        hoja.drawString(48, y, str(texto))
-        y -= tamano + 8
-
+    """PDF del cierre ya guardado. No vuelve a sumar las ventas."""
     cuando = timezone.localtime(cierre['fecha_generacion']).strftime('%d/%m/%Y %H:%M')
-    linea('Panadería Santiago', 16, True)
-    linea('Cierre estático de ventas', 13, True)
-    linea(f'{_periodo(cierre["periodo"])} del {cierre["desde"].isoformat()} al {cierre["hasta"].isoformat()}')
-    linea(f'Método: {_metodo(cierre["metodo_pago"])}')
-    linea(f'Congelado el {cuando} por {cierre["generado_por"]}')
-    y -= 8
-    linea(f'Ventas: {cierre["cantidad"]}', 12, True)
-    linea(f'Total: Bs {_dinero(cierre["total"])}', 12, True)
-    linea(f'Efectivo: Bs {_dinero(cierre["efectivo"])}')
-    linea(f'Tarjeta: Bs {_dinero(cierre["tarjeta"])}')
-    y -= 8
-    linea('Producto', 11, True)
-    for producto in cierre['productos']:
-        linea(f'{producto["nombre"]}  ·  {producto["cantidad"]} u  ·  Bs {_dinero(producto["subtotal"])}')
+    detalle = (
+        f'{_periodo(cierre["periodo"])} del {fecha_visible(cierre["desde"])} '
+        f'al {fecha_visible(cierre["hasta"])}   ·   '
+        f'Método: {_metodo(cierre["metodo_pago"])}\n'
+        f'Congelado el {cuando} por {cierre["generado_por"]}'
+    )
+    columnas = anchos_de(58, 18, 24)
+    reporte = HojaReporte(f'Reporte de cierre de ventas {cierre["id_cierre"]}')
+    reporte.abrir('Reporte de cierre de ventas', detalle)
+    reporte.tarjetas([
+        ('Ventas', str(cierre['cantidad'])),
+        ('Total', f'Bs {_dinero(cierre["total"])}'),
+        ('Efectivo', f'Bs {_dinero(cierre["efectivo"])}'),
+        ('Tarjeta', f'Bs {_dinero(cierre["tarjeta"])}'),
+    ])
+    reporte.seccion('Productos vendidos')
+
+    def encabezado():
+        reporte.fila(
+            [('Producto', 'izq'), ('Cantidad', 'der'), ('Subtotal', 'der')],
+            columnas,
+            encabezado=True,
+        )
+
+    encabezado()
+    for indice, producto in enumerate(cierre['productos']):
+        reporte.fila(
+            [
+                (producto['nombre'], 'izq'),
+                (str(producto['cantidad']), 'der'),
+                (f'Bs {_dinero(producto["subtotal"])}', 'der'),
+            ],
+            columnas,
+            cebra=indice % 2 == 1,
+            al_continuar=encabezado,
+        )
     if not cierre['productos']:
-        linea('Este periodo no tiene ventas.')
-    y -= 12
-    linea('Estos números quedaron guardados y no se vuelven a calcular.')
-    hoja.showPage()
-    hoja.save()
-    return buffer.getvalue()
+        reporte.nota('Este periodo no tiene ventas.')
+    reporte.nota('Estos números quedaron guardados y no se vuelven a calcular.')
+    return reporte.cerrar()
