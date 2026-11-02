@@ -1,28 +1,40 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   AlertTriangle,
   Boxes,
   CheckCircle2,
-  Coins,
   History,
+  Layers,
   RefreshCw,
   Search,
-  Store,
+  Sparkles,
+  TrendingDown,
   XCircle,
+  AlertOctagon,
 } from 'lucide-react';
-import existenciasService from '../../../../services/existenciasService';
-import productoService from '../../../../services/productoService';
 import type {
   DetalleKardexProducto,
   ExistenciaProducto,
   FiltrosExistencias,
   NivelStock,
   ResumenExistencias,
+  NotaPerdida,
 } from '../../../../types/existencias';
+import { existenciasService } from '../../../../services/existenciasService';
+import { productoService } from '../../../../services/productoService';
+import { useAuth } from '../../../../contexts/AuthContext';
+import { KardexProductoModal } from './components/KardexProductoModal';
+import { RegistrarBajaModal } from './components/RegistrarBajaModal';
+import { HistorialMermasModal } from './components/HistorialMermasModal';
 import type { CategoriaProducto } from '../../../../types/producto';
-import KardexProductoModal from './components/KardexProductoModal';
 
 export const ExistenciasTab: React.FC = () => {
+  const { hasPermission } = useAuth();
+  const puedeRegistrarBaja =
+    hasPermission('gestionar_inventario') ||
+    hasPermission('registrar_produccion') ||
+    hasPermission('gestionar_productos');
+
   // Estados de datos
   const [existencias, setExistencias] = useState<ExistenciaProducto[]>([]);
   const [resumen, setResumen] = useState<ResumenExistencias | null>(null);
@@ -41,78 +53,85 @@ export const ExistenciasTab: React.FC = () => {
   const [detalleKardex, setDetalleKardex] = useState<DetalleKardexProducto | null>(null);
   const [cargandoKardex, setCargandoKardex] = useState(false);
 
+  // Modales y estados para CU18 (Registrar Baja / Merma)
+  const [modalBajaAbierto, setModalBajaAbierto] = useState(false);
+  const [modalHistorialAbierto, setModalHistorialAbierto] = useState(false);
+  const [productoParaBaja, setProductoParaBaja] = useState<ExistenciaProducto | null>(null);
+  const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+
   // Cargar categorías al inicio
   useEffect(() => {
     let activo = true;
-    productoService.listarCategorias().then((cats) => {
-      if (activo) setCategorias(cats);
-    }).catch(() => {
-      // Ignora si falla la carga de categorías
-    });
-    return () => { activo = false; };
+    productoService
+      .listarCategorias()
+      .then((cats) => {
+        if (activo) setCategorias(cats);
+      })
+      .catch(() => {
+        // Ignora si falla la carga de categorías
+      });
+    return () => {
+      activo = false;
+    };
   }, []);
 
-  // Efecto reactivo ante cambios en filtros de búsqueda y orden
+  // Cargar existencias y resumen con filtros reactivos
   useEffect(() => {
     let activo = true;
+    const cargarDatos = async () => {
+      try {
+        const filtros: FiltrosExistencias = {
+          q: busqueda.trim() || undefined,
+          categoria: categoriaSeleccionada || undefined,
+          estado_stock: estadoStockSeleccionado || undefined,
+          ordenar_por: ordenSeleccionado,
+          solo_activos: true,
+        };
 
-    existenciasService
-      .listar({
-        q: busqueda.trim() || undefined,
-        categoria: categoriaSeleccionada || undefined,
-        estado_stock: estadoStockSeleccionado || undefined,
-        ordenar_por: ordenSeleccionado,
-      })
-      .then((dataExistencias) => {
+        const [items, stats] = await Promise.all([
+          existenciasService.listar(filtros),
+          existenciasService.obtenerResumen(),
+        ]);
+
         if (activo) {
-          setExistencias(dataExistencias);
+          setExistencias(items);
+          setResumen(stats);
           setCargando(false);
-          setRecargando(false);
         }
-      })
-      .catch(() => {
-        if (activo) {
-          setCargando(false);
-          setRecargando(false);
-        }
-      });
+      } catch {
+        if (activo) setCargando(false);
+      }
+    };
 
-    existenciasService
-      .obtenerResumen()
-      .then((dataResumen) => {
-        if (activo) setResumen(dataResumen);
-      })
-      .catch(() => {
-        // Fallback manejado
-      });
-
+    cargarDatos();
     return () => {
       activo = false;
     };
   }, [busqueda, categoriaSeleccionada, estadoStockSeleccionado, ordenSeleccionado]);
 
-  // Recarga manual forzada por el usuario
-  const handleRecargarManual = () => {
+  // Recargar manual
+  const handleRecargarManual = async () => {
     setRecargando(true);
-    Promise.all([
-      existenciasService.listar({
+    try {
+      const filtros: FiltrosExistencias = {
         q: busqueda.trim() || undefined,
         categoria: categoriaSeleccionada || undefined,
         estado_stock: estadoStockSeleccionado || undefined,
         ordenar_por: ordenSeleccionado,
-      }),
-      existenciasService.obtenerResumen(),
-    ])
-      .then(([dataExistencias, dataResumen]) => {
-        setExistencias(dataExistencias);
-        setResumen(dataResumen);
-      })
-      .finally(() => {
-        setRecargando(false);
-      });
+        solo_activos: true,
+      };
+      const [items, stats] = await Promise.all([
+        existenciasService.listar(filtros),
+        existenciasService.obtenerResumen(),
+      ]);
+      setExistencias(items);
+      setResumen(stats);
+    } finally {
+      setRecargando(false);
+    }
   };
 
-  // Manejador para abrir el Kardex de un producto
+  // Abrir modal de Kardex
   const handleVerKardex = async (idProducto: number) => {
     setProductoKardexSeleccionado(idProducto);
     setCargandoKardex(true);
@@ -126,13 +145,32 @@ export const ExistenciasTab: React.FC = () => {
     }
   };
 
+  // Cerrar modal de Kardex
   const handleCerrarKardex = () => {
     setProductoKardexSeleccionado(null);
     setDetalleKardex(null);
   };
 
+  // Abrir modal de baja de producto (CU18)
+  const handleAbrirBaja = (producto?: ExistenciaProducto) => {
+    setProductoParaBaja(producto || null);
+    setModalBajaAbierto(true);
+  };
+
+  // Handler tras completar baja exitosamente
+  const handleBajaRegistrada = (nota: NotaPerdida) => {
+    setMensajeExito(
+      `Baja registrada exitosamente: ${nota.cantidad} un. de "${nota.producto_nombre}" (Pérdida calculada: Bs. ${Number(
+        nota.costo_total
+      ).toFixed(2)})`
+    );
+    setTimeout(() => setMensajeExito(null), 5000);
+    handleRecargarManual();
+  };
+
   // Limpiar filtros activos
-  const hayFiltrosActivos = busqueda !== '' || categoriaSeleccionada !== '' || estadoStockSeleccionado !== '';
+  const hayFiltrosActivos =
+    busqueda !== '' || categoriaSeleccionada !== '' || estadoStockSeleccionado !== '';
   const limpiarFiltros = () => {
     setBusqueda('');
     setCategoriaSeleccionada('');
@@ -142,6 +180,23 @@ export const ExistenciasTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Notificación Toast de Éxito para CU18 */}
+      {mensajeExito && (
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium animate-in fade-in">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+            <span>{mensajeExito}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMensajeExito(null)}
+            className="text-emerald-700 hover:text-emerald-900 text-xs font-bold underline cursor-pointer"
+          >
+            Cerrar
+          </button>
+        </div>
+      )}
+
       {/* 1. Tarjetas de Métricas / KPIs Resumen (CU12) */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {/* KPI 1: Variedad de panes */}
@@ -163,69 +218,67 @@ export const ExistenciasTab: React.FC = () => {
           <p className="mt-1 text-xs text-slate-400">Catálogo activo horneado</p>
         </div>
 
-        {/* KPI 2: Total unidades disponibles */}
+        {/* KPI 2: Unidades totales disponibles */}
         <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Stock total listo
+              Total unidades listas
             </span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
-              <Store className="h-5 w-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-emerald-700">
-              {resumen?.total_unidades_stock ?? 0}
-            </span>
-            <span className="text-xs text-slate-500">unidades</span>
-          </div>
-          <p className="mt-1 text-xs text-slate-400">Listas para despacho en mostrador</p>
-        </div>
-
-        {/* KPI 3: Valor monetario estimado en Bs. */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Valor en mostrador
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-              <Coins className="h-5 w-5" />
+              <Sparkles className="h-5 w-5" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-              Bs. {resumen?.valor_total_inventario ?? '0.00'}
+              {resumen?.total_unidades_stock ?? 0}
             </span>
+            <span className="text-xs text-slate-500">unidades</span>
           </div>
-          <p className="mt-1 text-xs text-slate-400">Valorización a precio de venta</p>
+          <p className="mt-1 text-xs text-slate-400">Listos para despacho o venta</p>
         </div>
 
-        {/* KPI 4: Estado crítico o agotado */}
+        {/* KPI 3: Panes en estado crítico o agotados */}
         <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Atención / Alertas
+              Bajo stock o agotado
             </span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-700">
               <AlertTriangle className="h-5 w-5" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-rose-700">
+            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
               {(resumen?.productos_stock_critico ?? 0) + (resumen?.productos_agotados ?? 0)}
             </span>
-            <span className="text-xs text-slate-500">panes críticos/0</span>
+            <span className="text-xs text-slate-500">requieren horneado</span>
           </div>
-          <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-            <span className="text-amber-700 font-medium">{resumen?.productos_stock_critico ?? 0} bajos</span>
-            <span>·</span>
-            <span className="text-rose-700 font-medium">{resumen?.productos_agotados ?? 0} agotados</span>
+          <p className="mt-1 text-xs text-slate-400">
+            {resumen?.productos_agotados ?? 0} agotados / {resumen?.productos_stock_critico ?? 0} críticos
+          </p>
+        </div>
+
+        {/* KPI 4: Valorización total de vitrina */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Valorización en vitrina
+            </span>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+              <Layers className="h-5 w-5" />
+            </div>
           </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+              Bs. {Number(resumen?.valor_total_inventario ?? 0).toFixed(2)}
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-slate-400">Precio estimado a venta</p>
         </div>
       </div>
 
-      {/* 2. Barra de Filtros y Búsqueda */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+      {/* 2. Barra de Herramientas y Filtros (CU12 + Acciones CU18) */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs md:flex-row md:items-center md:justify-between">
         {/* Buscador de texto */}
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -233,18 +286,18 @@ export const ExistenciasTab: React.FC = () => {
             type="text"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar por nombre de pan (marraqueta, dulce, chama...)..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2 pl-10 pr-4 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-amber-600 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-amber-600/20"
+            placeholder="Buscar por tipo de pan o descripción..."
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-2 pl-10 pr-4 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all"
           />
         </div>
 
-        {/* Controles secundarios */}
+        {/* Filtros desplegables y botones */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Selector de Categoría */}
           <select
             value={categoriaSeleccionada}
             onChange={(e) => setCategoriaSeleccionada(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 focus:border-amber-600 focus:outline-hidden"
+            className="rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs sm:text-sm text-slate-700 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
           >
             <option value="">Todas las categorías</option>
             {categorias.map((cat) => (
@@ -254,33 +307,35 @@ export const ExistenciasTab: React.FC = () => {
             ))}
           </select>
 
-          {/* Selector de Estado de Stock */}
+          {/* Selector de Nivel de Stock */}
           <select
             value={estadoStockSeleccionado}
             onChange={(e) => setEstadoStockSeleccionado(e.target.value as '' | NivelStock)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 focus:border-amber-600 focus:outline-hidden"
+            className="rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs sm:text-sm text-slate-700 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
           >
-            <option value="">Cualquier stock</option>
-            <option value="disponible">Normal (&gt; 20 un)</option>
-            <option value="critico">Bajo (1 a 20 un)</option>
+            <option value="">Todos los estados</option>
+            <option value="disponible">Disponible (&gt; 20 un)</option>
+            <option value="critico">Bajo stock (1 a 20 un)</option>
             <option value="agotado">Agotado (0 un)</option>
           </select>
 
-          {/* Selector de Orden */}
+          {/* Selector de Ordenamiento */}
           <select
             value={ordenSeleccionado}
-            onChange={(e) => setOrdenSeleccionado(e.target.value as FiltrosExistencias['ordenar_por'])}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 focus:border-amber-600 focus:outline-hidden"
+            onChange={(e) =>
+              setOrdenSeleccionado(e.target.value as FiltrosExistencias['ordenar_por'])
+            }
+            className="rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs sm:text-sm text-slate-700 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
           >
-            <option value="nombre_asc">Nombre: A - Z</option>
-            <option value="nombre_desc">Nombre: Z - A</option>
+            <option value="nombre_asc">Nombre: A-Z</option>
+            <option value="nombre_desc">Nombre: Z-A</option>
             <option value="stock_desc">Mayor stock</option>
             <option value="stock_asc">Menor stock</option>
             <option value="precio_desc">Mayor precio</option>
             <option value="precio_asc">Menor precio</option>
           </select>
 
-          {/* Botón Refrescar */}
+          {/* Botón para refrescar */}
           <button
             type="button"
             onClick={handleRecargarManual}
@@ -291,42 +346,69 @@ export const ExistenciasTab: React.FC = () => {
             <RefreshCw className={`h-4 w-4 ${recargando ? 'animate-spin text-amber-600' : ''}`} />
           </button>
 
-          {/* Limpiar filtros si hay alguno activo */}
+          {/* Botón Historial de Bajas (CU18) */}
+          <button
+            type="button"
+            onClick={() => setModalHistorialAbierto(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer shadow-2xs"
+            title="Ver auditoría y reporte histórico de mermas"
+          >
+            <History className="h-4 w-4 text-slate-500" />
+            <span>Historial Bajas</span>
+          </button>
+
+          {/* Botón Registrar Baja (CU18) */}
+          {puedeRegistrarBaja && (
+            <button
+              type="button"
+              onClick={() => handleAbrirBaja()}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-rose-700 shadow-sm transition-all cursor-pointer"
+              title="Registrar merma o descarte de panes"
+            >
+              <AlertOctagon className="h-4 w-4" />
+              <span>Registrar Baja</span>
+            </button>
+          )}
+
+          {/* Limpiar filtros si hay activos */}
           {hayFiltrosActivos && (
             <button
               type="button"
               onClick={limpiarFiltros}
-              className="text-xs font-semibold text-amber-800 hover:text-amber-950 px-2 py-1 cursor-pointer"
+              className="text-xs text-amber-600 hover:text-amber-800 font-medium underline px-1 cursor-pointer"
             >
-              Limpiar filtros
+              Restablecer
             </button>
           )}
         </div>
       </div>
 
       {/* 3. Tabla Principal de Existencias */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
         {cargando ? (
-          <div className="space-y-4 p-8">
-            <div className="flex items-center justify-center gap-3 text-slate-400">
-              <div className="h-6 w-6 animate-spin rounded-full border-3 border-amber-600 border-t-transparent" />
-              <span className="text-sm">Consultando existencias de productos terminados en mostrador...</span>
-            </div>
+          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+            <RefreshCw className="h-8 w-8 animate-spin text-amber-600 mb-2" />
+            <p className="text-xs sm:text-sm font-medium">Consultando existencias en vitrina...</p>
           </div>
         ) : existencias.length === 0 ? (
-          <div className="p-12 text-center">
-            <Store className="mx-auto h-12 w-12 text-slate-300" />
-            <h3 className="mt-3 text-base font-bold text-slate-800">No se encontraron productos</h3>
-            <p className="mt-1 text-xs sm:text-sm text-slate-500 max-w-sm mx-auto">
-              No hay existencias registradas que coincidan con los criterios de búsqueda aplicados.
+          <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 mb-3">
+              <Boxes className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-semibold text-slate-900">
+              No se encontraron productos en vitrina
+            </h3>
+            <p className="mt-1 text-xs sm:text-sm text-slate-500 max-w-sm">
+              No hay productos terminados que coincidan con los filtros seleccionados o el catálogo
+              está vacío.
             </p>
             {hayFiltrosActivos && (
               <button
                 type="button"
                 onClick={limpiarFiltros}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2 text-xs sm:text-sm font-semibold text-amber-800 hover:bg-amber-100 transition-colors cursor-pointer"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
               >
-                Limpiar filtros de búsqueda
+                Limpiar filtros
               </button>
             )}
           </div>
@@ -380,16 +462,14 @@ export const ExistenciasTab: React.FC = () => {
                         Bs. {Number(item.precio_venta).toFixed(2)}
                       </td>
 
-                      {/* Nivel de stock con barra visual */}
+                      {/* Nivel de existencias con barra visual */}
                       <td className="py-3.5 px-4">
                         <div className="space-y-1.5">
-                          <div className="flex justify-between items-center text-xs">
+                          <div className="flex items-center justify-between text-xs">
                             <span className="font-bold text-slate-900 tabular-nums">
                               {stock} unidades
                             </span>
-                            <span className="text-[11px] text-slate-400">
-                              Cap. ~150 un
-                            </span>
+                            <span className="text-[11px] text-slate-400">Capacidad ref. 150</span>
                           </div>
                           <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
                             <div
@@ -406,7 +486,7 @@ export const ExistenciasTab: React.FC = () => {
                         </div>
                       </td>
 
-                      {/* Estado / Badge de disponibilidad */}
+                      {/* Badge de Estado */}
                       <td className="py-3.5 px-4 text-center">
                         {item.estado_stock === 'disponible' ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
@@ -415,8 +495,8 @@ export const ExistenciasTab: React.FC = () => {
                           </span>
                         ) : item.estado_stock === 'critico' ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
-                            <AlertTriangle className="h-3 w-3 text-amber-600" />
-                            Stock bajo
+                            <TrendingDown className="h-3 w-3 text-amber-600" />
+                            Bajo stock
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-200 px-2.5 py-0.5 text-xs font-semibold text-rose-800">
@@ -431,17 +511,31 @@ export const ExistenciasTab: React.FC = () => {
                         Bs. {Number(item.valor_total_stock).toFixed(2)}
                       </td>
 
-                      {/* Acciones: Ver Kardex */}
+                      {/* Acciones: Ver Kardex y Dar de Baja (CU18) */}
                       <td className="py-3.5 px-4 text-center">
-                        <button
-                          type="button"
-                          onClick={() => handleVerKardex(item.id_producto)}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-amber-500 hover:bg-amber-50/50 hover:text-amber-900 transition-all cursor-pointer shadow-2xs"
-                          title={`Ver historial de movimientos de ${item.producto_nombre}`}
-                        >
-                          <History className="h-3.5 w-3.5 text-amber-600" />
-                          <span>Kardex</span>
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleVerKardex(item.id_producto)}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-amber-500 hover:bg-amber-50/50 hover:text-amber-900 transition-all cursor-pointer shadow-2xs"
+                            title={`Ver historial de movimientos de ${item.producto_nombre}`}
+                          >
+                            <History className="h-3.5 w-3.5 text-amber-600" />
+                            <span>Kardex</span>
+                          </button>
+
+                          {puedeRegistrarBaja && item.stock_actual > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleAbrirBaja(item)}
+                              className="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50/60 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 hover:text-rose-900 transition-all cursor-pointer shadow-2xs"
+                              title={`Registrar baja por merma de ${item.producto_nombre}`}
+                            >
+                              <AlertOctagon className="h-3.5 w-3.5 text-rose-600" />
+                              <span>Baja</span>
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -459,6 +553,24 @@ export const ExistenciasTab: React.FC = () => {
           cargando={cargandoKardex}
           onClose={handleCerrarKardex}
         />
+      )}
+
+      {/* 5. Modal de Registro de Baja / Merma (CU18) */}
+      {modalBajaAbierto && (
+        <RegistrarBajaModal
+          existencias={existencias}
+          productoInicial={productoParaBaja}
+          onClose={() => {
+            setModalBajaAbierto(false);
+            setProductoParaBaja(null);
+          }}
+          onBajaRegistrada={handleBajaRegistrada}
+        />
+      )}
+
+      {/* 6. Modal de Historial de Mermas (CU18) */}
+      {modalHistorialAbierto && (
+        <HistorialMermasModal onClose={() => setModalHistorialAbierto(false)} />
       )}
     </div>
   );

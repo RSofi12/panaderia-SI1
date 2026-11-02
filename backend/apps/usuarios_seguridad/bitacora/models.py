@@ -88,6 +88,9 @@ class AccionBitacora(models.TextChoices):
     # --- CU16: Generar comprobante de venta ---
     EMISION_COMPROBANTE = 'EMISION_COMPROBANTE', 'Emisión de comprobante de venta'
 
+    # --- CU18: Registrar baja de productos terminados (merma) ---
+    REGISTRO_BAJA_PRODUCTO = 'REGISTRO_BAJA_PRODUCTO', 'Registro de baja de productos terminados (merma)'
+
 
 class Bitacora(models.Model):
     """

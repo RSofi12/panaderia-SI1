@@ -1,6 +1,6 @@
 /**
  * Servicio cliente para CU12: Consultar existencias de productos terminados.
- * Autor: Roberto (Equipo Panadería Santiago).
+ * Autor: Roberto (Equipo PanaderÃ­a Santiago).
  */
 import api from './api';
 import type {
@@ -8,9 +8,12 @@ import type {
   ExistenciaProducto,
   FiltrosExistencias,
   ResumenExistencias,
+  NotaPerdida,
+  RegistrarBajaPayload,
+  FiltrosMermas,
 } from '../types/existencias';
 
-// Datos de fallback en caso de trabajar en modo mockup o sin conexión al backend
+// Datos de fallback en caso de trabajar en modo mockup o sin conexiÃ³n al backend
 const MOCK_EXISTENCIAS: ExistenciaProducto[] = [
   {
     id_inventario: 1,
@@ -31,7 +34,7 @@ const MOCK_EXISTENCIAS: ExistenciaProducto[] = [
     id_inventario: 2,
     id_producto: 2,
     producto_nombre: 'Pan Arani',
-    producto_descripcion: 'Pan típico de masa densa y corteza firme.',
+    producto_descripcion: 'Pan tÃ­pico de masa densa y corteza firme.',
     categoria_id: 1,
     categoria_nombre: 'Panes Tradicionales',
     precio_venta: '1.00',
@@ -61,7 +64,7 @@ const MOCK_EXISTENCIAS: ExistenciaProducto[] = [
     id_inventario: 4,
     id_producto: 4,
     producto_nombre: 'Pan Casero',
-    producto_descripcion: 'Pan hogareño de corteza dorada y miga tierna.',
+    producto_descripcion: 'Pan hogareÃ±o de corteza dorada y miga tierna.',
     categoria_id: 1,
     categoria_nombre: 'Panes Tradicionales',
     precio_venta: '0.80',
@@ -120,7 +123,7 @@ const MOCK_EXISTENCIAS: ExistenciaProducto[] = [
   {
     id_inventario: 8,
     id_producto: 8,
-    producto_nombre: 'Pan con Azúcar',
+    producto_nombre: 'Pan con AzÃºcar',
     producto_descripcion: 'Pan suave con capa dulce cristalizada.',
     categoria_id: 3,
     categoria_nombre: 'Panes Dulces',
@@ -166,7 +169,7 @@ const MOCK_EXISTENCIAS: ExistenciaProducto[] = [
     id_inventario: 11,
     id_producto: 11,
     producto_nombre: 'Pan Galleta',
-    producto_descripcion: 'Pan tostado crocante de larga conservación.',
+    producto_descripcion: 'Pan tostado crocante de larga conservaciÃ³n.',
     categoria_id: 1,
     categoria_nombre: 'Panes Tradicionales',
     precio_venta: '0.60',
@@ -197,7 +200,7 @@ const MOCK_EXISTENCIAS: ExistenciaProducto[] = [
 export const existenciasService = {
   /**
    * GET /api/productos-terminados/existencias/
-   * Lista todas las existencias de panes con filtros dinámicos.
+   * Lista todas las existencias de panes con filtros dinÃ¡micos.
    */
   async listar(filtros: FiltrosExistencias = {}): Promise<ExistenciaProducto[]> {
     try {
@@ -260,7 +263,7 @@ export const existenciasService = {
 
   /**
    * GET /api/productos-terminados/existencias/resumen/
-   * Retorna métricas globales para tarjetas KPI.
+   * Retorna mÃ©tricas globales para tarjetas KPI.
    */
   async obtenerResumen(): Promise<ResumenExistencias> {
     try {
@@ -320,7 +323,7 @@ export const existenciasService = {
           cantidad: producto.stock_actual + 30,
           id_produccion: 101,
           id_nota_perdida: null,
-          origen_detalle: 'Producción / Horneado #101',
+          origen_detalle: 'ProducciÃ³n / Horneado #101',
         },
         {
           id_movimiento: 2,
@@ -337,6 +340,37 @@ export const existenciasService = {
       ],
     };
   },
+  /**
+   * GET /api/productos-terminados/mermas/
+   * Lista el historial de notas de pérdida / mermas registradas (CU18).
+   */
+  async listarMermas(filtros?: FiltrosMermas): Promise<NotaPerdida[]> {
+    try {
+      const params: Record<string, string> = {};
+      if (filtros?.id_producto) params.id_producto = String(filtros.id_producto);
+      if (filtros?.q) params.q = filtros.q;
+      if (filtros?.fecha_desde) params.fecha_desde = filtros.fecha_desde;
+      if (filtros?.fecha_hasta) params.fecha_hasta = filtros.fecha_hasta;
+
+      const response = await api.get<NotaPerdida[]>('/productos-terminados/mermas/', { params });
+      if (response.data) {
+        return response.data;
+      }
+    } catch {
+      // Fallback si no hay backend activo
+    }
+    return [];
+  },
+
+  /**
+   * POST /api/productos-terminados/mermas/
+   * Registra una nueva baja de producto terminado descontando stock (CU18).
+   */
+  async registrarBaja(payload: RegistrarBajaPayload): Promise<NotaPerdida> {
+    const response = await api.post<NotaPerdida>('/productos-terminados/mermas/', payload);
+    return response.data;
+  },
 };
 
 export default existenciasService;
+

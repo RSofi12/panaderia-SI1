@@ -232,3 +232,215 @@ class PruebasExistenciasProductosTerminados(TestCase):
         self.assertEqual(len(respuesta.data['movimientos']), 1)
         self.assertEqual(respuesta.data['movimientos'][0]['tipo'], 'entrada')
         self.assertEqual(respuesta.data['movimientos'][0]['cantidad'], 100)
+
+from apps.productos_inventario.produccion.models import Produccion, DetalleProduccion, JornadaProduccion
+from apps.productos_inventario.productos_terminados.models import NotaPerdidaProducto
+from apps.usuarios_seguridad.bitacora.models import AccionBitacora, Bitacora
+
+
+@override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
+class PruebasBajasProductosTerminadosCU18(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+        # Permisos
+        self.permiso_inventario = Permiso.objects.create(
+            id_permiso=106,
+            nombre='gestionar_inventario',
+            modulo='productos_inventario',
+            descripcion='Consultar y gestionar existencias',
+        )
+        self.permiso_produccion = Permiso.objects.create(
+            id_permiso=107,
+            nombre='registrar_produccion',
+            modulo='produccion',
+            descripcion='Registrar produccion y mermas',
+        )
+
+        # Rol Produccion
+        self.rol_produccion = Rol.objects.create(
+            id_rol=104,
+            nombre='Personal de Produccion',
+            descripcion='Elaboracion y mermas',
+        )
+        self.rol_produccion.asignar_permiso(self.permiso_inventario)
+        self.rol_produccion.asignar_permiso(self.permiso_produccion)
+
+        # Rol sin acceso
+        self.rol_sin_permiso = Rol.objects.create(
+            id_rol=199,
+            nombre='Sin Acceso Produccion',
+            descripcion='Sin permisos de inventario',
+        )
+
+        # Usuarios
+        self.usuario_produccion = Usuario.objects.create_user(
+            nombre_usuario='roberto_produccion',
+            password='Password123!',
+            nombre_completo='Roberto Panadero',
+            email='panadero@panaderia.com',
+            id_rol=self.rol_produccion,
+        )
+        self.usuario_ajeno = Usuario.objects.create_user(
+            nombre_usuario='usuario_ajeno',
+            password='Password123!',
+            nombre_completo='Usuario Ajeno',
+            email='ajeno@panaderia.com',
+            id_rol=self.rol_sin_permiso,
+        )
+
+        # Categoria y Producto
+        self.cat_panes = CategoriaProducto.objects.create(
+            id_categoria=201,
+            nombre='Panes Tradicionales',
+        )
+        self.producto = Producto.objects.create(
+            id_producto=201,
+            nombre='Marraqueta Especial',
+            id_categoria=self.cat_panes,
+            precio_venta=Decimal('0.80'),
+            costo_produccion=Decimal('0.40'),
+            activo=True,
+        )
+
+        # Inventario inicial con 50 unidades
+        self.inventario = InventarioProductoTerminado.objects.create(
+            id_inventario=201,
+            id_producto=self.producto,
+            stock_actual=50,
+        )
+
+        # Produccion y Detalle de origen
+        self.produccion = Produccion.objects.create(
+            id_produccion=201,
+            id_usuario=self.usuario_produccion,
+            jornada=JornadaProduccion.MANANA,
+        )
+        self.detalle_prod = DetalleProduccion.objects.create(
+            id_detalle_produccion=201,
+            id_produccion=self.produccion,
+            id_producto=self.producto,
+            cantidad_producida=50,
+            costo_unitario=Decimal('0.40'),
+        )
+
+    def test_01_registrar_baja_exitosa(self):
+        """Debe crear NotaPerdidaProducto, descontar stock, registrar salida en kardex y auditar en Bitacora."""
+        self.client.force_authenticate(user=self.usuario_produccion)
+
+        payload = {
+            'id_producto': self.producto.id_producto,
+            'cantidad': 10,
+            'id_detalle_produccion': self.detalle_prod.id_detalle_produccion,
+            'motivo': 'Quemado durante horneado',
+            'observaciones': 'Horno 2 sufrio sobrecalentamiento',
+        }
+
+        resp = self.client.post('/api/productos-terminados/mermas/', payload, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(resp.data['cantidad'], 10)
+        self.assertEqual(resp.data['producto_nombre'], 'Marraqueta Especial')
+        self.assertEqual(resp.data['costo_unitario'], '0.40')
+        self.assertEqual(resp.data['costo_total'], '4.00')
+
+        # Verificar stock descontado
+        self.inventario.refresh_from_db()
+        self.assertEqual(self.inventario.stock_actual, 40)
+
+        # Verificar movimiento kardex
+        mov = MovimientoProductoTerminado.objects.filter(id_nota_perdida_id=resp.data['id_nota_perdida']).first()
+        self.assertIsNotNone(mov)
+        self.assertEqual(mov.tipo, TipoMovimientoProductoTerminado.SALIDA)
+        self.assertEqual(mov.cantidad, 10)
+
+        # Verificar bitacora
+        log = Bitacora.objects.filter(accion=AccionBitacora.REGISTRO_BAJA_PRODUCTO).first()
+        self.assertIsNotNone(log)
+        self.assertIn('Marraqueta Especial', log.descripcion)
+        self.assertIn('Quemado durante horneado', log.descripcion)
+
+    def test_02_registrar_baja_resuelve_detalle_produccion_automaticamente(self):
+        """Si no se especifica id_detalle_produccion, se resuelve el mas reciente del producto."""
+        self.client.force_authenticate(user=self.usuario_produccion)
+
+        payload = {
+            'id_producto': self.producto.id_producto,
+            'cantidad': 5,
+            'motivo': 'Pan endurecido',
+        }
+
+        resp = self.client.post('/api/productos-terminados/mermas/', payload, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(resp.data['id_detalle_produccion'], self.detalle_prod.id_detalle_produccion)
+
+        self.inventario.refresh_from_db()
+        self.assertEqual(self.inventario.stock_actual, 45)
+
+    def test_03_registrar_baja_sin_stock_suficiente_falla(self):
+        """No debe permitir dar de baja una cantidad mayor a la disponible en vitrina."""
+        self.client.force_authenticate(user=self.usuario_produccion)
+
+        payload = {
+            'id_producto': self.producto.id_producto,
+            'cantidad': 999,
+            'motivo': 'Exceso',
+        }
+
+        resp = self.client.post('/api/productos-terminados/mermas/', payload, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('cantidad', resp.data)
+
+        # Stock no debe cambiar
+        self.inventario.refresh_from_db()
+        self.assertEqual(self.inventario.stock_actual, 50)
+
+    def test_04_registrar_baja_cantidad_invalida_falla(self):
+        """Cantidad 0 o negativa debe ser rechazada."""
+        self.client.force_authenticate(user=self.usuario_produccion)
+
+        for cant in [0, -5]:
+            resp = self.client.post('/api/productos-terminados/mermas/', {
+                'id_producto': self.producto.id_producto,
+                'cantidad': cant,
+            }, format='json')
+            self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_05_usuario_sin_permiso_recibe_403(self):
+        """Usuario sin permiso para registrar bajas debe recibir 403 Forbidden."""
+        self.client.force_authenticate(user=self.usuario_ajeno)
+
+        payload = {
+            'id_producto': self.producto.id_producto,
+            'cantidad': 5,
+        }
+
+        resp = self.client.post('/api/productos-terminados/mermas/', payload, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_06_usuario_no_autenticado_recibe_401(self):
+        """Peticion anonima debe recibir 401 Unauthorized."""
+        payload = {
+            'id_producto': self.producto.id_producto,
+            'cantidad': 5,
+        }
+
+        resp = self.client.post('/api/productos-terminados/mermas/', payload, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_07_listar_mermas_retorna_historial_y_soporta_filtros(self):
+        """GET /api/productos-terminados/mermas/ debe retornar historial ordenado y filtrable."""
+        self.client.force_authenticate(user=self.usuario_produccion)
+
+        NotaPerdidaProducto.objects.create(
+            id_nota_perdida=301,
+            id_detalle_produccion=self.detalle_prod,
+            id_usuario=self.usuario_produccion,
+            cantidad=3,
+            costo_unitario=Decimal('0.40'),
+        )
+
+        resp = self.client.get('/api/productos-terminados/mermas/')
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(resp.data) >= 1)
+        self.assertEqual(resp.data[0]['producto_nombre'], 'Marraqueta Especial')
+        self.assertEqual(resp.data[0]['costo_total'], '1.20')

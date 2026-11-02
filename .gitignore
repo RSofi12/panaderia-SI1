@@ -82,3 +82,7 @@ diagramasUML/
 plantilla/
 docs/informes/*.pdf
 backend/generate_pdf_cu12.py
+docs/informes/*.drawio
+docs/informes/*.html
+docs/informes/*.png
+docs/informes/prototipos_ciclo3/
