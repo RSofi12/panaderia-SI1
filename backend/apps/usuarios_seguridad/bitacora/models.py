@@ -86,6 +86,9 @@ class AccionBitacora(models.TextChoices):
     # --- CU10: Registrar producción diaria ---
     REGISTRO_PRODUCCION = 'REGISTRO_PRODUCCION', 'Registro de producción diaria'
 
+    # --- CU21: Generar reporte de ventas ---
+    CIERRE_REPORTE_VENTAS = 'CIERRE_REPORTE_VENTAS', 'Cierre estático del reporte de ventas'
+
 
 class Bitacora(models.Model):
     """
