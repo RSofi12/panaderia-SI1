@@ -124,7 +124,14 @@ export const AppRoutes: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-            <Route path="reportes" element={<ReportesPage />} />
+            <Route
+              path="reportes"
+              element={
+                <ProtectedRoute requiredPermission="generar_reportes">
+                  <ReportesPage />
+                </ProtectedRoute>
+              }
+            />
           </Route>
 
           {/* Redirecciones por defecto */}

@@ -81,6 +81,11 @@ class Pedido(models.Model):
         unique=True,
         verbose_name='Id de transacción Stripe',
     )
+    pagado = models.BooleanField(
+        default=False,
+        verbose_name='Pagado',
+        help_text='El cliente ya pagó. Sin esto no se prepara ni se entrega.',
+    )
     total = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -117,6 +122,14 @@ class Pedido(models.Model):
                     | Q(id_transaccion_stripe__isnull=True)
                 ),
                 name='pedido_stripe_solo_con_tarjeta',
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(pagado=False)
+                    | Q(metodo_pago=MetodoPago.EFECTIVO)
+                    | Q(id_transaccion_stripe__isnull=False)
+                ),
+                name='pedido_pagado_con_tarjeta_tiene_cobro',
             ),
         ]
 

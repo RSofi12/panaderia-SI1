@@ -48,6 +48,30 @@ Quitar el pago «QR» del registro de pedido y cobrar con el mismo formulario de
 - El commit de CU14 quedó en `silvia-dev` y se fusionó en `prueba`.
 - `prueba` ya tenía las rutas de consulta CU15. El conflicto en `urls.py` y `views.py` se resolvió dejando esas rutas y, además, las de Stripe.
 
+## Corte 7 — aviso al entregar
+
+- **Frontend:** al completar el paso Entregar, en efectivo o después de la tarjeta, aparece el diálogo «El pedido ha sido entregado», con el número, el cliente, el total y el comprobante de la venta.
+
+## Corte 6 — línea de tiempo horizontal
+
+- **Frontend:** los cuatro pasos quedan en una fila. El nombre vive dentro de su columna, el círculo del siguiente paso mide 44 px y el avance se ve por la línea, el check y el texto («Estás aquí», «Toca aquí», «Hecho»), no solo por el color.
+
+## Corte 5 — línea de tiempo del pedido
+
+- **Frontend:** al abrir un pedido, Preparar, Listo y Entregar se ven como pasos. El paso actual dice «Ahora» y solo el siguiente se puede tocar. Cancelar queda aparte, fuera de la línea.
+- Los pasos ya hechos no se pueden saltar ni volver atrás: el backend solo permite la transición siguiente.
+
+## Corte 8 — primero se paga
+
+- **Regla:** ningún pedido pasa a preparación, listo o entregado si no está pagado. Cancelar sigue permitido.
+- **Backend:** `pedido.pagado`. El alta en efectivo lo deja en verdadero. La tarjeta queda pagada al guardar el id de Stripe o con `POST /api/pedidos/<id>/pago/`. La intención de tarjeta vale en cualquier pedido aún no cobrado, no solo al entregar.
+- **Frontend:** el primer paso de la línea es Pagar. El efectivo dice «Pagar … en efectivo». Un pedido viejo sin cobro muestra ese paso y bloquea los demás. Al pagarlo aparece «El pedido ha sido pagado».
+- **Migración:** `pedidos.0003_pedido_pagado_and_more`. Los pedidos que ya tenían id de Stripe quedan pagados. El efectivo anterior queda sin pagar hasta que se cobre en la línea.
+
+## Corte 4 — etiqueta del caso de uso
+
+- **Frontend:** al entrar a registrar pedido, arriba aparece la etiqueta «CU14 · Registrar pedido», del mismo modo que comercialización muestra «CU13 · Registrar venta».
+
 ## 4. ⚠️ Pendientes o siguientes pasos
 
 - No se pulsó Entregar con una tarjeta real de prueba en el navegador.

@@ -65,11 +65,14 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f'[OK] {len(roles_dict)} Roles procesados.'))
 
             # 3. Rol - Permiso
+            # El 10 (generar_reportes) es el paquete de reportes, CU21 a CU25.
+            # PACKAGE_CU_MAP lo reserva al Propietario. El Administrador sigue
+            # con el resto del catálogo, pero no hereda este permiso.
             rol_permisos_map = {
-                1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],  # Admin: Todos
-                2: [2, 3, 4, 6, 7, 8, 9, 10, 11, 13],            # Propietario: gestión de materias primas incluida
-                3: [3, 4, 6, 10],                            # Ventas
-                4: [5, 6],                                   # Producción
+                1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13],  # Administrador
+                2: [2, 3, 4, 6, 7, 8, 9, 10, 11, 13],       # Propietario
+                3: [3, 4, 6],                               # Ventas
+                4: [5, 6],                                  # Producción
             }
 
             for id_r, perm_ids in rol_permisos_map.items():
@@ -79,6 +82,12 @@ class Command(BaseCommand):
                         rol=rol,
                         permiso=permisos_dict[id_p]
                     )
+
+            # get_or_create no borra filas viejas. Una base que ya le dio
+            # generar_reportes a Ventas o al Administrador se corrige aquí.
+            RolPermiso.objects.filter(
+                permiso=permisos_dict[10],
+            ).exclude(rol=roles_dict[2]).delete()
 
             self.stdout.write(self.style.SUCCESS('[OK] Mapeo de Roles y Permisos actualizado.'))
 
