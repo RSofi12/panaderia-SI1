@@ -69,6 +69,13 @@ class Command(BaseCommand):
                     {'materia': 'Levadura', 'cantidad': '10.000', 'precio': '45.00'},
                 ],
             },
+            {
+                # Reposición del Día 4 (2026-09-09)
+                'proveedor': 'Molinos del Oriente S.R.L.',
+                'detalles': [
+                    {'materia': 'Harina', 'cantidad': '50.000', 'precio': '4.50'},
+                ],
+            },
         ]
 
         with transaction.atomic():
