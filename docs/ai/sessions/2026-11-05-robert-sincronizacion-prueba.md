@@ -58,6 +58,14 @@ Cambiar el espacio de trabajo local a la rama de desarrollo personal `robert-dev
 - **Artefactos generados:**
   - `docs/informes/CU21_Diagrama_Analisis_Clases.drawio`: Diagrama de clases de realización/análisis (Boundary `ReportesPage`, Controller `ReporteVentasController`, Entities: `Venta`, `DetalleVenta`, `Producto`, `CierreReporteVentas`, `LineaCierreReporteVentas`, `Usuario`, `Bitacora`).
   - `docs/informes/CU21_Diagrama_Analisis_Clases.html`: Documento interactivo con renderizado vectorial SVG, rombos negros de composición (`startArrow=diamond;startFill=1`) en `Venta ◆-- DetalleVenta` y `CierreReporteVentas ◆-- LineaCierreReporteVentas`, cardinalidades tomadas del modelo de dominio de la Panadería, y tabla resumen PUDS para copiar a Word/Docs.
+
+---
+
+## Corte 4 — Guía Completa de Defensa Técnica en PDF para CU18 (Roberto)
+
+- **Artefactos generados:**
+  - `backend/generate_pdf_cu18.py`: Script generador de la guía académica en ReportLab con canvas de dos pasadas y numeración.
+  - `docs/informes/Guia_Defensa_CU18_Roberto.pdf`: Documento formal de 7 páginas para Roberto, conteniendo mapa exhaustivo de rutas de código, explicación arquitectónica y flujo transaccional ACID (`select_for_update()`, descuento, Kardex y bitácora), código crítico explicado, guión de exposición oral paso a paso, 6 preguntas difíciles de tribunal con respuestas maestras y 4 modificaciones en vivo (live coding) con soluciones listas.
 - Publicar opcionalmente los commits locales hacia el remoto mediante `git push origin robert-dev` si se desea respaldo en la nube de GitHub.
 - Continuar con el desarrollo o pruebas funcionales específicas asignadas a la rama.
 
