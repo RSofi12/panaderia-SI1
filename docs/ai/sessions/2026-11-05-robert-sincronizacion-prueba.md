@@ -66,6 +66,21 @@ Cambiar el espacio de trabajo local a la rama de desarrollo personal `robert-dev
 - **Artefactos generados:**
   - `backend/generate_pdf_cu18.py`: Script generador de la guía académica en ReportLab con canvas de dos pasadas y numeración.
   - `docs/informes/Guia_Defensa_CU18_Roberto.pdf`: Documento formal de 7 páginas para Roberto, conteniendo mapa exhaustivo de rutas de código, explicación arquitectónica y flujo transaccional ACID (`select_for_update()`, descuento, Kardex y bitácora), código crítico explicado, guión de exposición oral paso a paso, 6 preguntas difíciles de tribunal con respuestas maestras y 4 modificaciones en vivo (live coding) con soluciones listas.
+
+---
+
+## Corte 5 — Adición del atributo `detalle` en la tabla `producto` (Full-Stack)
+
+- **Objetivo:** Responder a la modificación en vivo solicitada por el tribunal agregando un nuevo campo descriptivo al catálogo de productos sin romper la compatibilidad con los demás casos de uso.
+- **Backend:**
+  - `backend/apps/productos_inventario/productos/models.py`: Incorporación del campo `detalle = models.TextField(blank=True, null=True, default='', verbose_name='Detalle')`.
+  - Migración creada y aplicada: `0003_producto_detalle.py`.
+  - `backend/apps/productos_inventario/productos/serializers.py`: Agregado `'detalle'` en `ProductoSerializer`.
+- **Frontend:**
+  - `frontend/src/types/producto.ts`: Agregado `detalle?: string | null` a `Producto` y `ProductoPayload`.
+  - `frontend/src/apps/dashboard/productos/components/ProductoFormModal.tsx`: Agregado campo de entrada para *Detalle* en el formulario de creación/edición de productos.
+  - `frontend/src/apps/dashboard/productos/ProductosPage.tsx`: Agregada la columna visible **"Detalle"** en la tabla del catálogo de productos.
+- **Verificación:** 33 pruebas unitarias de productos pasando en verde y compilación frontend `npm run build` sin errores.
 - Publicar opcionalmente los commits locales hacia el remoto mediante `git push origin robert-dev` si se desea respaldo en la nube de GitHub.
 - Continuar con el desarrollo o pruebas funcionales específicas asignadas a la rama.
 
