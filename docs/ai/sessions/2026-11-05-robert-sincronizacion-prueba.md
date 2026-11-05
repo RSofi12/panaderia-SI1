@@ -40,7 +40,16 @@ Cambiar el espacio de trabajo local a la rama de desarrollo personal `robert-dev
 
 ---
 
-## 4. ⚠️ Pendientes o siguientes pasos
+---
+
+## Corte 2 — Especificación y Diagrama PUDS para CU21 (Generar reporte de ventas)
+
+- **Artefactos generados:**
+  - `docs/informes/CU21_detalle_caso_de_uso.drawio`: Archivo XML compatible con diagrams.net (Draw.io) con el muñeco actor (Propietario en `#FDFD9A`), línea sólida de asociación, elipse de caso de uso y tabla de especificación formal con cabeceras beige (`#F6E5D8`) y celdas blancas alineadas con la matriz del proyecto.
+  - `docs/informes/CU21_detalle_caso_de_uso.html`: Página web interactiva con diagrama SVG vectorial y tabla HTML con botón de copiado directo con estilos al portapapeles para Google Docs / Word.
+- **Trazabilidad:**
+  - Actor alineado al Propietario (según matriz PUDS y permiso `generar_reportes`).
+  - Flujo documentando el modo dinámico (ventas por día, semana, mes y método de pago), modo estático (cierres inmutables en `cierre_reporte_ventas`) y exportaciones (CSV y PDF).
 - Publicar opcionalmente los commits locales hacia el remoto mediante `git push origin robert-dev` si se desea respaldo en la nube de GitHub.
 - Continuar con el desarrollo o pruebas funcionales específicas asignadas a la rama.
 
@@ -62,3 +71,4 @@ Cambiar el espacio de trabajo local a la rama de desarrollo personal `robert-dev
   # Frontend
   npm --prefix frontend run dev
   ```
+
