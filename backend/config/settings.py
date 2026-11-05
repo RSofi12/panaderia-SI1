@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'apps.compras',
     'apps.compras.proveedores',
     'apps.compras.compra_materia_prima',
+    'apps.compras.gastos',
     'apps.comercializacion',
     'apps.comercializacion.ventas',
     'apps.comercializacion.pedidos',
