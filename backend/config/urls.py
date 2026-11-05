@@ -18,10 +18,26 @@ def health_check(request):
     except Exception as e:
         db_status = 'error'
         err_msg = str(e)
+
+    # Si la base de datos está conectada pero vacía (0 tablas), inicializa automáticamente
+    auto_initialized = False
+    if db_status == 'ok' and len(tables) == 0:
+        from django.core.management import call_command
+        try:
+            call_command('migrate', interactive=False)
+            call_command('seed_all')
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='public';")
+                tables = [row[0] for row in cursor.fetchall()]
+            auto_initialized = True
+        except Exception as e:
+            err_msg = f"Error en inicialización: {e}"
+
     return JsonResponse({
         'status': 'ok',
         'database': db_status,
         'tables_count': len(tables),
+        'auto_initialized': auto_initialized,
         'sample_tables': tables[:10],
         'error': err_msg
     })
