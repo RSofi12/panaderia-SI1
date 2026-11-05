@@ -37,6 +37,7 @@ class Producto(models.Model):
     )
     nombre = models.CharField(max_length=100, verbose_name='Nombre del producto')
     descripcion = models.TextField(blank=True, null=True, verbose_name='Descripción')
+    detalle = models.TextField(blank=True, null=True, default='', verbose_name='Detalle')
     costo_produccion = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, verbose_name='Costo de producción (Bs)'
     )

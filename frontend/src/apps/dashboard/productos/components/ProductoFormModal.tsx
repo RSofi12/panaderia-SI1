@@ -19,6 +19,7 @@ const estadoInicial = (producto: Producto | null): ProductoPayload => ({
   id_categoria: producto?.id_categoria ?? null,
   nombre: producto?.nombre ?? '',
   descripcion: producto?.descripcion ?? '',
+  detalle: producto?.detalle ?? '',
   costo_produccion: producto?.costo_produccion ?? '',
   porcentaje_ganancia: producto?.porcentaje_ganancia ?? '',
   precio_venta: producto?.precio_venta ?? '',
@@ -97,6 +98,7 @@ export const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
       ...form,
       nombre: form.nombre.trim(),
       descripcion: form.descripcion.trim(),
+      detalle: (form.detalle ?? '').trim(),
     };
 
     setGuardando(true);
@@ -194,6 +196,20 @@ export const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
               rows={2}
               value={form.descripcion}
               onChange={(e) => actualizar('descripcion', e.target.value)}
+              className={inputClass(false)}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="detalle" className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Detalle <span className="font-normal text-slate-400">(opcional)</span>
+            </label>
+            <input
+              id="detalle"
+              type="text"
+              value={form.detalle ?? ''}
+              onChange={(e) => actualizar('detalle', e.target.value)}
+              placeholder="Ej. Masa madre, horneado en piso, sin conservantes"
               className={inputClass(false)}
             />
           </div>

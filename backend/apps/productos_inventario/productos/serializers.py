@@ -30,6 +30,7 @@ class ProductoSerializer(serializers.ModelSerializer):
             'categoria_nombre',
             'nombre',
             'descripcion',
+            'detalle',
             'costo_produccion',
             'porcentaje_ganancia',
             'precio_sugerido',

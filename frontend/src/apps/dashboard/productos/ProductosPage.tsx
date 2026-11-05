@@ -420,6 +420,7 @@ export const ProductosPage: React.FC = () => {
                     <tr>
                       <th className="px-4 py-3">Producto</th>
                       <th className="px-4 py-3">Categoría</th>
+                      <th className="px-4 py-3">Detalle</th>
                       <th className="px-4 py-3 text-right">Costo</th>
                       <th className="px-4 py-3 text-right">Ganancia</th>
                       <th className="px-4 py-3 text-right">Sugerido</th>
@@ -440,6 +441,9 @@ export const ProductosPage: React.FC = () => {
                           )}
                         </td>
                         <td className="px-4 py-3 text-slate-600">{producto.categoria_nombre ?? 'Sin categoría'}</td>
+                        <td className="px-4 py-3 text-xs text-slate-600 max-w-[180px] truncate" title={producto.detalle ?? ''}>
+                          {producto.detalle ? producto.detalle : <span className="text-slate-300 italic">—</span>}
+                        </td>
                         <td className="px-4 py-3 text-right tabular-nums">{formatearBs(producto.costo_produccion)}</td>
                         <td className="px-4 py-3 text-right tabular-nums">{Number(producto.porcentaje_ganancia)} %</td>
                         <td className="px-4 py-3 text-right tabular-nums">{formatearBs(producto.precio_sugerido)}</td>
