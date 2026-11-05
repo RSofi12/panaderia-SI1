@@ -50,6 +50,14 @@ Cambiar el espacio de trabajo local a la rama de desarrollo personal `robert-dev
 - **Trazabilidad:**
   - Actor alineado al Propietario (según matriz PUDS y permiso `generar_reportes`).
   - Flujo documentando el modo dinámico (ventas por día, semana, mes y método de pago), modo estático (cierres inmutables en `cierre_reporte_ventas`) y exportaciones (CSV y PDF).
+
+---
+
+## Corte 3 — Diagrama de Clases de Análisis PUDS para CU21
+
+- **Artefactos generados:**
+  - `docs/informes/CU21_Diagrama_Analisis_Clases.drawio`: Diagrama de clases de realización/análisis (Boundary `ReportesPage`, Controller `ReporteVentasController`, Entities: `Venta`, `DetalleVenta`, `Producto`, `CierreReporteVentas`, `LineaCierreReporteVentas`, `Usuario`, `Bitacora`).
+  - `docs/informes/CU21_Diagrama_Analisis_Clases.html`: Documento interactivo con renderizado vectorial SVG, rombos negros de composición (`startArrow=diamond;startFill=1`) en `Venta ◆-- DetalleVenta` y `CierreReporteVentas ◆-- LineaCierreReporteVentas`, cardinalidades tomadas del modelo de dominio de la Panadería, y tabla resumen PUDS para copiar a Word/Docs.
 - Publicar opcionalmente los commits locales hacia el remoto mediante `git push origin robert-dev` si se desea respaldo en la nube de GitHub.
 - Continuar con el desarrollo o pruebas funcionales específicas asignadas a la rama.
 
