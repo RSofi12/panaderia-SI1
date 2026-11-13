@@ -72,7 +72,8 @@ Dame por el chat un plan de implementación del {{CU_ID}}, con estas secciones:
 9. Riesgos y preguntas abiertas: decisiones de negocio que debo consultar
    al equipo o a la docente antes de programar.
 10. Orden de implementación sugerido (paso a paso, con entregables
-    verificables por paso) y nombre de rama de Git sugerido (uso de una rama propia del desarrollador).
+    verificables por paso) y nombre de rama de Git sugerido (uso de una rama propia y unica del desarrollador).
+11. Sugerir un mensaje commit en español sugerido una vez implementado un paso del plan (backend, frontend, pruebas, documentacion, u otras mejoras durante la implementacion del CU en edición).
 
 # FORMATO
 - Español, claro y sencillo (soy estudiante de pregrado).
