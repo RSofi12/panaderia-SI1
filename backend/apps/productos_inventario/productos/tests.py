@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone as datetime_timezone
 from decimal import Decimal
 import re
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -10,6 +11,7 @@ from django.test.utils import CaptureQueriesContext
 from django.urls import resolve, reverse
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.test import APIClient
 
 from apps.usuarios_seguridad.permisos.models import ModuloPermiso, Permiso
@@ -361,6 +363,26 @@ class PruebasHistorialPreciosCU19(TestCase):
             self.ids_resultados(primera) + self.ids_resultados(segunda),
             [registro.pk for registro in reversed(registros)],
         )
+
+    def test_paginacion_mantiene_diez_filas_si_cambia_el_valor_global(self):
+        for _ in range(12):
+            self.crear_historial()
+
+        for tamano_global in (3, None):
+            with self.subTest(tamano_global=tamano_global):
+                with patch.object(PageNumberPagination, 'page_size', tamano_global):
+                    primera = self.client.get(self.url)
+                    segunda = self.client.get(self.url, {'page': 2})
+
+                self.assertEqual(primera.status_code, status.HTTP_200_OK)
+                self.assertEqual(segunda.status_code, status.HTTP_200_OK)
+                self.assertEqual(primera.data['count'], 12)
+                self.assertEqual(len(primera.data['results']), 10)
+                self.assertEqual(len(segunda.data['results']), 2)
+                self.assertIsNone(primera.data['previous'])
+                self.assertIn('page=2', primera.data['next'])
+                self.assertIsNotNone(segunda.data['previous'])
+                self.assertIsNone(segunda.data['next'])
 
     def test_precio_decimal_se_serializa_sin_perdida_de_precision(self):
         for precio in ('0.00', '0.10', '12345678.91', '99999999.99'):
