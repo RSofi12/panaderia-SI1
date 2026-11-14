@@ -1,0 +1,80 @@
+<mxGraphModel dx="1515" dy="713" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    <mxCell id="cu20a-titulo" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=16;" value="&lt;span style=&quot;font-size: 12pt; font-family: Arial, sans-serif; font-weight: 700;&quot;&gt;CU20. Registrar gasto o inversión — Diagrama de análisis de clases (BCE)&lt;/span&gt;" vertex="1">
+      <mxGeometry height="30" width="620" x="240" y="15" as="geometry" />
+    </mxCell>
+    <mxCell id="cu20a-actor" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;fontStyle=0;fontSize=12;labelBackgroundColor=none;fillColor=#f9f7ed;strokeColor=#36393d;" value="Administrador /&#xa;Propietario" vertex="1">
+      <mxGeometry height="60" width="30" x="110" y="370" as="geometry" />
+    </mxCell>
+    <mxCell id="cu20a-ui" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;rounded=0;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Interface&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;GastosPage&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- filtros: FiltrosGasto&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- movimientos: List&amp;lt;Movimiento&amp;gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- modalRegistroAbierto: Boolean&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- cargando: Boolean&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ solicitarListadoGastos(filtros): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ abrirRegistrarGasto(datos): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ solicitarAnulacion(idMovimiento): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ renderizarTablaGastos(): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ mostrarNotificacion(mensaje): void&lt;/p&gt;" vertex="1">
+      <mxGeometry height="210" width="230" x="180" y="295" as="geometry" />
+    </mxCell>
+    <mxCell id="cu20a-ctrl" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;rounded=0;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Controller&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;GastoController&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- permisoRequerido: registrar_gastos&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ get(request): Response&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ post(request): Response&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ anular(request, pk): Response&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ leer_filtros_gasto(params): Tuple&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ registrar_movimiento(datos): Movimiento&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ anular_movimiento(id): Movimiento&lt;/p&gt;" vertex="1">
+      <mxGeometry height="200" width="240" x="450" y="305" as="geometry" />
+    </mxCell>
+    <mxCell id="cu20a-usuario" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;rounded=0;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Usuario&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ idUsuario: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ nombreUsuario: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ nombreCompleto: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ email: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ activo: Boolean&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ registrar()&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ consultar()&lt;/p&gt;" vertex="1">
+      <mxGeometry height="180" width="170" x="760" y="50" as="geometry" />
+    </mxCell>
+    <mxCell id="cu20a-mov" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;rounded=0;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;MovimientoEconomico&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ idMovimiento: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ idUsuario: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ tipo: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ categoria: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ concepto: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ descripcion: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ monto: Decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ fechaHora: DateTime&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ anulado: Boolean&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ registrar()&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ consultar()&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ anular()&lt;/p&gt;" vertex="1">
+      <mxGeometry height="235" width="190" x="750" y="288" as="geometry" />
+    </mxCell>
+    <mxCell id="cu20a-bitacora" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;labelBackgroundColor=none;rounded=0;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;i&gt;&amp;lt;&amp;lt;Entity&amp;gt;&amp;gt;&lt;/i&gt;&lt;br&gt;&lt;b&gt;Bitacora&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ idBitacora: Long [PK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ idUsuario: Long [FK]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ accion: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ tablaAfectada: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ descripcion: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ fechaHora: DateTime&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ agenteUsuario: String&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ registrarAccion()&lt;/p&gt;" vertex="1">
+      <mxGeometry height="190" width="170" x="760" y="585" as="geometry" />
+    </mxCell>
+    <mxCell id="cu20a-e-actor-ui" edge="1" parent="1" source="cu20a-actor" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;" target="cu20a-ui">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu20a-e-ui-ctrl" edge="1" parent="1" source="cu20a-ui" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;" target="cu20a-ctrl">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu20a-e-ctrl-mov" edge="1" parent="1" source="cu20a-ctrl" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endArrow=none;endFill=0;" target="cu20a-mov">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu20a-e-ctrl-bit" edge="1" parent="1" source="cu20a-ctrl" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.85;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;endArrow=none;endFill=0;" target="cu20a-bitacora">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu20a-r-user-mov" edge="1" parent="1" source="cu20a-usuario" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;" target="cu20a-mov">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="cu20a-r-user-mov-s" connectable="0" parent="cu20a-r-user-mov" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="+1" vertex="1">
+      <mxGeometry relative="1" x="-0.5862" as="geometry">
+        <mxPoint x="-15" y="-3" as="offset" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="cu20a-r-user-mov-t" connectable="0" parent="cu20a-r-user-mov" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="+0..*" vertex="1">
+      <mxGeometry relative="1" x="0.5862" as="geometry">
+        <mxPoint x="-19" as="offset" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="cu20a-r-user-mov-lbl" connectable="0" parent="cu20a-r-user-mov" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="registra" vertex="1">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="32" as="offset" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="cu20a-r-user-bit" edge="1" parent="1" source="cu20a-usuario" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;endArrow=none;endFill=0;" target="cu20a-bitacora">
+      <mxGeometry relative="1" x="-0.0172" as="geometry">
+        <Array as="points">
+          <mxPoint x="980" y="140" />
+          <mxPoint x="980" y="680" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="cu20a-r-user-bit-s" connectable="0" parent="cu20a-r-user-bit" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="+1" vertex="1">
+      <mxGeometry relative="1" x="-0.8517" as="geometry">
+        <mxPoint x="-30" y="-10" as="offset" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="cu20a-r-user-bit-t" connectable="0" parent="cu20a-r-user-bit" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="+0..*" vertex="1">
+      <mxGeometry relative="1" x="0.85" as="geometry">
+        <mxPoint x="-30" y="-10" as="offset" />
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="cu20a-r-user-bit-lbl" connectable="0" parent="cu20a-r-user-bit" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;" value="registra&amp;nbsp;" vertex="1">
+      <mxGeometry relative="1" x="-0.0172" as="geometry">
+        <mxPoint x="10" y="1" as="offset" />
+      </mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>
