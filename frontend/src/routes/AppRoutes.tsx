@@ -7,6 +7,7 @@ import ForgotPasswordPage from '../apps/auth/ForgotPasswordPage';
 import ResetPasswordPage from '../apps/auth/ResetPasswordPage';
 import DashboardLayout from '../apps/dashboard/DashboardLayout';
 import DashboardHome from '../apps/dashboard/DashboardHome';
+import KpiDashboardPage from '../apps/dashboard/kpis/KpiDashboardPage';
 import UsuariosPage from '../apps/dashboard/usuarios/UsuariosPage';
 import ProductosPage from '../apps/dashboard/productos/ProductosPage';
 import HistorialPreciosPage from '../apps/dashboard/productos/historial-precios/HistorialPreciosPage';
@@ -54,6 +55,14 @@ export const AppRoutes: React.FC = () => {
             }
           >
             <Route index element={<DashboardHome />} />
+            <Route
+              path="kpis"
+              element={
+                <ProtectedRoute requiredPermission={['generar_reportes', 'consultar_bitacora']}>
+                  <KpiDashboardPage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* CU3 - Gestión de usuarios.
                 Va DENTRO de /dashboard y no como ruta suelta porque comparte

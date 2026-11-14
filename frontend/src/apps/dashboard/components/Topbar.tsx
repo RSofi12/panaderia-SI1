@@ -28,7 +28,7 @@ export const Topbar: React.FC<TopbarProps> = ({ title, menuAbierto, onAlternarMe
           >
             <Menu className="h-5 w-5" />
           </button>
-          <h1 className="truncate text-base font-bold text-slate-900 sm:text-lg">{title}</h1>
+          <h1 className="font-sugo truncate text-lg font-normal tracking-wide text-slate-900 sm:text-xl">{title}</h1>
         </div>
 
         <div className="flex items-center gap-3">

@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import type { ElementType } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, LogOut, PackageOpen } from 'lucide-react';
+import { Gauge, LayoutDashboard, LogOut, PackageOpen } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import circleLogo from '../../../assets/circle-logo-panaderia.svg';
 import { NAV_MODULES } from '../navigation';
@@ -214,7 +214,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onNavigate }) => {
                 expandido ? 'max-w-48 flex-1 opacity-100' : 'max-w-0 opacity-0'
               }`}
             >
-              <p id={tituloId} className="truncate text-sm font-bold leading-tight text-white">
+              <p id={tituloId} className="font-sugo truncate text-base font-normal tracking-wide leading-tight text-white">
                 Panadería Santiago
               </p>
               <p className="text-[11px] font-medium text-amber-300/90">Panel Administrativo</p>
@@ -236,6 +236,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onNavigate }) => {
               onPista={mostrarPista}
               onSoltarPista={soltarPista}
             />
+
+            {(hasPermission('generar_reportes') || hasPermission('consultar_bitacora')) && (
+              <EnlaceMenu
+                to="/dashboard/kpis"
+                icon={Gauge}
+                etiqueta="Dashboard"
+                orden={1}
+                expandido={expandido}
+                onClick={alElegirModulo}
+                onPista={mostrarPista}
+                onSoltarPista={soltarPista}
+              />
+            )}
 
             {ventanasVisibles.length > 0 && (
               <>
