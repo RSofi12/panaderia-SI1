@@ -35,6 +35,13 @@ Implementar el Dashboard Analítico y Ejecutivo de KPIs para el **Propietario** 
    - 4 KPIs principales de impacto financiero y operativo.
    - **Gráfico Circular Interactivo (DonutChart):** Muestra la proporción exacta entre Ventas Cobradas, Compras de Materia Prima y Gastos Operativos con leyenda dinámica y cálculo porcentual en tiempo real.
    - **Gráfico de Columnas Verticales (ColumnBarChart):** Representa la demanda y rotación de los 5 productos más vendidos con tooltips flotantes sobre las barras.
+   - **Fila de Indicadores Operativos Tácticos:**
+     - Ticket Promedio de compra en Bs.
+     - % de Adopción de pagos digitales (QR/Tarjeta) vs. Efectivo.
+     - Conteo de pedidos pendientes de entrega (CU15).
+     - Valorización del stock de pan listo para la venta en mostrador (CU12).
+   - **Centro de Reportes Rápidos Oficiales (Ciclo 4):**
+     - Enlaces directos a CU21 (Ventas), CU22 (Producción), CU23 (Existencias), CU24 (Compras y Gastos) y CU25 (Resultados Económicos) con microinteracciones y elevación suave.
    - Panel de alerta crítica para insumos con enlace directo a compras (CU07).
 
 4. **Vista de Administrador (`frontend/src/apps/dashboard/kpis/AdminDashboardView.tsx`):**

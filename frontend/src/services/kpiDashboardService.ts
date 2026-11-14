@@ -12,6 +12,8 @@ import { compraService } from './compraService';
 import { gastosService } from './gastosService';
 import { usuariosService } from './usuariosService';
 import { bitacoraService } from './bitacoraService';
+import { pedidoService } from './pedidoService';
+import { existenciasService } from './existenciasService';
 import type { MateriaPrimaStock } from '../types/inventario';
 import type { CompraResumen } from '../types/compra';
 import type { MovimientoEconomico } from '../types/gasto';
@@ -29,6 +31,13 @@ export interface OwnerKpiSummary {
   insumosCriticosCount: number;
   insumosCriticos: Array<{ id: number; nombre: string; stock: number; stockMinimo: number; unidad: string }>;
   topProductos: Array<{ nombre: string; cantidad: number; subtotal: number }>;
+  // Nuevas métricas tácticas
+  ticketPromedio: number;
+  totalEfectivo: number;
+  totalDigital: number;
+  digitalPct: number;
+  pedidosPendientes: number;
+  valorInventarioMostrador: number;
 }
 
 export interface AdminKpiSummary {
@@ -43,7 +52,7 @@ export interface AdminKpiSummary {
 
 export const kpiDashboardService = {
   /**
-   * Agrega métricas estratégicas para el Propietario (CU05, CU07, CU08, CU09, CU13, CU20, CU21, CU25)
+   * Agrega métricas estratégicas para el Propietario (CU05, CU07, CU08, CU09, CU12, CU13, CU14, CU15, CU20, CU21, CU25)
    */
   async obtenerResumenPropietario(periodo: PeriodoReporte = 'mes'): Promise<OwnerKpiSummary> {
     const valorPeriodo = periodo === 'dia' ? fechaHoy() : periodo === 'semana' ? semanaActual() : mesActual();
@@ -52,12 +61,19 @@ export const kpiDashboardService = {
     // 1. Consultar ventas del periodo
     const reporteVentas = await consultarReporteVentas(rango.desde, rango.hasta);
     const ingresos = parseFloat(reporteVentas.total || '0') || 0;
+    const efectivo = parseFloat(reporteVentas.efectivo || '0') || 0;
+    const tarjeta = parseFloat(reporteVentas.tarjeta || '0') || 0;
+    const transacciones = reporteVentas.cantidad || 0;
+    const ticketPromedio = transacciones > 0 ? ingresos / transacciones : 0;
+    const digitalPct = ingresos > 0 ? Math.round((tarjeta / ingresos) * 100) : 0;
 
-    // 2. Consultar compras, gastos e inventario
-    const [compras, gastos, materiasPrimas] = await Promise.all([
+    // 2. Consultar compras, gastos, materias primas, pedidos y existencias en paralelo
+    const [compras, gastos, materiasPrimas, pedidos, existencias] = await Promise.all([
       compraService.listar({ fecha_desde: rango.desde, fecha_hasta: rango.hasta }).catch(() => [] as CompraResumen[]),
       gastosService.listar({ fecha_desde: rango.desde, fecha_hasta: rango.hasta }).catch(() => [] as MovimientoEconomico[]),
       inventarioService.listarStock().catch(() => [] as MateriaPrimaStock[]),
+      pedidoService.listar().catch(() => []),
+      existenciasService.listar({}).catch(() => []),
     ]);
 
     const comprasFiltradas = compras || [];
@@ -90,10 +106,21 @@ export const kpiDashboardService = {
         subtotal: parseFloat(p.subtotal) || 0,
       }));
 
+    // Conteo de pedidos activos/pendientes
+    const pedidosPendientes = (pedidos || []).filter(
+      (ped: { estado?: string }) => ped.estado === 'pendiente' || ped.estado === 'en_preparacion' || ped.estado === 'listo'
+    ).length;
+
+    // Valorización de existencias de pan en mostrador
+    const valorInventarioMostrador = (existencias || []).reduce(
+      (acc: number, item: { valor_total_stock?: string }) => acc + (parseFloat(item.valor_total_stock || '0') || 0),
+      0
+    );
+
     return {
       periodo,
       ingresosTotales: ingresos,
-      transaccionesVentas: reporteVentas.cantidad || 0,
+      transaccionesVentas: transacciones,
       totalComprasInsumos: totalCompras,
       totalGastosOperativos: totalGastos,
       resultadoEconomico: resultado,
@@ -101,6 +128,12 @@ export const kpiDashboardService = {
       insumosCriticosCount: insumosCriticos.length,
       insumosCriticos,
       topProductos,
+      ticketPromedio,
+      totalEfectivo: efectivo,
+      totalDigital: tarjeta,
+      digitalPct,
+      pedidosPendientes,
+      valorInventarioMostrador,
     };
   },
 
