@@ -11,8 +11,8 @@ from decimal import Decimal
 from django.utils import timezone
 
 from apps.comercializacion.ventas.models import MetodoPago
-from apps.comun.csv_reporte import dinero_local
-from apps.comun.pdf_reporte import HojaReporte, anchos_de, fecha_visible
+from apps.reportes.formatos.csv_reporte import dinero_local
+from apps.reportes.formatos.pdf_reporte import HojaReporte, anchos_de, fecha_visible
 
 
 def _dinero(valor) -> str:
