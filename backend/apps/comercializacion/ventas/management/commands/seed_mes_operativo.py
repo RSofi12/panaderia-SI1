@@ -172,11 +172,11 @@ class Command(BaseCommand):
 
         # Mapeos útiles de productos
         prod_por_nombre = {p.nombre: p for p in productos}
-        panes_tradicionales = [p for p in productos if p.id_categoria.nombre == 'Panes Tradicionales']
-        masas_tipicas = [p for p in productos if p.id_categoria.nombre == 'Masas Típicas Cruceñas']
-        salados = [p for p in productos if p.id_categoria.nombre == 'Salados y Especialidades']
-        reposteria = [p for p in productos if p.id_categoria.nombre == 'Repostería y Queques']
-        gourmet = [p for p in productos if p.id_categoria.nombre in ('Panadería Gourmet y Rústica', 'Panes Integrales')]
+        panes_tradicionales = [p for p in productos if p.id_categoria and p.id_categoria.nombre == 'Panes Tradicionales y de Mesa']
+        masas_tipicas = [p for p in productos if p.id_categoria and p.id_categoria.nombre == 'Masas Típicas y Regionales']
+        salados = [p for p in productos if p.id_categoria and p.id_categoria.nombre == 'Salados y Especialidades']
+        reposteria = [p for p in productos if p.id_categoria and p.id_categoria.nombre == 'Repostería y Panes Dulces']
+        gourmet = [p for p in productos if p.id_categoria and p.id_categoria.nombre == 'Panadería Rústica y Gourmet']
 
         with transaction.atomic():
             # =========================================================
