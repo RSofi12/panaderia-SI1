@@ -6,10 +6,13 @@ from rest_framework.views import APIView
 
 from apps.reportes.permissions import PuedeGenerarReportes
 from apps.reportes.serializers import (
+    ReporteExistenciasConsultaSerializer,
+    ReporteExistenciasSerializer,
     ReporteVentasConsultaSerializer,
     ReporteVentasSerializer,
 )
 from apps.reportes.services.exportar_reporte import csv_reporte, pdf_reporte_ventas
+from apps.reportes.services.reporte_existencias import reporte_existencias
 from apps.reportes.services.reporte_ventas import reporte_ventas
 
 
@@ -88,3 +91,17 @@ class ReporteVentasPdfView(APIView):
         nombre = f'reporte-ventas-{reporte["desde"]}-{reporte["hasta"]}.pdf'
         respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
         return respuesta
+
+
+class ReporteExistenciasView(APIView):
+    """GET /api/reportes/existencias/ — CU23, sin modificar inventarios."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        # QueryDict aplica defaults HTML a cadenas vacías; el contrato CU23
+        # distingue filtros ausentes de valores explícitos no permitidos.
+        consulta = ReporteExistenciasConsultaSerializer(data=request.query_params.dict())
+        consulta.is_valid(raise_exception=True)
+        reporte = reporte_existencias(**consulta.validated_data)
+        return Response(ReporteExistenciasSerializer(reporte).data)
