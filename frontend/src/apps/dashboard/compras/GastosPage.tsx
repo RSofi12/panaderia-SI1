@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   Ban,
+  Eye,
   Filter,
   Loader2,
   Plus,
@@ -20,6 +21,7 @@ import { Paginacion } from '../components/Paginacion';
 import { paginar, usePagina } from '../components/paginar';
 import { RegistrarGastoModal } from './components/RegistrarGastoModal';
 import { AnularGastoModal } from './components/AnularGastoModal';
+import { DetalleGastoModal } from './components/DetalleGastoModal';
 
 // "13 nov 2026, 10:30". El navegador toma `es-BO` del ICU; si no lo tiene,
 // cae al locale por defecto sin romper la tabla.
@@ -36,7 +38,11 @@ const formatearFecha = (iso: string) => formatoFecha.format(new Date(iso));
 const plural = (cantidad: number, singular: string, plural_: string) =>
   `${cantidad} ${cantidad === 1 ? singular : plural_}`;
 
-type ModalAbierto = { tipo: 'registrar' } | { tipo: 'anular'; movimiento: MovimientoEconomico } | null;
+type ModalAbierto =
+  | { tipo: 'registrar' }
+  | { tipo: 'anular'; movimiento: MovimientoEconomico }
+  | { tipo: 'detalle'; movimiento: MovimientoEconomico }
+  | null;
 
 interface Aviso {
   tono: 'exito' | 'error';
@@ -531,18 +537,29 @@ export const GastosPage: React.FC = () => {
                           {movimiento.anulado ? 'Anulado' : 'Vigente'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">
-                        {!movimiento.anulado && (
+                      <td className="whitespace-nowrap px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"
-                            onClick={() => setModal({ tipo: 'anular', movimiento })}
-                            aria-label={`Anular ${movimiento.concepto}`}
-                            title="Anular movimiento"
-                            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                            onClick={() => setModal({ tipo: 'detalle', movimiento })}
+                            aria-label={`Ver detalle de ${movimiento.concepto}`}
+                            title="Ver detalle completo"
+                            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-700 cursor-pointer"
                           >
-                            <Ban className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                           </button>
-                        )}
+                          {!movimiento.anulado && (
+                            <button
+                              type="button"
+                              onClick={() => setModal({ tipo: 'anular', movimiento })}
+                              aria-label={`Anular ${movimiento.concepto}`}
+                              title="Anular movimiento"
+                              className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 cursor-pointer"
+                            >
+                              <Ban className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -589,6 +606,13 @@ export const GastosPage: React.FC = () => {
           ocupado={anulando}
           onCancelar={cerrarModal}
           onConfirmar={confirmarAnulacion}
+        />
+      )}
+
+      {modal?.tipo === 'detalle' && (
+        <DetalleGastoModal
+          movimiento={modal.movimiento}
+          onClose={cerrarModal}
         />
       )}
     </div>
