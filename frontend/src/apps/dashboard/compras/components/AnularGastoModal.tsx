@@ -28,11 +28,8 @@ export const AnularGastoModal: React.FC<Props> = ({ movimiento, ocupado, onCance
       if (evento.key === 'Escape' && !ocupado) onCancelar();
     }
     document.addEventListener('keydown', alPresionar);
-    const overflowPrevio = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', alPresionar);
-      document.body.style.overflow = overflowPrevio;
     };
   }, [ocupado, onCancelar]);
 

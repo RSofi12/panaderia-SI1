@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, Download, FileText, Loader2, Printer, X } from 'lucide-react';
+import { AlertCircle, Download, FileText, Loader2, Printer } from 'lucide-react';
 import type { ComprobanteVenta } from '../../../../types/comprobante';
+import ModalLectura from '../../components/ModalLectura';
 import { ComprobanteTicketView } from './ComprobanteTicketView';
 import { ventaService } from './ventaService';
 
@@ -55,15 +56,6 @@ export const ComprobanteVentaModal: React.FC<ComprobanteVentaModalProps> = ({
     };
   }, [idVenta, abierto]);
 
-  // Manejo de teclado (Escape para cerrar)
-  useEffect(() => {
-    if (!abierto) return;
-    const alPresionar = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCerrar();
-    };
-    window.addEventListener('keydown', alPresionar);
-    return () => window.removeEventListener('keydown', alPresionar);
-  }, [abierto, onCerrar]);
 
   const handleDescargarPdf = async () => {
     if (!comprobante) return;
@@ -223,70 +215,23 @@ export const ComprobanteVentaModal: React.FC<ComprobanteVentaModalProps> = ({
   if (!abierto) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="titulo-modal-comprobante"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
-      onClick={handleCerrar}
-    >
-      <div
-        className="flex max-h-[92vh] w-full max-w-md flex-col rounded-2xl bg-white shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Cabecera del modal */}
-        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 bg-amber-50/50">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-600 text-white shadow-sm">
-              <FileText className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 id="titulo-modal-comprobante" className="text-base font-bold text-slate-900">
-                Comprobante de Venta
-              </h2>
-              <p className="text-xs text-slate-500">CU16 · Panadería Santiago</p>
-            </div>
-          </div>
+    <ModalLectura
+      titulo="Comprobante de Venta"
+      subtitulo="CU16 · Panadería Santiago"
+      iconoCabecera={
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-600 text-white shadow-sm">
+          <FileText className="h-5 w-5" />
+        </div>
+      }
+      onCerrar={handleCerrar}
+      ancho="sm"
+      cuerpoClassName="bg-slate-50 p-5"
+      pie={
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <button
             type="button"
             onClick={handleCerrar}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
-            aria-label="Cerrar comprobante"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* Cuerpo del modal con el ticket */}
-        <div className="flex-1 overflow-y-auto p-5 bg-slate-50">
-          {cargando ? (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-500">
-              <Loader2 className="h-9 w-9 animate-spin text-amber-600" />
-              <p className="mt-3 text-sm font-medium">Cargando comprobante...</p>
-            </div>
-          ) : error ? (
-            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-center">
-              <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
-              <p className="mt-2 text-sm font-semibold text-rose-800">{error}</p>
-              <button
-                type="button"
-                onClick={handleCerrar}
-                className="mt-3 text-xs font-bold text-rose-700 underline"
-              >
-                Cerrar
-              </button>
-            </div>
-          ) : comprobante ? (
-            <ComprobanteTicketView comprobante={comprobante} />
-          ) : null}
-        </div>
-
-        {/* Botones de acción inferiores */}
-        <div className="border-t border-slate-100 bg-white px-5 py-3.5 flex flex-wrap items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={handleCerrar}
-            className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
           >
             Cerrar
           </button>
@@ -296,7 +241,7 @@ export const ComprobanteVentaModal: React.FC<ComprobanteVentaModalProps> = ({
               type="button"
               disabled={!comprobante || cargando || descargandoPdf}
               onClick={handleDescargarPdf}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-xs font-bold text-amber-800 hover:bg-amber-100 transition disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-xs font-bold text-amber-800 hover:bg-amber-100 transition disabled:opacity-50 cursor-pointer"
               title="Descargar comprobante en PDF oficial"
             >
               {descargandoPdf ? (
@@ -311,7 +256,7 @@ export const ComprobanteVentaModal: React.FC<ComprobanteVentaModalProps> = ({
               type="button"
               disabled={!comprobante || cargando}
               onClick={handleImprimir}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-amber-700 px-4 py-2.5 text-xs font-bold text-white shadow hover:bg-amber-800 transition disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-amber-700 px-4 py-2.5 text-xs font-bold text-white shadow hover:bg-amber-800 transition disabled:opacity-50 cursor-pointer"
               title="Imprimir ticket para cliente"
             >
               <Printer className="h-4 w-4" />
@@ -319,7 +264,30 @@ export const ComprobanteVentaModal: React.FC<ComprobanteVentaModalProps> = ({
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      }
+    >
+      {cargando ? (
+        <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+          <Loader2 className="h-9 w-9 animate-spin text-amber-600" />
+          <p className="mt-3 text-sm font-medium">Cargando comprobante...</p>
+        </div>
+      ) : error ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-rose-600" />
+          <p className="mt-2 text-sm font-semibold text-rose-800">{error}</p>
+          <button
+            type="button"
+            onClick={handleCerrar}
+            className="mt-3 text-xs font-bold text-rose-700 underline cursor-pointer"
+          >
+            Cerrar
+          </button>
+        </div>
+      ) : comprobante ? (
+        <ComprobanteTicketView comprobante={comprobante} />
+      ) : null}
+    </ModalLectura>
   );
 };
+
+export default ComprobanteVentaModal;
