@@ -69,17 +69,17 @@
 
 ---
 
-### 📌 Ciclo 4 (6 Casos de Uso) — *CU20 backend en curso*
+### 📌 Ciclo 4 (6 Casos de Uso) — *CU20 completo (backend + frontend)*
 | CU | Nombre del Caso de Uso | Paquete Backend | Estado |
-|---|---|---|:---:|
-| **CU20**| Registrar gasto / inversión | `apps.compras` | 🟡 |
+|---|---|---|---|
+| **CU20**| Registrar gasto / inversión | `apps.compras` | ✅ |
 | **CU21**| Generar reporte de ventas | `apps.reportes` | ⚪ |
 | **CU22**| Generar reporte de producción | `apps.reportes` | ⚪ |
 | **CU23**| Generar reporte de existencias | `apps.reportes` | ⚪ |
 | **CU24**| Generar reporte de compras y gastos | `apps.reportes` | ⚪ |
 | **CU25**| Generar reporte de resultados económicos | `apps.reportes` | ⚪ |
 
-**CU20 (2026-11-13):** API backend de gastos e inversiones en `apps.compras.gastos` (rama `prueba`). `POST /api/gastos/` (tipo, categoría, concepto, monto, descripción y fecha no futura), `GET /api/gastos/` con filtros (`tipo`, `categoria`, `fecha_desde`, `fecha_hasta`, `anulado`, `search`), `GET /api/gastos/<id>/` y `POST /api/gastos/<id>/anular/` (anulación lógica, sin borrar). RBAC con permiso `registrar_gastos` (Administrador y Propietario); el responsable sale de la sesión y nunca del payload. Integridad en base de datos: `CHECK (monto > 0)`, `CHECK (tipo IN ...)`, `CHECK (categoria IN ...)` e índice por `fecha_hora` (migración `gastos.0002`). Bitácora `ALTA_MOVIMIENTO_ECONOMICO` y `ANULACION_MOVIMIENTO_ECONOMICO` en la misma transacción (migración `bitacora.0016`). 32 pruebas nuevas, 49 en `apps.compras` en verde. **Falta:** pantalla React y permisos en `navigation.ts`.
+**CU20 (2026-11-13):** API backend de gastos e inversiones en `apps.compras.gastos` (rama `prueba`). `POST /api/gastos/` (tipo, categoría, concepto, monto, descripción y fecha no futura), `GET /api/gastos/` con filtros (`tipo`, `categoria`, `fecha_desde`, `fecha_hasta`, `anulado`, `search`), `GET /api/gastos/<id>/` y `POST /api/gastos/<id>/anular/` (anulación lógica, sin borrar). RBAC con permiso `registrar_gastos` (Administrador y Propietario); el responsable sale de la sesión y nunca del payload. Integridad en base de datos: `CHECK (monto > 0)`, `CHECK (tipo IN ...)`, `CHECK (categoria IN ...)` e índice por `fecha_hora` (migración `gastos.0002`). Bitácora `ALTA_MOVIMIENTO_ECONOMICO` y `ANULACION_MOVIMIENTO_ECONOMICO` en la misma transacción (migración `bitacora.0016`). 32 pruebas nuevas, 49 en `apps.compras` en verde. **Frontend:** pestaña "Gastos e inversiones" en Compras y Proveedores (`ComprasModuloPage`, visible con `registrar_gastos`), `GastosPage` con filtros (tipo, categoría, fechas, anulados, búsqueda), resumen de egresos con proporción gasto/inversión, alta y anulación lógica con modales accesibles (`role="dialog"` / `alertdialog`), `types/gasto.ts` y `services/gastosService.ts`. Verificado con `npx tsc -b`, `npm run build` y `npm run lint` (sin hallazgos en los archivos nuevos). Pendiente: recorrido visual con sesión real.
 
 
 ---

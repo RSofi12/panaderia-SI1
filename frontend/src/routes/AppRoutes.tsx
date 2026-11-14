@@ -99,11 +99,11 @@ export const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             } />
 
-            {/* Módulo "Compras y Proveedores": pestañas CU7 (compras) y CU6
-                (proveedores); CU20 se sumará aquí. Sin ProtectedRoute de un
-                solo permiso: la consulta la admiten dos permisos
-                (gestionar_proveedores o registrar_compras) y el backend
-                responde 403 al resto. */}
+            {/* Módulo "Compras y Proveedores": pestañas CU7 (compras), CU20
+                (gastos e inversiones) y CU6 (proveedores). Sin ProtectedRoute
+                de un solo permiso: cada pestaña aparece según su permiso
+                (registrar_compras, registrar_gastos, gestionar_proveedores) y
+                el backend responde 403 al resto. */}
             <Route path="compras" element={<ComprasModuloPage />} />
             <Route path="comercializacion" element={<ComercializacionPage />} />
             <Route path="comercializacion/pedidos/estado" element={<ProtectedRoute requiredPermission={['registrar_pedidos', 'registrar_produccion']}><PedidosEstadoPage /></ProtectedRoute>} />

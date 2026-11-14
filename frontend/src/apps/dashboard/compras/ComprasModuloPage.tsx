@@ -1,12 +1,13 @@
 import React from 'react';
 import type { ElementType } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ShoppingCart, Truck } from 'lucide-react';
+import { ShoppingCart, Truck, Wallet } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import ProveedoresPage from '../proveedores/ProveedoresPage';
 import ComprasPage from './ComprasPage';
+import GastosPage from './GastosPage';
 
-type Pestana = 'compras' | 'proveedores';
+type Pestana = 'compras' | 'proveedores' | 'gastos';
 
 interface DefinicionPestana {
   id: Pestana;
@@ -19,9 +20,11 @@ export const ComprasModuloPage: React.FC = () => {
   const { hasPermission } = useAuth();
   const puedeComprar = hasPermission('registrar_compras');
   const puedeVerProveedores = puedeComprar || hasPermission('gestionar_proveedores');
+  const puedeVerGastos = hasPermission('registrar_gastos');
 
   const pestanas: DefinicionPestana[] = [
     { id: 'compras', etiqueta: 'Compras', icono: ShoppingCart, visible: puedeComprar },
+    { id: 'gastos', etiqueta: 'Gastos e inversiones', icono: Wallet, visible: puedeVerGastos },
     { id: 'proveedores', etiqueta: 'Proveedores', icono: Truck, visible: puedeVerProveedores },
   ];
   const disponibles = pestanas.filter((p) => p.visible);
@@ -59,7 +62,11 @@ export const ComprasModuloPage: React.FC = () => {
         </div>
       )}
 
-      <div role="tabpanel">{activa === 'compras' ? <ComprasPage /> : <ProveedoresPage />}</div>
+      <div role="tabpanel">
+        {activa === 'compras' && <ComprasPage />}
+        {activa === 'gastos' && <GastosPage />}
+        {activa === 'proveedores' && <ProveedoresPage />}
+      </div>
     </div>
   );
 };

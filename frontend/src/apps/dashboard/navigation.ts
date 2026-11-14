@@ -60,7 +60,7 @@ export const NAV_MODULES: NavModule[] = [
     to: '/dashboard/compras',
     icon: ShoppingCart,
     casosDeUso: 'CU6, CU7, CU20',
-    permisos: ['gestionar_proveedores', 'registrar_compras'],
+    permisos: ['gestionar_proveedores', 'registrar_compras', 'registrar_gastos'],
     implemented: true,
   },
   {
