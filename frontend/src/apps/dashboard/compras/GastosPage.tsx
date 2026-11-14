@@ -152,12 +152,12 @@ export const GastosPage: React.FC = () => {
     setIncluirAnulados(false);
   }
 
-  async function confirmarAnulacion() {
+  async function confirmarAnulacion(motivo?: string) {
     if (modal?.tipo !== 'anular') return;
     const { movimiento } = modal;
     setAnulando(true);
     try {
-      await gastosService.anular(movimiento.id_movimiento);
+      await gastosService.anular(movimiento.id_movimiento, motivo);
       setAviso({ tono: 'exito', texto: `Movimiento anulado: ${movimiento.concepto}.` });
       setModal(null);
       recargar();

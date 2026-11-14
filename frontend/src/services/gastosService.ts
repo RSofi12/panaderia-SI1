@@ -39,8 +39,9 @@ export const gastosService = {
   },
 
   /** POST /api/gastos/<id>/anular/ — marca anulado sin borrar el registro */
-  async anular(id: number): Promise<MovimientoEconomico> {
-    const response = await api.post<MovimientoEconomico>(`/gastos/${id}/anular/`);
+  async anular(id: number, motivo?: string): Promise<MovimientoEconomico> {
+    const payload = motivo?.trim() ? { motivo: motivo.trim() } : {};
+    const response = await api.post<MovimientoEconomico>(`/gastos/${id}/anular/`, payload);
     return response.data;
   },
 };

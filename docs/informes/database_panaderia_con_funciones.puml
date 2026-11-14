@@ -286,12 +286,15 @@ class DetalleCompra #FFE6CC {
 class MovimientoEconomico #FFE6CC {
     -idMovimiento : int
     -tipo : String
+    -categoria : String
     -concepto : String
     -descripcion : String
     -monto : decimal
     -fechaHora : DateTime
+    -anulado : boolean
     +registrar()
-    +editar()
+    +consultar()
+    +anular()
 }
 
 

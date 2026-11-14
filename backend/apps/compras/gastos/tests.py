@@ -396,6 +396,30 @@ class PruebasDetalleYAnulacion(BasePruebasGastos):
         self.assertEqual(bitacora.tabla_afectada, 'movimiento_economico')
         self.assertEqual(bitacora.usuario, self.propietario)
 
+    def test_anular_movimiento_con_motivo_queda_en_bitacora(self):
+        self.client.force_authenticate(user=self.propietario)
+        res = self.client.post(
+            f'{URL_LISTA}{self.movimiento.pk}/anular/',
+            {'motivo': 'Error en digitación de monto'},
+            format='json',
+        )
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertTrue(res.data['anulado'])
+
+        bitacora = Bitacora.objects.get(
+            accion=AccionBitacora.ANULACION_MOVIMIENTO_ECONOMICO
+        )
+        self.assertIn('Error en digitación de monto', bitacora.descripcion)
+
+    def test_listado_con_paginacion_opcional(self):
+        self.client.force_authenticate(user=self.propietario)
+        res = self.client.get(f'{URL_LISTA}?page=1&page_size=5')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('count', res.data)
+        self.assertIn('results', res.data)
+
     def test_doble_anulacion_devuelve_400(self):
         self.client.force_authenticate(user=self.propietario)
         primero = self.client.post(f'{URL_LISTA}{self.movimiento.pk}/anular/')

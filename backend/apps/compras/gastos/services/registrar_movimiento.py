@@ -96,7 +96,7 @@ def registrar_movimiento(*, usuario, tipo, concepto, monto, categoria=None,
 
 
 @transaction.atomic
-def anular_movimiento(*, usuario, id_movimiento, agente_usuario=None):
+def anular_movimiento(*, usuario, id_movimiento, motivo=None, agente_usuario=None):
     """
     Anula un movimiento sin borrarlo: conserva la fila y la auditoría.
 
@@ -114,6 +114,9 @@ def anular_movimiento(*, usuario, id_movimiento, agente_usuario=None):
     movimiento.anulado = True
     movimiento.save(update_fields=['anulado'])
 
+    motivo_limpio = (motivo or '').strip()
+    motivo_texto = f' — Motivo: {motivo_limpio}' if motivo_limpio else ''
+
     Bitacora.registrar(
         usuario=usuario,
         accion=AccionBitacora.ANULACION_MOVIMIENTO_ECONOMICO,
@@ -121,6 +124,7 @@ def anular_movimiento(*, usuario, id_movimiento, agente_usuario=None):
         descripcion=(
             f'Anulación del movimiento #{movimiento.id_movimiento} — '
             f'{movimiento.get_tipo_display()}: {movimiento.concepto} — Bs {movimiento.monto}'
+            f'{motivo_texto}'
         ),
         agente_usuario=agente_usuario,
     )

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Ban, Loader2 } from 'lucide-react';
 import { formatearBs } from '../../productos/precios';
 import type { MovimientoEconomico } from '../../../../types/gasto';
@@ -7,7 +7,7 @@ interface Props {
   movimiento: MovimientoEconomico;
   ocupado: boolean;
   onCancelar: () => void;
-  onConfirmar: () => void;
+  onConfirmar: (motivo?: string) => void;
 }
 
 /**
@@ -16,6 +16,7 @@ interface Props {
  * inicial va en "Cancelar" y no en el botón destructivo.
  */
 export const AnularGastoModal: React.FC<Props> = ({ movimiento, ocupado, onCancelar, onConfirmar }) => {
+  const [motivo, setMotivo] = useState('');
   const cancelarRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -35,6 +36,10 @@ export const AnularGastoModal: React.FC<Props> = ({ movimiento, ocupado, onCance
     };
   }, [ocupado, onCancelar]);
 
+  const manejarConfirmacion = () => {
+    onConfirmar(motivo.trim() || undefined);
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
@@ -53,7 +58,7 @@ export const AnularGastoModal: React.FC<Props> = ({ movimiento, ocupado, onCance
           <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
             <Ban className="h-5 w-5" />
           </span>
-          <div>
+          <div className="flex-1">
             <h2 id="titulo-anular-gasto" className="text-base font-bold text-slate-900">
               ¿Anular este movimiento?
             </h2>
@@ -65,6 +70,21 @@ export const AnularGastoModal: React.FC<Props> = ({ movimiento, ocupado, onCance
               Dejará de contar en los reportes, pero seguirá visible en el historial y en la bitácora.
               No se puede revertir desde la aplicación.
             </p>
+
+            <div className="mt-4">
+              <label htmlFor="motivo-anulacion" className="block text-xs font-semibold text-slate-700 mb-1">
+                Motivo o justificación (opcional)
+              </label>
+              <textarea
+                id="motivo-anulacion"
+                rows={2}
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                disabled={ocupado}
+                placeholder="Ej: Factura duplicada, error en el monto..."
+                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+              />
+            </div>
           </div>
         </div>
         <footer className="flex flex-col-reverse gap-2 border-t border-slate-100 bg-slate-50 px-5 py-3 sm:flex-row sm:justify-end">
@@ -79,7 +99,7 @@ export const AnularGastoModal: React.FC<Props> = ({ movimiento, ocupado, onCance
           </button>
           <button
             type="button"
-            onClick={onConfirmar}
+            onClick={manejarConfirmacion}
             disabled={ocupado}
             aria-busy={ocupado}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"

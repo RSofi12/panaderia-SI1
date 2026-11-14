@@ -549,6 +549,11 @@ CREATE TABLE "movimiento_economico" (
 
 CREATE INDEX "mov_economico_fecha_idx" ON "movimiento_economico" ("fecha_hora");
 
+-- CU20 en bitácora: cada alta y cada anulación dejan una fila en `bitacora` con
+-- `accion` = 'ALTA_MOVIMIENTO_ECONOMICO' o 'ANULACION_MOVIMIENTO_ECONOMICO'
+-- (migración bitacora.0016_acciones_cu20_gastos). La anulación no borra la fila
+-- del movimiento: `anulado` pasa a true y el egreso deja de contar en reportes.
+
 
 -- =========================================================
 -- LLAVES FORÁNEAS - USUARIOS Y SEGURIDAD
