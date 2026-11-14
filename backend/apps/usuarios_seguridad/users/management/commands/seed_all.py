@@ -39,6 +39,7 @@ class Command(BaseCommand):
             ('seed_pedidos_demo', '9. Clientes y Pedidos en Mostrador/Anticipados'),
             ('seed_gastos_demo', '10. Gastos Operativos e Inversiones'),
             ('seed_ventas_demo', '11. Registro Histórico de Ventas'),
+            ('seed_mes_operativo', '12. Simulación de 1 Mes Operativo Completo (L-S, 8h)'),
         ]
 
         exitos = 0

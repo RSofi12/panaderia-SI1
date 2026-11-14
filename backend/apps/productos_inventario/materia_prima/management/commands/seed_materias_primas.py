@@ -21,6 +21,19 @@ INSUMOS = [
     ('Huevos', 'unidad', '100.000', '0.90'),
     ('Leche', 'litro', '15.000', '7.50'),
     ('Mantequilla', 'kg', '5.000', '35.00'),
+    ('Queso Criollo', 'kg', '10.000', '32.00'),
+    ('Almidón de Yuca', 'kg', '15.000', '18.00'),
+    ('Yuca Fresca', 'kg', '20.000', '5.00'),
+    ('Choclo Desgranado', 'kg', '10.000', '12.00'),
+    ('Harina de Centeno', 'kg', '10.000', '9.50'),
+    ('Harina Integral', 'kg', '15.000', '7.00'),
+    ('Carne de Pollo Relleno', 'kg', '8.000', '24.00'),
+    ('Charque Vacuno', 'kg', '5.000', '65.00'),
+    ('Chocolate Cobertura', 'kg', '5.000', '48.00'),
+    ('Canela en Polvo', 'kg', '1.000', '80.00'),
+    ('Zanahoria Rallada', 'kg', '5.000', '6.00'),
+    ('Plátano y Banana', 'kg', '8.000', '7.00'),
+    ('Aceitunas Negras', 'kg', '2.000', '35.00'),
 ]
 
 
