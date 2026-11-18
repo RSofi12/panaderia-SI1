@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   BarChart3,
   TrendingUp,
@@ -54,7 +55,7 @@ const REPORTES_CASOS: CasoUsoReporte[] = [
     cu: 'CU23',
     titulo: 'Generar reporte de existencias',
     descripcion:
-      'Reporte del estado y valorización de existencias de materias primas y productos terminados en mostrador.',
+      'Consulta del stock actual de materias primas y productos terminados, con mínimos utilizados, bajo stock y registros sin inventario.',
     icono: PieChart,
   },
   {
@@ -723,7 +724,7 @@ export const ReportesPage: React.FC = () => {
                     </span>
                     <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500">
                       <AlertCircle className="h-3 w-3 text-amber-600" />
-                      {item.cu === 'CU21' ? 'Activo y Funcional' : 'Planificado'}
+                      {item.cu === 'CU21' || item.cu === 'CU23' ? 'Activo y Funcional' : 'Planificado'}
                     </span>
                   </div>
 
@@ -738,9 +739,16 @@ export const ReportesPage: React.FC = () => {
                 </div>
 
                 <div className="border-t border-slate-100 pt-3">
-                  <p className="text-[11px] text-slate-400">
-                    <span className="font-semibold text-slate-600">Actor autorizado:</span> Propietario
-                  </p>
+                  {item.cu === 'CU23' ? (
+                    <>
+                      <Link to="/dashboard/reportes/existencias" className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-amber-800 underline underline-offset-4 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2">Abrir reporte de existencias</Link>
+                      <p className="mt-2 text-xs text-slate-600">Disponible para usuarios autorizados a generar reportes. Mínimo de productos terminados referencial y provisional.</p>
+                    </>
+                  ) : (
+                    <p className="text-[11px] text-slate-400">
+                      <span className="font-semibold text-slate-600">Actor autorizado:</span> Propietario
+                    </p>
+                  )}
                 </div>
               </div>
             );
