@@ -8,6 +8,16 @@ export interface ProductoVendido {
   subtotal: string;
 }
 
+export interface VentaDetalle {
+  id_venta: number;
+  numero_comprobante: number;
+  fecha: string;
+  fecha_hora: string;
+  metodo_pago: string;
+  total: string;
+  cajero: string;
+}
+
 export interface ReporteVentas {
   desde: string;
   hasta: string;
@@ -16,14 +26,7 @@ export interface ReporteVentas {
   efectivo: string;
   tarjeta: string;
   productos: ProductoVendido[];
-}
-
-export interface CierreReporteVentas extends ReporteVentas {
-  id_cierre: number;
-  periodo: PeriodoReporte;
-  metodo_pago: string | null;
-  fecha_generacion: string;
-  generado_por: string;
+  ventas?: VentaDetalle[];
 }
 
 function isoFecha(fecha: Date): string {
@@ -102,26 +105,6 @@ export async function consultarReporteVentas(
   return respuesta.data;
 }
 
-export async function guardarCierreVentas(cierre: {
-  desde: string;
-  hasta: string;
-  periodo: PeriodoReporte;
-  metodoPago?: string;
-}): Promise<CierreReporteVentas> {
-  const respuesta = await api.post<CierreReporteVentas>('/reportes/ventas/cierres/', {
-    desde: cierre.desde,
-    hasta: cierre.hasta,
-    periodo: cierre.periodo,
-    ...(cierre.metodoPago ? { metodo_pago: cierre.metodoPago } : {}),
-  });
-  return respuesta.data;
-}
-
-export async function listarCierresVentas(): Promise<CierreReporteVentas[]> {
-  const respuesta = await api.get<CierreReporteVentas[]>('/reportes/ventas/cierres/');
-  return respuesta.data;
-}
-
 function guardarBlob(contenido: Blob, nombre: string) {
   const url = URL.createObjectURL(contenido);
   const enlace = document.createElement('a');
@@ -133,21 +116,38 @@ function guardarBlob(contenido: Blob, nombre: string) {
   URL.revokeObjectURL(url);
 }
 
-export async function descargarReporteCsv(desde: string, hasta: string, metodoPago?: string): Promise<void> {
+export async function descargarReporteCsv(
+  desde: string,
+  hasta: string,
+  metodoPago?: string,
+  columnas?: string[],
+): Promise<void> {
   const respuesta = await api.get<Blob>('/reportes/ventas/csv/', {
     params: {
       desde,
       hasta,
       ...(metodoPago ? { metodo_pago: metodoPago } : {}),
+      ...(columnas && columnas.length > 0 ? { columnas: columnas.join(',') } : {}),
     },
     responseType: 'blob',
   });
   guardarBlob(respuesta.data, `reporte-ventas-${desde}-${hasta}.csv`);
 }
 
-export async function descargarCierrePdf(idCierre: number): Promise<void> {
-  const respuesta = await api.get<Blob>(`/reportes/ventas/cierres/${idCierre}/pdf/`, {
+export async function descargarReportePdf(
+  desde: string,
+  hasta: string,
+  metodoPago?: string,
+  columnas?: string[],
+): Promise<void> {
+  const respuesta = await api.get<Blob>('/reportes/ventas/pdf/', {
+    params: {
+      desde,
+      hasta,
+      ...(metodoPago ? { metodo_pago: metodoPago } : {}),
+      ...(columnas && columnas.length > 0 ? { columnas: columnas.join(',') } : {}),
+    },
     responseType: 'blob',
   });
-  guardarBlob(respuesta.data, `cierre-ventas-${idCierre}.pdf`);
+  guardarBlob(respuesta.data, `reporte-ventas-${desde}-${hasta}.pdf`);
 }

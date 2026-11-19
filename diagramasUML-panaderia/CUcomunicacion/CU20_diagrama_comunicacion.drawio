@@ -1,0 +1,319 @@
+<mxGraphModel dx="1422" dy="798" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+
+    <!-- TITULO DEL DIAGRAMA -->
+    <mxCell id="CU20-COMM-TITLE" parent="1" style="text;whiteSpace=wrap;html=1;labelBackgroundColor=none;" value="&lt;p dir=&quot;ltr&quot; style=&quot;line-height:1.8;margin-top:0pt;margin-bottom:6pt;&quot;&gt;&lt;span style=&quot;font-size:12pt;font-family:Arial,sans-serif;color:#000000;font-weight:700;&quot;&gt;CU20 – Registrar gasto o inversión&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;font-size:9pt;color:#666666;margin:0;&quot;&gt;Diagrama de Comunicación UML • Flujo Actor - Boundary - Controller - Entities&lt;/p&gt;" vertex="1">
+      <mxGeometry height="50" width="520" x="40" y="20" as="geometry" />
+    </mxCell>
+
+    <!-- ACTOR: :Administrador / :Propietario -->
+    <mxCell id="CU20-COMM-ACT" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=0;" value=":Administrador / :Propietario" vertex="1">
+      <mxGeometry height="70" width="40" x="70" y="340" as="geometry" />
+    </mxCell>
+
+    <!-- BOUNDARY: :GastosPage -->
+    <mxCell id="CU20-COMM-BND" parent="1" style="shape=umlBoundary;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=0;" value=":GastosPage" vertex="1">
+      <mxGeometry height="70" width="90" x="300" y="340" as="geometry" />
+    </mxCell>
+
+    <!-- CONTROLLER: :GastoController -->
+    <mxCell id="CU20-COMM-CTRL" parent="1" style="ellipse;shape=umlControl;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=0;" value="" vertex="1">
+      <mxGeometry height="80" width="80" x="700" y="300" as="geometry" />
+    </mxCell>
+
+    <!-- ENTITY: :Usuario -->
+    <mxCell id="CU20-COMM-ENT-US" parent="1" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=0;" value=":Usuario" vertex="1">
+      <mxGeometry height="44" width="44" x="1010" y="240" as="geometry" />
+    </mxCell>
+
+    <!-- ENTITY: :MovimientoEconomico -->
+    <mxCell id="CU20-COMM-ENT-ME" parent="1" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=0;" value=":MovimientoEconomico" vertex="1">
+      <mxGeometry height="44" width="44" x="1010" y="400" as="geometry" />
+    </mxCell>
+
+    <!-- ENTITY: :Bitacora -->
+    <mxCell id="CU20-COMM-ENT-BI" parent="1" style="ellipse;shape=umlEntity;whiteSpace=wrap;html=1;labelPosition=center;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontSize=10;labelBackgroundColor=none;rounded=1;fontStyle=0;" value=":Bitacora" vertex="1">
+      <mxGeometry height="44" width="44" x="1010" y="560" as="geometry" />
+    </mxCell>
+
+    <!-- ENLACES DE COMUNICACION (LINEAS SOLIDAS, SIN FLECHA) -->
+    <mxCell id="CU20-COMM-LNK-ACT-BND" edge="1" parent="1" source="CU20-COMM-ACT" target="CU20-COMM-BND" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="CU20-COMM-LNK-BND-CTRL" edge="1" parent="1" source="CU20-COMM-BND" target="CU20-COMM-CTRL" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.875;entryDx=0;entryDy=0;">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+
+    <mxCell id="CU20-COMM-LNK-CTRL-US" edge="1" parent="1" source="CU20-COMM-CTRL" target="CU20-COMM-ENT-US" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=1;exitY=0.125;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="940" y="310" />
+          <mxPoint x="940" y="262" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-LNK-CTRL-ME" edge="1" parent="1" source="CU20-COMM-CTRL" target="CU20-COMM-ENT-ME" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=1;exitY=0.625;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="960" y="350" />
+          <mxPoint x="960" y="422" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-LNK-CTRL-BI" edge="1" parent="1" source="CU20-COMM-CTRL" target="CU20-COMM-ENT-BI" style="rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;endFill=0;fontSize=10;labelBackgroundColor=none;fontColor=default;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="980" y="380" />
+          <mxPoint x="980" y="582" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <!-- NOMBRE DEL CONTROLLER (celda independiente para no chocar con los enlaces) -->
+    <mxCell id="CU20-COMM-CTRL-NAME" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value=":GastoController" vertex="1">
+      <mxGeometry height="20" width="150" x="680" y="272" as="geometry" />
+    </mxCell>
+
+    <!-- ===================================================== -->
+    <!-- FLUJO 1 (AZUL MARINO): CONSULTA Y FILTROS             -->
+    <!-- ===================================================== -->
+
+    <mxCell id="CU20-COMM-M1" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="1: solicitarListadoGastos()" vertex="1">
+      <mxGeometry height="26" width="170" x="100" y="245" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A1" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;strokeColor=#003366;" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry">
+        <mxPoint x="151" y="240" as="sourcePoint" />
+        <mxPoint x="194" y="240" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M11" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="1.1: get()" vertex="1">
+      <mxGeometry height="26" width="110" x="400" y="245" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A11" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;strokeColor=#003366;" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry">
+        <mxPoint x="433" y="240" as="sourcePoint" />
+        <mxPoint x="460" y="240" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M12" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="1.2: leer_filtros_gasto()" vertex="1">
+      <mxGeometry height="26" width="155" x="640" y="180" as="geometry" />
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M13" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="1.3: filter()" vertex="1">
+      <mxGeometry height="26" width="140" x="800" y="318" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A13" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;strokeColor=#003366;" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry">
+        <mxPoint x="842" y="313" as="sourcePoint" />
+        <mxPoint x="872" y="313" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M14" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="1.4: select_related()" vertex="1">
+      <mxGeometry height="26" width="125" x="800" y="278" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A14" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;strokeColor=#003366;" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry">
+        <mxPoint x="838" y="273" as="sourcePoint" />
+        <mxPoint x="868" y="273" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M15" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="1.5: mostrarMovimientos()" vertex="1">
+      <mxGeometry height="26" width="180" x="520" y="470" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A15" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=1.5;fontSize=10;strokeColor=#003366;dashed=1;" value="">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="637" y="465" as="sourcePoint" />
+        <mxPoint x="577" y="465" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M16" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="1.6: renderizarTablaGastos()" vertex="1">
+      <mxGeometry height="26" width="190" x="100" y="470" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A16" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=1.5;fontSize=10;strokeColor=#003366;dashed=1;" value="">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="224" y="465" as="sourcePoint" />
+        <mxPoint x="164" y="465" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===================================================== -->
+    <!-- FLUJO 2 (VERDE BOSQUE): REGISTRO DE GASTO/INVERSION   -->
+    <!-- ===================================================== -->
+
+    <mxCell id="CU20-COMM-M2" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="2: abrirRegistrarGasto()" vertex="1">
+      <mxGeometry height="26" width="160" x="100" y="273" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A2" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;strokeColor=#005522;" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry">
+        <mxPoint x="148" y="268" as="sourcePoint" />
+        <mxPoint x="188" y="268" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M21" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="2.1: post()" vertex="1">
+      <mxGeometry height="26" width="90" x="400" y="273" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A21" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;strokeColor=#005522;" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry">
+        <mxPoint x="427" y="268" as="sourcePoint" />
+        <mxPoint x="453" y="268" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M22" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="2.2: is_valid()" vertex="1">
+      <mxGeometry height="26" width="155" x="640" y="206" as="geometry" />
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M23" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="2.3: create()" vertex="1">
+      <mxGeometry height="26" width="120" x="800" y="352" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A23" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;strokeColor=#005522;" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry">
+        <mxPoint x="836" y="347" as="sourcePoint" />
+        <mxPoint x="864" y="347" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M24" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="2.4: registrar()" vertex="1">
+      <mxGeometry height="26" width="130" x="800" y="386" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A24" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;strokeColor=#005522;" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry">
+        <mxPoint x="839" y="381" as="sourcePoint" />
+        <mxPoint x="871" y="381" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M25" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="2.5: mostrarGastoRegistrado()" vertex="1">
+      <mxGeometry height="26" width="190" x="520" y="500" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A25" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=1.5;fontSize=10;strokeColor=#005522;dashed=1;" value="">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="644" y="495" as="sourcePoint" />
+        <mxPoint x="584" y="495" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M26" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="2.6: cerrarModalRegistro()" vertex="1">
+      <mxGeometry height="26" width="190" x="100" y="500" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A26" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=1.5;fontSize=10;strokeColor=#005522;dashed=1;" value="">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="224" y="495" as="sourcePoint" />
+        <mxPoint x="164" y="495" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===================================================== -->
+    <!-- FLUJO 3 (ROJO OXIDO): ANULACION LOGICA                -->
+    <!-- ===================================================== -->
+
+    <mxCell id="CU20-COMM-M3" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="3: solicitarAnulacion()" vertex="1">
+      <mxGeometry height="26" width="150" x="100" y="301" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A3" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;strokeColor=#8B0000;" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry">
+        <mxPoint x="145" y="296" as="sourcePoint" />
+        <mxPoint x="182" y="296" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M31" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="3.1: post()" vertex="1">
+      <mxGeometry height="26" width="90" x="400" y="301" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A31" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;strokeColor=#8B0000;" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry">
+        <mxPoint x="427" y="296" as="sourcePoint" />
+        <mxPoint x="453" y="296" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M32" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="3.2: anular_movimiento()" vertex="1">
+      <mxGeometry height="26" width="155" x="640" y="232" as="geometry" />
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M33" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="3.3: save()" vertex="1">
+      <mxGeometry height="26" width="110" x="800" y="414" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A33" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;strokeColor=#8B0000;" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry">
+        <mxPoint x="833" y="409" as="sourcePoint" />
+        <mxPoint x="859" y="409" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M34" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="3.4: registrar()" vertex="1">
+      <mxGeometry height="26" width="130" x="800" y="442" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A34" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=2;fontSize=10;strokeColor=#8B0000;" value="">
+      <mxGeometry height="50" relative="1" width="50" as="geometry">
+        <mxPoint x="839" y="437" as="sourcePoint" />
+        <mxPoint x="871" y="437" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M35" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="3.5: mostrarGastoAnulado()" vertex="1">
+      <mxGeometry height="26" width="180" x="520" y="530" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A35" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=1.5;fontSize=10;strokeColor=#8B0000;dashed=1;" value="">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="637" y="525" as="sourcePoint" />
+        <mxPoint x="577" y="525" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-M36" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=1;fontSize=10;fontColor=#000000;fontStyle=0;labelBackgroundColor=none;" value="3.6: renderizarListado()" vertex="1">
+      <mxGeometry height="26" width="180" x="100" y="530" as="geometry" />
+    </mxCell>
+    <mxCell id="CU20-COMM-A36" edge="1" parent="1" style="endArrow=classic;html=1;rounded=1;strokeWidth=1.5;fontSize=10;strokeColor=#8B0000;dashed=1;" value="">
+      <mxGeometry relative="1" as="geometry">
+        <mxPoint x="217" y="525" as="sourcePoint" />
+        <mxPoint x="157" y="525" as="targetPoint" />
+      </mxGeometry>
+    </mxCell>
+
+    <!-- ===================================================== -->
+    <!-- AUTO-MENSAJES (VALIDACIONES EN EL CONTROLLER)         -->
+    <!-- Se dibujan como bucles sobre el borde superior.       -->
+    <!-- ===================================================== -->
+
+    <mxCell id="CU20-COMM-LOOP1" edge="1" parent="1" source="CU20-COMM-CTRL" target="CU20-COMM-CTRL" style="endArrow=classic;html=1;rounded=1;curved=1;strokeWidth=2;fontSize=10;strokeColor=#003366;exitX=0.15;exitY=0;exitDx=0;exitDy=0;entryX=0.4;entryY=0;entryDx=0;entryDy=0;" value="">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="712" y="285" />
+          <mxPoint x="732" y="285" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-LOOP2" edge="1" parent="1" source="CU20-COMM-CTRL" target="CU20-COMM-CTRL" style="endArrow=classic;html=1;rounded=1;curved=1;strokeWidth=2;fontSize=10;strokeColor=#005522;exitX=0.45;exitY=0;exitDx=0;exitDy=0;entryX=0.7;entryY=0;entryDx=0;entryDy=0;" value="">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="736" y="285" />
+          <mxPoint x="756" y="285" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+    <mxCell id="CU20-COMM-LOOP3" edge="1" parent="1" source="CU20-COMM-CTRL" target="CU20-COMM-CTRL" style="endArrow=classic;html=1;rounded=1;curved=1;strokeWidth=2;fontSize=10;strokeColor=#8B0000;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.95;entryY=0;entryDx=0;entryDy=0;" value="">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="760" y="285" />
+          <mxPoint x="776" y="285" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

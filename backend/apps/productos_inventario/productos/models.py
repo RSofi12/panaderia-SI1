@@ -9,6 +9,8 @@ class CategoriaProducto(models.Model):
     id_categoria = models.BigAutoField(primary_key=True)
     nombre = models.CharField(max_length=50, verbose_name='Nombre de la categoría')
     descripcion = models.TextField(blank=True, null=True, verbose_name='Descripción')
+    activo = models.BooleanField(default=True, verbose_name='Categoría activa')
+    estado = models.CharField(max_length=20, default='Activo', verbose_name='Estado')
 
     class Meta:
         db_table = 'categoria_producto'

@@ -11,6 +11,12 @@ PROVEEDORES = [
     ('Molinos del Oriente S.R.L.', '33210099', 'Parque Industrial, Santa Cruz'),
     ('Distribuidora Lácteos Santa Cruz', '33220188', 'Av. Grigotá, 6to anillo'),
     ('Insumos y Levaduras Bolivia', '33230277', 'Av. Piraí, 4to anillo'),
+    ('Avícola Sofía S.A.', '33520011', 'Av. Cristo Redentor, Km 8 1/2'),
+    ('Ingenio Azucarero Guabirá S.A.', '39220050', 'Carretera al Norte Km 52, Montero'),
+    ('Distribuidora San Juan (Almidones y Tubérculos)', '33640022', 'Mercado Abasto Mayorista, Galpón 4'),
+    ('Lácteos y Quesos Chaqueños', '33480033', 'Av. Tres Pasos al Frente, 3er anillo'),
+    ('Chocolates y Especias Para Ti / Repostería', '33350044', 'Calle 24 de Septiembre #145'),
+    ('Molino Harinero San Gabriel', '33710055', 'Parque Industrial Mza. 22'),
 ]
 
 

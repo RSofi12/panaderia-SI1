@@ -87,3 +87,6 @@ docs/informes/*.html
 docs/informes/*.png
 docs/informes/prototipos_ciclo3/
 docs/informes/archivos de apoyo/
+diagramasUML-panaderia/CUanalisis-de-clases/CU20_diagrama_analisis_clases.drawio
+diagramasUML-panaderia/CUcomunicacion/CU20_diagrama_comunicacion.drawio
+.atl/

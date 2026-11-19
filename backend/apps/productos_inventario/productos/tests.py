@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone as datetime_timezone
 from decimal import Decimal
 import re
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -10,6 +11,7 @@ from django.test.utils import CaptureQueriesContext
 from django.urls import resolve, reverse
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.test import APIClient
 
 from apps.usuarios_seguridad.permisos.models import ModuloPermiso, Permiso
@@ -97,6 +99,40 @@ class PruebasGestionProductos(TestCase):
                 accion=AccionBitacora.ALTA_PRODUCTO,
             ).exists()
         )
+
+    def test_rechaza_crear_producto_con_nombre_duplicado_case_insensitive(self):
+        self.client.force_authenticate(user=self.usuario_admin)
+        Producto.objects.create(
+            nombre='Marraqueta',
+            id_categoria=self.categoria,
+            costo_produccion=Decimal('0.40'),
+            porcentaje_ganancia=Decimal('50.00'),
+            precio_venta=Decimal('0.60'),
+        )
+
+        payload_duplicado = {
+            'nombre': '  marraqueta  ',
+            'id_categoria': self.categoria.id_categoria,
+            'costo_produccion': '0.45',
+            'porcentaje_ganancia': '50.00',
+            'precio_venta': '0.70',
+        }
+        resp = self.client.post('/api/productos/', payload_duplicado, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('nombre', resp.data)
+        self.assertIn('Ya existe un producto', str(resp.data['nombre'][0]))
+
+    def test_rechaza_crear_producto_sin_categoria(self):
+        self.client.force_authenticate(user=self.usuario_admin)
+        payload_sin_cat = {
+            'nombre': 'Pan Sin Categoría',
+            'costo_produccion': '0.45',
+            'porcentaje_ganancia': '50.00',
+            'precio_venta': '0.70',
+        }
+        resp = self.client.post('/api/productos/', payload_sin_cat, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('id_categoria', resp.data)
 
     def test_toggle_activo_producto(self):
         self.client.force_authenticate(user=self.usuario_admin)
@@ -361,6 +397,26 @@ class PruebasHistorialPreciosCU19(TestCase):
             self.ids_resultados(primera) + self.ids_resultados(segunda),
             [registro.pk for registro in reversed(registros)],
         )
+
+    def test_paginacion_mantiene_diez_filas_si_cambia_el_valor_global(self):
+        for _ in range(12):
+            self.crear_historial()
+
+        for tamano_global in (3, None):
+            with self.subTest(tamano_global=tamano_global):
+                with patch.object(PageNumberPagination, 'page_size', tamano_global):
+                    primera = self.client.get(self.url)
+                    segunda = self.client.get(self.url, {'page': 2})
+
+                self.assertEqual(primera.status_code, status.HTTP_200_OK)
+                self.assertEqual(segunda.status_code, status.HTTP_200_OK)
+                self.assertEqual(primera.data['count'], 12)
+                self.assertEqual(len(primera.data['results']), 10)
+                self.assertEqual(len(segunda.data['results']), 2)
+                self.assertIsNone(primera.data['previous'])
+                self.assertIn('page=2', primera.data['next'])
+                self.assertIsNotNone(segunda.data['previous'])
+                self.assertIsNone(segunda.data['next'])
 
     def test_precio_decimal_se_serializa_sin_perdida_de_precision(self):
         for precio in ('0.00', '0.10', '12345678.91', '99999999.99'):

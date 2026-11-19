@@ -7,6 +7,7 @@ import ForgotPasswordPage from '../apps/auth/ForgotPasswordPage';
 import ResetPasswordPage from '../apps/auth/ResetPasswordPage';
 import DashboardLayout from '../apps/dashboard/DashboardLayout';
 import DashboardHome from '../apps/dashboard/DashboardHome';
+import KpiDashboardPage from '../apps/dashboard/kpis/KpiDashboardPage';
 import UsuariosPage from '../apps/dashboard/usuarios/UsuariosPage';
 import ProductosPage from '../apps/dashboard/productos/ProductosPage';
 import HistorialPreciosPage from '../apps/dashboard/productos/historial-precios/HistorialPreciosPage';
@@ -54,6 +55,14 @@ export const AppRoutes: React.FC = () => {
             }
           >
             <Route index element={<DashboardHome />} />
+            <Route
+              path="kpis"
+              element={
+                <ProtectedRoute requiredPermission={['generar_reportes', 'consultar_bitacora']}>
+                  <KpiDashboardPage />
+                </ProtectedRoute>
+              }
+            />
 
             {/* CU3 - Gestión de usuarios.
                 Va DENTRO de /dashboard y no como ruta suelta porque comparte
@@ -99,11 +108,11 @@ export const AppRoutes: React.FC = () => {
               </ProtectedRoute>
             } />
 
-            {/* Módulo "Compras y Proveedores": pestañas CU7 (compras) y CU6
-                (proveedores); CU20 se sumará aquí. Sin ProtectedRoute de un
-                solo permiso: la consulta la admiten dos permisos
-                (gestionar_proveedores o registrar_compras) y el backend
-                responde 403 al resto. */}
+            {/* Módulo "Compras y Proveedores": pestañas CU7 (compras), CU20
+                (gastos e inversiones) y CU6 (proveedores). Sin ProtectedRoute
+                de un solo permiso: cada pestaña aparece según su permiso
+                (registrar_compras, registrar_gastos, gestionar_proveedores) y
+                el backend responde 403 al resto. */}
             <Route path="compras" element={<ComprasModuloPage />} />
             <Route path="comercializacion" element={<ComercializacionPage />} />
             <Route path="comercializacion/pedidos/estado" element={<ProtectedRoute requiredPermission={['registrar_pedidos', 'registrar_produccion']}><PedidosEstadoPage /></ProtectedRoute>} />

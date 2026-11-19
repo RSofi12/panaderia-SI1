@@ -70,6 +70,10 @@ class AccionBitacora(models.TextChoices):
     # --- CU7: Registrar compra ---
     ALTA_COMPRA = 'ALTA_COMPRA', 'Registro de compra de materia prima'
 
+    # --- CU20: Registrar gasto o inversión ---
+    ALTA_MOVIMIENTO_ECONOMICO = 'ALTA_MOVIMIENTO_ECONOMICO', 'Registro de gasto o inversión'
+    ANULACION_MOVIMIENTO_ECONOMICO = 'ANULACION_MOVIMIENTO_ECONOMICO', 'Anulación de gasto o inversión'
+
     # --- CU13: Registrar venta ---
     ALTA_VENTA = 'ALTA_VENTA', 'Registro de venta en mostrador'
 
