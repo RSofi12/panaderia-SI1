@@ -599,7 +599,9 @@
 - **Impacto:** no requiere modelos, migraciones, asignaciones de permisos o dependencias nuevas. Los escritores y contratos de CU05/CU07/CU08/CU09 permanecen operativos. Pruebas de backend exclusivamente en PostgreSQL temporal y revisión independiente de implementación.
 
 
+---
 
-
-
-
+### 53. 📅 2026-11-19 — Regla Universal: Centralización de Archivos de Apoyo en docs/informes/archivos de apoyo/
+- **Decisión:** Establecer como regla obligatoria y universal del proyecto que todo archivo generado como material de apoyo, plantillas externas, diagramas Draw.io/PlantUML, visualizadores HTML temporales, capturas de prototipos PNG/JPG y scripts auxiliares debe ubicarse exclusivamente en docs/informes/archivos de apoyo/.
+- **Motivo:** Evitar la dispersión de artefactos no productivos en el árbol del proyecto (ackend/, rontend/, raíz, docs/), manteniendo el repositorio ordenado y previniendo que se suban al control de versiones archivos pesados o efímeros.
+- **Impacto:** Dicha carpeta está excluida en .gitignore. Se prohíbe explícitamente a cualquier desarrollador o IA crear o dejar archivos de apoyo sueltos fuera de esta ruta. Se protegen estrictamente los archivos de código del sistema (rontend/index.html, templates de email Django y assets web).
