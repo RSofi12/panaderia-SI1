@@ -13,6 +13,12 @@ class Proveedor(models.Model):
     nombre = models.CharField(max_length=150, verbose_name='Nombre del proveedor')
     telefono = models.CharField(max_length=20, blank=True, null=True, verbose_name='Teléfono')
     direccion = models.CharField(max_length=200, blank=True, null=True, verbose_name='Dirección')
+    descripcion = models.CharField(
+        max_length=300,
+        blank=True,
+        default='',
+        verbose_name='Descripción',
+    )
     fecha_registro = models.DateTimeField(default=timezone.now, verbose_name='Fecha de registro')
     activo = models.BooleanField(default=True, verbose_name='Proveedor activo')
 

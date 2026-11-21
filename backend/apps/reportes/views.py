@@ -6,10 +6,13 @@ from rest_framework.views import APIView
 
 from apps.reportes.permissions import PuedeGenerarReportes
 from apps.reportes.serializers import (
+    InterpretarComandoVozEntradaSerializer,
+    InterpretarComandoVozSalidaSerializer,
     ReporteVentasConsultaSerializer,
     ReporteVentasSerializer,
 )
 from apps.reportes.services.exportar_reporte import csv_reporte, pdf_reporte_ventas
+from apps.reportes.services.interprete_voz import interpretar_comando_voz
 from apps.reportes.services.reporte_ventas import reporte_ventas
 
 
@@ -24,6 +27,31 @@ def _parsear_columnas(raw: str | None) -> list[str] | None:
         return None
     cols = [c.strip().lower() for c in raw.split(',') if c.strip()]
     return cols or None
+
+
+def _rechazar_exportacion_sin_datos(reporte: dict) -> None:
+    if reporte.get('cantidad', 0) == 0:
+        raise serializers.ValidationError(
+            {'detail': 'No hay datos disponibles para el período solicitado.'}
+        )
+
+
+class ReporteInterpretarVozView(APIView):
+    """POST /api/reportes/voz/interpretar/ — CU21–CU25 (voz/texto + Gemini o fallback local)."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def post(self, request):
+        entrada = InterpretarComandoVozEntradaSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+        datos = entrada.validated_data
+        cu_actual = (datos.get('cu_actual') or '').strip() or None
+        try:
+            resultado = interpretar_comando_voz(datos['texto'], cu_actual=cu_actual)
+        except ValueError as exc:
+            raise serializers.ValidationError({'texto': str(exc)}) from exc
+        salida = InterpretarComandoVozSalidaSerializer(resultado)
+        return Response(salida.data, status=status.HTTP_200_OK)
 
 
 class ReporteVentasView(APIView):
@@ -61,6 +89,7 @@ class ReporteVentasCsvView(APIView):
             reporte = reporte_ventas(desde=datos['desde'], hasta=datos['hasta'], metodo_pago=metodo)
         except DjangoValidationError as exc:
             _error_de_validacion(exc)
+        _rechazar_exportacion_sin_datos(reporte)
         contenido = csv_reporte(reporte, metodo, columnas)
         respuesta = HttpResponse(contenido, content_type='text/csv; charset=utf-8-sig')
         nombre = f'reporte-ventas-{reporte["desde"]}-{reporte["hasta"]}.csv'
@@ -83,6 +112,7 @@ class ReporteVentasPdfView(APIView):
             reporte = reporte_ventas(desde=datos['desde'], hasta=datos['hasta'], metodo_pago=metodo)
         except DjangoValidationError as exc:
             _error_de_validacion(exc)
+        _rechazar_exportacion_sin_datos(reporte)
         contenido = pdf_reporte_ventas(reporte, metodo, columnas)
         respuesta = HttpResponse(contenido, content_type='application/pdf')
         nombre = f'reporte-ventas-{reporte["desde"]}-{reporte["hasta"]}.pdf'

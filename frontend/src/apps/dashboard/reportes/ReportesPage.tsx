@@ -24,9 +24,18 @@ import {
   mesActual,
   rangoDelPeriodo,
   semanaActual,
+  semanaIsoDesdeFecha,
   type PeriodoReporte,
   type ReporteVentas,
 } from '../../../services/reporteVentasService';
+import type { ComandoVozInterpretado, PendienteDescargaVoz } from '../../../types/reporteVoz';
+import AsistenteVozReporte from './components/AsistenteVozReporte';
+
+const MENSAJE_SIN_DATOS_REPORTE = 'No hay datos disponibles para el período solicitado.';
+
+function avisarSinDatosReporte(): string {
+  return MENSAJE_SIN_DATOS_REPORTE;
+}
 
 interface CasoUsoReporte {
   cu: string;
@@ -128,6 +137,7 @@ export const ReportesPage: React.FC = () => {
   const [cargando, setCargando] = useState(false);
   const [descargando, setDescargando] = useState<'csv' | 'excel' | 'pdf' | ''>('');
   const [error, setError] = useState('');
+  const [pendienteFormatoVoz, setPendienteFormatoVoz] = useState<PendienteDescargaVoz | null>(null);
 
   // Pestaña activa dentro del reporte: Ventas individuales o Desglose por producto
   const [vistaTabla, setVistaTabla] = useState<'ventas' | 'productos'>('ventas');
@@ -240,6 +250,10 @@ export const ReportesPage: React.FC = () => {
   // Manejadores de exportación
   async function handleDescargarCsv() {
     if (!consulta) return;
+    if (reporte && reporte.cantidad === 0) {
+      setError(MENSAJE_SIN_DATOS_REPORTE);
+      return;
+    }
     setError('');
     setDescargando('csv');
     try {
@@ -253,6 +267,10 @@ export const ReportesPage: React.FC = () => {
 
   async function handleDescargarExcel() {
     if (!consulta) return;
+    if (reporte && reporte.cantidad === 0) {
+      setError(MENSAJE_SIN_DATOS_REPORTE);
+      return;
+    }
     setError('');
     setDescargando('excel');
     try {
@@ -267,12 +285,155 @@ export const ReportesPage: React.FC = () => {
 
   async function handleDescargarPdf() {
     if (!consulta) return;
+    if (reporte && reporte.cantidad === 0) {
+      setError(MENSAJE_SIN_DATOS_REPORTE);
+      return;
+    }
     setError('');
     setDescargando('pdf');
     try {
       await descargarReportePdf(consulta.desde, consulta.hasta, consulta.metodo, columnasSeleccionadas);
     } catch {
-      setError('No se pudo generar el documento PDF.');
+      setError(MENSAJE_SIN_DATOS_REPORTE);
+    } finally {
+      setDescargando('');
+    }
+  }
+
+  function sincronizarSelectoresDesdeRango(
+    desde: string,
+    hasta: string,
+    periodoVoz?: string | null,
+  ) {
+    if (periodoVoz === 'dia' || desde === hasta) {
+      setPeriodo('dia');
+      setDia(desde);
+      return;
+    }
+    if (periodoVoz === 'semana') {
+      setPeriodo('semana');
+      setSemana(semanaIsoDesdeFecha(desde));
+      return;
+    }
+    if (periodoVoz === 'mes' || (desde.endsWith('-01') && hasta.slice(0, 7) === desde.slice(0, 7))) {
+      setPeriodo('mes');
+      setMes(desde.slice(0, 7));
+      return;
+    }
+    setPeriodo('dia');
+    setDia(desde);
+  }
+
+  async function consultarConRango(
+    desde: string,
+    hasta: string,
+    metodoPago: string,
+  ): Promise<ReporteVentas | null> {
+    setError('');
+    setCargando(true);
+    try {
+      setConsulta({ desde, hasta, periodo, metodo: metodoPago });
+      const datos = await consultarReporteVentas(desde, hasta, metodoPago);
+      setReporte(datos);
+      return datos;
+    } catch {
+      setReporte(null);
+      setConsulta(null);
+      setError('No se pudo armar el reporte de ese período.');
+      return null;
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  async function handleComandoVoz(comando: ComandoVozInterpretado): Promise<string | void> {
+    if (!comando.modulo_disponible || comando.caso_uso !== 'CU21') {
+      setError(
+        `${comando.respuesta_voz} El módulo ${comando.caso_uso} aún no está integrado en pantalla; el backend ya entiende el comando.`,
+      );
+      return comando.respuesta_voz;
+    }
+
+    const { desde, hasta, metodo_pago: metodoPago, columnas, periodo: periodoVoz } = comando.filtros;
+    if (!desde || !hasta) {
+      setError('El comando no trajo un rango de fechas válido.');
+      return 'El comando no trajo un rango de fechas válido.';
+    }
+
+    sincronizarSelectoresDesdeRango(desde, hasta, periodoVoz);
+    const metodoFiltro = metodoPago ?? '';
+    setMetodo(metodoFiltro);
+
+    if (columnas && columnas.length > 0) {
+      setColumnasVisibles((prev) => {
+        const siguiente = { ...prev };
+        for (const clave of Object.keys(siguiente)) {
+          siguiente[clave] = columnas.includes(clave);
+        }
+        return siguiente;
+      });
+    }
+
+    const columnasActivas =
+      columnas && columnas.length > 0
+        ? columnas
+        : Object.entries(columnasVisibles)
+            .filter(([, visible]) => visible)
+            .map(([id]) => id);
+
+    const datos = await consultarConRango(desde, hasta, metodoFiltro);
+    if (!datos) {
+      return 'No se pudo consultar el reporte de ese período.';
+    }
+    if (datos.cantidad === 0) {
+      setPendienteFormatoVoz(null);
+      setError(MENSAJE_SIN_DATOS_REPORTE);
+      return avisarSinDatosReporte();
+    }
+
+    if (comando.requiere_seleccion_formato) {
+      setPendienteFormatoVoz({
+        desde,
+        hasta,
+        metodo: metodoFiltro,
+        columnas: columnasActivas,
+      });
+      return comando.respuesta_voz;
+    }
+
+    if (comando.accion !== 'descargar' || comando.formato === 'pantalla') {
+      setPendienteFormatoVoz(null);
+      return comando.respuesta_voz;
+    }
+
+    await descargarReportePorVoz(desde, hasta, metodoFiltro, columnasActivas, comando.formato);
+    return comando.respuesta_voz;
+  }
+
+  async function descargarReportePorVoz(
+    desde: string,
+    hasta: string,
+    metodoFiltro: string,
+    columnasActivas: string[],
+    formato: 'pdf' | 'csv' | 'excel',
+  ) {
+    if (reporte && reporte.cantidad === 0) {
+      setPendienteFormatoVoz(null);
+      setError(MENSAJE_SIN_DATOS_REPORTE);
+      return;
+    }
+    setPendienteFormatoVoz(null);
+    setError('');
+    try {
+      if (formato === 'pdf') {
+        setDescargando('pdf');
+        await descargarReportePdf(desde, hasta, metodoFiltro, columnasActivas);
+      } else {
+        setDescargando(formato === 'excel' ? 'excel' : 'csv');
+        await descargarReporteCsv(desde, hasta, metodoFiltro, columnasActivas);
+      }
+    } catch {
+      setError(MENSAJE_SIN_DATOS_REPORTE);
     } finally {
       setDescargando('');
     }
@@ -301,6 +462,52 @@ export const ReportesPage: React.FC = () => {
           </span>
         </div>
       </div>
+
+      <AsistenteVozReporte cuActual="CU21" onComando={handleComandoVoz} />
+
+      {pendienteFormatoVoz ? (
+        <section
+          className="rounded-2xl border border-amber-300 bg-amber-50/90 p-4 shadow-2xs"
+          role="dialog"
+          aria-labelledby="titulo-elegir-formato-voz"
+        >
+          <h3 id="titulo-elegir-formato-voz" className="text-sm font-bold text-amber-950">
+            ¿En qué formato quieres el reporte?
+          </h3>
+          <p className="mt-1 text-xs text-amber-900/90">
+            No indicaste PDF, CSV ni Excel en el comando. El reporte ya está cargado en pantalla; elige cómo
+            descargarlo.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {(['pdf', 'csv', 'excel'] as const).map((formato) => (
+              <button
+                key={formato}
+                type="button"
+                disabled={Boolean(descargando)}
+                onClick={() =>
+                  void descargarReportePorVoz(
+                    pendienteFormatoVoz.desde,
+                    pendienteFormatoVoz.hasta,
+                    pendienteFormatoVoz.metodo,
+                    pendienteFormatoVoz.columnas,
+                    formato,
+                  )
+                }
+                className="rounded-xl border border-amber-400 bg-white px-4 py-2 text-sm font-bold uppercase tracking-wide text-amber-950 shadow-2xs hover:bg-amber-100 disabled:opacity-50"
+              >
+                {formato}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setPendienteFormatoVoz(null)}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              Solo ver en pantalla
+            </button>
+          </div>
+        </section>
+      ) : null}
 
       {/* 2. Barra de Selección de Período y Filtros */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
@@ -737,9 +944,14 @@ export const ReportesPage: React.FC = () => {
                   <p className="text-xs text-slate-600 leading-relaxed mb-4">{item.descripcion}</p>
                 </div>
 
-                <div className="border-t border-slate-100 pt-3">
+                <div className="border-t border-slate-100 pt-3 space-y-2">
                   <p className="text-[11px] text-slate-400">
                     <span className="font-semibold text-slate-600">Actor autorizado:</span> Propietario
+                  </p>
+                  <p className="text-[10px] text-slate-500">
+                    {item.cu === 'CU21'
+                      ? 'Voz activa arriba: PDF, CSV y Excel para este reporte.'
+                      : `Voz en backend listo (${item.cu}); falta pantalla del equipo.`}
                   </p>
                 </div>
               </div>

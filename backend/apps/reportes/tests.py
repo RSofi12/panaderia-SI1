@@ -134,6 +134,22 @@ class PruebasReporteVentas(TestCase):
         self.assertIn('Marraqueta', texto)
         self.assertIn('attachment; filename="reporte-ventas-2026-10-01-2026-10-31.csv"', csv_respuesta['Content-Disposition'])
 
+    def test_pdf_sin_ventas_responde_400(self):
+        self.client.force_authenticate(self.propietario)
+        pdf = self.client.get('/api/reportes/ventas/pdf/', {
+            'desde': '20250-01-01',
+            'hasta': '20250-12-31',
+        })
+        self.assertEqual(pdf.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_csv_sin_ventas_responde_400(self):
+        self.client.force_authenticate(self.propietario)
+        csv_respuesta = self.client.get('/api/reportes/ventas/csv/', {
+            'desde': '20250-01-01',
+            'hasta': '20250-12-31',
+        })
+        self.assertEqual(csv_respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_el_pdf_exporta_datos_dinamicos(self):
         self.client.force_authenticate(self.propietario)
         pdf = self.client.get('/api/reportes/ventas/pdf/', {
@@ -183,3 +199,82 @@ class PruebasReporteVentas(TestCase):
         self.assertEqual(respuesta.data['efectivo'], '0.00')
         self.assertEqual(respuesta.data['tarjeta'], '12.00')
         self.assertEqual(respuesta.data['productos'][0]['cantidad'], 1)
+
+
+@override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'], GEMINI_API_KEY='')
+class PruebasReporteVoz(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        permiso = Permiso.objects.create(
+            nombre='generar_reportes',
+            descripcion='Reportes',
+            modulo=ModuloPermiso.REPORTES,
+        )
+        rol = Rol.objects.create(nombre='Propietario', descripcion='Dueño')
+        RolPermiso.objects.create(rol=rol, permiso=permiso)
+        self.propietario = Usuario.objects.create_user(
+            nombre_usuario='voz_prop',
+            password='PanADERIA2026!',
+            nombre_completo='Carlos Vargas',
+            email='voz@mail.com',
+            id_rol=rol,
+        )
+
+    def test_interpretar_ventas_pdf_local(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.post(
+            '/api/reportes/voz/interpretar/',
+            {'texto': 'Descarga en PDF el reporte de ventas de este mes en efectivo'},
+            format='json',
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data['caso_uso'], 'CU21')
+        self.assertEqual(respuesta.data['formato'], 'pdf')
+        self.assertEqual(respuesta.data['accion'], 'descargar')
+        self.assertTrue(respuesta.data['modulo_disponible'])
+        self.assertEqual(respuesta.data['motor'], 'local')
+
+    def test_interpretar_existencias_marca_modulo_pendiente(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.post(
+            '/api/reportes/voz/interpretar/',
+            {'texto': 'Genera en Excel el reporte de existencias de materia prima'},
+            format='json',
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data['caso_uso'], 'CU23')
+        self.assertEqual(respuesta.data['formato'], 'excel')
+        self.assertFalse(respuesta.data['modulo_disponible'])
+
+    def test_descarga_sin_formato_pide_seleccion(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.post(
+            '/api/reportes/voz/interpretar/',
+            {'texto': 'Descarga el reporte de ventas de este mes en efectivo'},
+            format='json',
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertTrue(respuesta.data['requiere_seleccion_formato'])
+        self.assertEqual(respuesta.data['accion'], 'descargar')
+        self.assertEqual(respuesta.data['formato'], 'pantalla')
+
+    def test_texto_vacio_responde_400(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.post(
+            '/api/reportes/voz/interpretar/',
+            {'texto': '   '},
+            format='json',
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_interpretar_anio_futuro_rango_anual(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.post(
+            '/api/reportes/voz/interpretar/',
+            {'texto': 'Descarga en PDF el reporte de ventas del año 20250'},
+            format='json',
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data['filtros']['desde'], '20250-01-01')
+        self.assertEqual(respuesta.data['filtros']['hasta'], '20250-12-31')
+        self.assertEqual(respuesta.data['formato'], 'pdf')

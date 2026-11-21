@@ -508,6 +508,7 @@ CREATE TABLE "proveedor" (
   "nombre" varchar(150) NOT NULL,
   "telefono" varchar(20),
   "direccion" varchar(200),
+  "descripcion" varchar(300) NOT NULL DEFAULT '',
   "fecha_registro" timestamp NOT NULL DEFAULT (now()),
   "activo" boolean NOT NULL DEFAULT true
 );
