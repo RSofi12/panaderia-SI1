@@ -8,11 +8,18 @@ from apps.reportes.permissions import PuedeGenerarReportes
 from apps.reportes.serializers import (
     InterpretarComandoVozEntradaSerializer,
     InterpretarComandoVozSalidaSerializer,
+    ReporteResultadosEconomicosConsultaSerializer,
+    ReporteResultadosEconomicosSerializer,
     ReporteVentasConsultaSerializer,
     ReporteVentasSerializer,
 )
 from apps.reportes.services.exportar_reporte import csv_reporte, pdf_reporte_ventas
+from apps.reportes.services.exportar_resultados_economicos import (
+    csv_resultados_economicos,
+    pdf_resultados_economicos,
+)
 from apps.reportes.services.interprete_voz import interpretar_comando_voz
+from apps.reportes.services.reporte_resultados_economicos import reporte_resultados_economicos
 from apps.reportes.services.reporte_ventas import reporte_ventas
 
 
@@ -118,3 +125,75 @@ class ReporteVentasPdfView(APIView):
         nombre = f'reporte-ventas-{reporte["desde"]}-{reporte["hasta"]}.pdf'
         respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
         return respuesta
+
+
+# =============================================================================
+# VISTAS PARA CU25: RESULTADOS ECONÓMICOS
+# =============================================================================
+
+class ReporteResultadosEconomicosView(APIView):
+    """GET /api/reportes/resultados-economicos/?desde=&hasta= — CU25."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        consulta = ReporteResultadosEconomicosConsultaSerializer(data=request.query_params)
+        consulta.is_valid(raise_exception=True)
+        datos = consulta.validated_data
+        try:
+            reporte = reporte_resultados_economicos(
+                desde=datos['desde'],
+                hasta=datos['hasta'],
+            )
+        except DjangoValidationError as exc:
+            _error_de_validacion(exc)
+        return Response(ReporteResultadosEconomicosSerializer(reporte).data)
+
+
+class ReporteResultadosEconomicosCsvView(APIView):
+    """GET /api/reportes/resultados-economicos/csv/ — Exportación CSV (Excel) de resultados económicos."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        consulta = ReporteResultadosEconomicosConsultaSerializer(data=request.query_params)
+        consulta.is_valid(raise_exception=True)
+        datos = consulta.validated_data
+        try:
+            reporte = reporte_resultados_economicos(desde=datos['desde'], hasta=datos['hasta'])
+        except DjangoValidationError as exc:
+            _error_de_validacion(exc)
+        if not reporte.get('tiene_movimientos'):
+            raise serializers.ValidationError(
+                {'detail': 'No hay movimientos económicos registrados para el período solicitado.'}
+            )
+        contenido = csv_resultados_economicos(reporte)
+        respuesta = HttpResponse(contenido, content_type='text/csv; charset=utf-8-sig')
+        nombre = f'resultados-economicos-{reporte["desde"]}-{reporte["hasta"]}.csv'
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
+        return respuesta
+
+
+class ReporteResultadosEconomicosPdfView(APIView):
+    """GET /api/reportes/resultados-economicos/pdf/ — Exportación PDF formal de resultados económicos."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        consulta = ReporteResultadosEconomicosConsultaSerializer(data=request.query_params)
+        consulta.is_valid(raise_exception=True)
+        datos = consulta.validated_data
+        try:
+            reporte = reporte_resultados_economicos(desde=datos['desde'], hasta=datos['hasta'])
+        except DjangoValidationError as exc:
+            _error_de_validacion(exc)
+        if not reporte.get('tiene_movimientos'):
+            raise serializers.ValidationError(
+                {'detail': 'No hay movimientos económicos registrados para el período solicitado.'}
+            )
+        contenido = pdf_resultados_economicos(reporte)
+        respuesta = HttpResponse(contenido, content_type='application/pdf')
+        nombre = f'resultados-economicos-{reporte["desde"]}-{reporte["hasta"]}.pdf'
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
+        return respuesta
+

@@ -76,3 +76,79 @@ class ReporteVentasSerializer(serializers.Serializer):
     tarjeta = serializers.DecimalField(max_digits=10, decimal_places=2)
     productos = ProductoVendidoSerializer(many=True)
     ventas = VentaItemReporteSerializer(many=True, required=False)
+
+
+# =============================================================================
+# SERIALIZERS PARA CU25: RESULTADOS ECONÓMICOS
+# =============================================================================
+
+class ReporteResultadosEconomicosConsultaSerializer(serializers.Serializer):
+    """Parámetros de consulta para el reporte de resultados económicos (CU25)."""
+    desde = serializers.DateField(required=True)
+    hasta = serializers.DateField(required=True)
+
+
+class DesgloseCategoriaMontoSerializer(serializers.Serializer):
+    categoria = serializers.CharField()
+    total = serializers.DecimalField(max_digits=12, decimal_places=2)
+    cantidad = serializers.IntegerField()
+
+
+class EstadoResultadosFilaSerializer(serializers.Serializer):
+    concepto = serializers.CharField()
+    monto = serializers.DecimalField(max_digits=12, decimal_places=2)
+    tipo = serializers.CharField()
+    porcentaje_ingresos = serializers.DecimalField(max_digits=6, decimal_places=2)
+
+
+class ResumenFinancieroSerializer(serializers.Serializer):
+    total_ingresos = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total_egresos_operativos = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total_egresos_totales = serializers.DecimalField(max_digits=12, decimal_places=2)
+    utilidad_bruta = serializers.DecimalField(max_digits=12, decimal_places=2)
+    utilidad_operativa = serializers.DecimalField(max_digits=12, decimal_places=2)
+    utilidad_neta = serializers.DecimalField(max_digits=12, decimal_places=2)
+    margen_bruto_pct = serializers.DecimalField(max_digits=6, decimal_places=2)
+    margen_operativo_pct = serializers.DecimalField(max_digits=6, decimal_places=2)
+    margen_neto_pct = serializers.DecimalField(max_digits=6, decimal_places=2)
+
+
+class IngresosReporteEconomicoSerializer(serializers.Serializer):
+    total = serializers.DecimalField(max_digits=12, decimal_places=2)
+    efectivo = serializers.DecimalField(max_digits=12, decimal_places=2)
+    tarjeta = serializers.DecimalField(max_digits=12, decimal_places=2)
+    cantidad_transacciones = serializers.IntegerField()
+
+
+class CostosReporteEconomicoSerializer(serializers.Serializer):
+    compras_materia_prima = serializers.DecimalField(max_digits=12, decimal_places=2)
+    cantidad_compras = serializers.IntegerField()
+    mermas_perdidas = serializers.DecimalField(max_digits=12, decimal_places=2)
+    unidades_mermas = serializers.IntegerField()
+    total_costos_directos = serializers.DecimalField(max_digits=12, decimal_places=2)
+
+
+class GastosOperativosReporteSerializer(serializers.Serializer):
+    total = serializers.DecimalField(max_digits=12, decimal_places=2)
+    cantidad = serializers.IntegerField()
+    desglose = DesgloseCategoriaMontoSerializer(many=True)
+
+
+class InversionesReporteSerializer(serializers.Serializer):
+    total = serializers.DecimalField(max_digits=12, decimal_places=2)
+    cantidad = serializers.IntegerField()
+    desglose = DesgloseCategoriaMontoSerializer(many=True)
+
+
+class ReporteResultadosEconomicosSerializer(serializers.Serializer):
+    """Esquema de salida completo para el reporte de resultados económicos (CU25)."""
+    desde = serializers.DateField()
+    hasta = serializers.DateField()
+    tiene_movimientos = serializers.BooleanField()
+    ingresos = IngresosReporteEconomicoSerializer()
+    costos = CostosReporteEconomicoSerializer()
+    gastos_operativos = GastosOperativosReporteSerializer()
+    inversiones = InversionesReporteSerializer()
+    resumen_financiero = ResumenFinancieroSerializer()
+    estado_resultados = EstadoResultadosFilaSerializer(many=True)
+

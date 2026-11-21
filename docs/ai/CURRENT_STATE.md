@@ -69,17 +69,19 @@
 
 ---
 
-### 📌 Ciclo 4 (6 Casos de Uso) — *CU20 completo (backend + frontend)*
+### 📌 Ciclo 4 (6 Casos de Uso) — *CU20, CU21 y CU25 completos (backend + frontend)*
 | CU | Nombre del Caso de Uso | Paquete Backend | Estado |
-|---|---|---|---|
+|---|---|---|:---:|
 | **CU20**| Registrar gasto / inversión | `apps.compras` | ✅ |
-| **CU21**| Generar reporte de ventas | `apps.reportes` | ⚪ |
+| **CU21**| Generar reporte de ventas | `apps.reportes` | ✅ |
 | **CU22**| Generar reporte de producción | `apps.reportes` | ⚪ |
 | **CU23**| Generar reporte de existencias | `apps.reportes` | ⚪ |
 | **CU24**| Generar reporte de compras y gastos | `apps.reportes` | ⚪ |
-| **CU25**| Generar reporte de resultados económicos | `apps.reportes` | ⚪ |
+| **CU25**| Generar reporte de resultados económicos | `apps.reportes` | ✅ |
 
 **CU20 (2026-11-13):** API backend de gastos e inversiones en `apps.compras.gastos` (rama `prueba`). `POST /api/gastos/` (tipo, categoría, concepto, monto, descripción y fecha no futura), `GET /api/gastos/` con filtros (`tipo`, `categoria`, `fecha_desde`, `fecha_hasta`, `anulado`, `search`), `GET /api/gastos/<id>/` y `POST /api/gastos/<id>/anular/` (anulación lógica, sin borrar). RBAC con permiso `registrar_gastos` (Administrador y Propietario); el responsable sale de la sesión y nunca del payload. Integridad en base de datos: `CHECK (monto > 0)`, `CHECK (tipo IN ...)`, `CHECK (categoria IN ...)` e índice por `fecha_hora` (migración `gastos.0002`). Bitácora `ALTA_MOVIMIENTO_ECONOMICO` y `ANULACION_MOVIMIENTO_ECONOMICO` en la misma transacción (migración `bitacora.0016`). 32 pruebas nuevas, 49 en `apps.compras` en verde. **Frontend:** pestaña "Gastos e inversiones" en Compras y Proveedores (`ComprasModuloPage`, visible con `registrar_gastos`), `GastosPage` con filtros (tipo, categoría, fechas, anulados, búsqueda), resumen de egresos con proporción gasto/inversión, alta y anulación lógica con modales accesibles (`role="dialog"` / `alertdialog`), `types/gasto.ts` y `services/gastosService.ts`. Verificado con `npx tsc -b`, `npm run build` y `npm run lint` (sin hallazgos en los archivos nuevos). Pendiente: recorrido visual con sesión real.
+
+**CU25 (2026-11-21):** Generación de reporte de resultados económicos y balance financiero para el Propietario en `apps.reportes`. Backend: servicio analítico `generar_reporte_resultados_economicos` con agregaciones SQL (`Coalesce`, `Sum`), cálculo de Margen Bruto, Utilidad Operativa y Resultado Neto deduciendo materias primas, mermas de mostrador y gastos/inversiones no anulados. Exportación binaria en CSV (Excel) y PDF formal con ReportLab (`HojaReporte`). Integración en el intérprete de voz transversal (`interprete_voz.py`). RBAC con permiso `generar_reportes` y auditoría en bitácora. 22 pruebas unitarias e integración en verde en `apps.reportes`. Frontend: pestaña y vista interactiva `ResultadosEconomicosView.tsx` en `/dashboard/reportes`, selectores por período (día, semana, mes), tarjetas de KPIs, tabla de estado de resultados, desglose de gastos e inversiones, descargas automáticas Blob, sincronización con el asistente de voz y build Vite verificado al 100%.
 
 
 ---

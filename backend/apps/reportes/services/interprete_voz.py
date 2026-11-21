@@ -18,7 +18,7 @@ from django.utils import timezone
 
 CASOS_USO = ('CU21', 'CU22', 'CU23', 'CU24', 'CU25')
 FORMATOS = ('pdf', 'csv', 'excel', 'pantalla')
-MODULOS_DISPONIBLES = frozenset({'CU21'})
+MODULOS_DISPONIBLES = frozenset({'CU21', 'CU25'})
 
 _PROMPT_SISTEMA = """Eres el asistente de reportes de la Panadería Santiago (Bolivia).
 Traduce el comando del usuario a JSON estricto.

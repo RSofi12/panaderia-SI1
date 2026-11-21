@@ -30,6 +30,7 @@ import {
 } from '../../../services/reporteVentasService';
 import type { ComandoVozInterpretado, PendienteDescargaVoz } from '../../../types/reporteVoz';
 import AsistenteVozReporte from './components/AsistenteVozReporte';
+import { ResultadosEconomicosView } from './components/ResultadosEconomicosView';
 
 const MENSAJE_SIN_DATOS_REPORTE = 'No hay datos disponibles para el período solicitado.';
 
@@ -117,6 +118,15 @@ function etiquetaPeriodo(periodo: PeriodoReporte): string {
 }
 
 export const ReportesPage: React.FC = () => {
+  // Caso de uso activo en pantalla (CU21: Ventas, CU25: Resultados Económicos)
+  const [cuActivo, setCuActivo] = useState<'CU21' | 'CU25'>('CU21');
+  const [comandoEconomicoPendiente, setComandoEconomicoPendiente] = useState<{
+    formato: string;
+    accion: string;
+    desde?: string;
+    hasta?: string;
+  } | null>(null);
+
   // Filtros de período
   const [periodo, setPeriodo] = useState<PeriodoReporte>('mes');
   const [dia, setDia] = useState(fechaHoy);
@@ -347,6 +357,17 @@ export const ReportesPage: React.FC = () => {
   }
 
   async function handleComandoVoz(comando: ComandoVozInterpretado): Promise<string | void> {
+    if (comando.caso_uso === 'CU25') {
+      setCuActivo('CU25');
+      setComandoEconomicoPendiente({
+        formato: comando.formato,
+        accion: comando.accion,
+        desde: comando.filtros.desde ?? undefined,
+        hasta: comando.filtros.hasta ?? undefined,
+      });
+      return comando.respuesta_voz;
+    }
+
     if (!comando.modulo_disponible || comando.caso_uso !== 'CU21') {
       setError(
         `${comando.respuesta_voz} El módulo ${comando.caso_uso} aún no está integrado en pantalla; el backend ya entiende el comando.`,
@@ -463,9 +484,45 @@ export const ReportesPage: React.FC = () => {
         </div>
       </div>
 
-      <AsistenteVozReporte cuActual="CU21" onComando={handleComandoVoz} />
+      <AsistenteVozReporte cuActual={cuActivo} onComando={handleComandoVoz} />
 
-      {pendienteFormatoVoz ? (
+      {/* Selector de Pestañas de Reportes Disponibles */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+        <button
+          type="button"
+          onClick={() => setCuActivo('CU21')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+            cuActivo === 'CU21'
+              ? 'bg-amber-800 text-white shadow-xs'
+              : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+          }`}
+        >
+          <TrendingUp className="h-4 w-4" />
+          CU21 · Ventas y Facturación
+        </button>
+        <button
+          type="button"
+          onClick={() => setCuActivo('CU25')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+            cuActivo === 'CU25'
+              ? 'bg-emerald-800 text-white shadow-xs'
+              : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+          }`}
+        >
+          <FileSpreadsheet className="h-4 w-4" />
+          CU25 · Resultados Económicos y Balance
+        </button>
+      </div>
+
+      {cuActivo === 'CU25' ? (
+        <ResultadosEconomicosView
+          onAvisoSinDatos={setError}
+          comandoVozPendiente={comandoEconomicoPendiente}
+          onComandoVozEjecutado={() => setComandoEconomicoPendiente(null)}
+        />
+      ) : (
+        <>
+          {pendienteFormatoVoz ? (
         <section
           className="rounded-2xl border border-amber-300 bg-amber-50/90 p-4 shadow-2xs"
           role="dialog"
@@ -905,6 +962,8 @@ export const ReportesPage: React.FC = () => {
           </div>
         ) : null}
       </section>
+      </>
+      )}
 
       {/* 5. Catálogo de Casos de Uso Planificados de Reportes (Ciclo 4) */}
       <section className="space-y-4">
@@ -918,10 +977,19 @@ export const ReportesPage: React.FC = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {REPORTES_CASOS.map((item) => {
             const Icono = item.icono;
+            const esActivo = item.cu === 'CU21' || item.cu === 'CU25';
+            const estaSeleccionado = cuActivo === item.cu;
+
             return (
               <div
                 key={item.cu}
-                className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs transition-shadow hover:shadow-md hover:border-amber-200"
+                onClick={() => {
+                  if (item.cu === 'CU21') setCuActivo('CU21');
+                  if (item.cu === 'CU25') setCuActivo('CU25');
+                }}
+                className={`flex flex-col justify-between rounded-2xl border bg-white p-5 shadow-2xs transition-all ${
+                  esActivo ? 'cursor-pointer hover:border-amber-400 hover:shadow-md' : 'opacity-85'
+                } ${estaSeleccionado ? 'ring-2 ring-amber-800 border-amber-800' : 'border-slate-200'}`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-3">
@@ -929,8 +997,8 @@ export const ReportesPage: React.FC = () => {
                       {item.cu}
                     </span>
                     <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500">
-                      <AlertCircle className="h-3 w-3 text-amber-600" />
-                      {item.cu === 'CU21' ? 'Activo y Funcional' : 'Planificado'}
+                      <AlertCircle className={`h-3 w-3 ${esActivo ? 'text-emerald-600' : 'text-amber-600'}`} />
+                      {esActivo ? 'Activo y Funcional' : 'Planificado'}
                     </span>
                   </div>
 
@@ -950,7 +1018,9 @@ export const ReportesPage: React.FC = () => {
                   </p>
                   <p className="text-[10px] text-slate-500">
                     {item.cu === 'CU21'
-                      ? 'Voz activa arriba: PDF, CSV y Excel para este reporte.'
+                      ? 'Voz activa: PDF, CSV y Excel para este reporte.'
+                      : item.cu === 'CU25'
+                      ? 'Activo: Estado de resultados, balance y descarga PDF/Excel.'
                       : `Voz en backend listo (${item.cu}); falta pantalla del equipo.`}
                   </p>
                 </div>

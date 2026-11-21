@@ -14,7 +14,12 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.comercializacion.ventas.models import DetalleVenta, Venta
+from apps.compras.compra_materia_prima.models import Compra
+from apps.compras.gastos.models import CategoriaMovimientoEconomico, MovimientoEconomico, TipoMovimientoEconomico
+from apps.compras.proveedores.models import Proveedor
+from apps.productos_inventario.produccion.models import DetalleProduccion, Produccion
 from apps.productos_inventario.productos.models import Producto
+from apps.productos_inventario.productos_terminados.models import NotaPerdidaProducto
 from apps.usuarios_seguridad.permisos.models import ModuloPermiso, Permiso
 from apps.usuarios_seguridad.roles.models import Rol, RolPermiso
 
@@ -278,3 +283,188 @@ class PruebasReporteVoz(TestCase):
         self.assertEqual(respuesta.data['filtros']['desde'], '20250-01-01')
         self.assertEqual(respuesta.data['filtros']['hasta'], '20250-12-31')
         self.assertEqual(respuesta.data['formato'], 'pdf')
+
+
+@override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
+class PruebasReporteResultadosEconomicos(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.client = APIClient()
+        permiso = Permiso.objects.create(
+            nombre='generar_reportes',
+            descripcion='Reportes',
+            modulo=ModuloPermiso.REPORTES,
+        )
+        rol_prop = Rol.objects.create(nombre='Propietario', descripcion='Dueño')
+        RolPermiso.objects.create(rol=rol_prop, permiso=permiso)
+
+        self.propietario = Usuario.objects.create_user(
+            nombre_usuario='prop_econ',
+            password='PanADERIA2026!',
+            nombre_completo='Carlos Vargas',
+            email='carlos.econ@mail.com',
+            id_rol=rol_prop,
+        )
+
+        rol_ventas = Rol.objects.create(nombre='Personal de Ventas', descripcion='Ventas')
+        self.vendedor = Usuario.objects.create_user(
+            nombre_usuario='vendedor_econ',
+            password='PanADERIA2026!',
+            nombre_completo='Vendedor Mostrador',
+            email='vendedor.econ@mail.com',
+            id_rol=rol_ventas,
+        )
+
+        self.pan = Producto.objects.create(nombre='Marraqueta Especial', precio_venta=Decimal('1.00'), activo=True)
+        self.proveedor = Proveedor.objects.create(
+            nombre='Distribuidora Harinera',
+            telefono='77123456',
+            direccion='Av. San Martín',
+            activo=True,
+        )
+
+        # 1. Venta (Ingreso: 100.00 Bs)
+        self.venta = Venta.objects.create(
+            id_usuario=self.vendedor,
+            numero_comprobante=5001,
+            fecha_hora=_cuando(2026, 11, 10),
+            metodo_pago='efectivo',
+            total=Decimal('100.00'),
+        )
+
+        # 2. Compra de insumos (Costo directo: 30.00 Bs)
+        self.compra = Compra.objects.create(
+            id_proveedor=self.proveedor,
+            id_usuario=self.propietario,
+            fecha_hora=_cuando(2026, 11, 10),
+            total=Decimal('30.00'),
+        )
+
+        # 3. Merma de vitrina (CU18: 10 un * 0.50 Bs = 5.00 Bs)
+        self.produccion = Produccion.objects.create(
+            id_usuario=self.propietario,
+            fecha=_cuando(2026, 11, 10).date(),
+            jornada='mañana',
+        )
+        self.detalle_prod = DetalleProduccion.objects.create(
+            id_produccion=self.produccion,
+            id_producto=self.pan,
+            cantidad_producida=100,
+            costo_unitario=Decimal('0.50'),
+        )
+        self.merma = NotaPerdidaProducto.objects.create(
+            id_detalle_produccion=self.detalle_prod,
+            id_usuario=self.propietario,
+            cantidad=10,
+            costo_unitario=Decimal('0.50'),
+            fecha_salida=_cuando(2026, 11, 10),
+        )
+
+        # 4. Gasto operativo (CU20: 20.00 Bs)
+        self.gasto = MovimientoEconomico.objects.create(
+            id_usuario=self.propietario,
+            tipo=TipoMovimientoEconomico.GASTO,
+            categoria=CategoriaMovimientoEconomico.SERVICIOS,
+            concepto='Pago de luz',
+            monto=Decimal('20.00'),
+            fecha_hora=_cuando(2026, 11, 10),
+            anulado=False,
+        )
+
+        # 5. Inversión de capital (CU20: 15.00 Bs)
+        self.inversion = MovimientoEconomico.objects.create(
+            id_usuario=self.propietario,
+            tipo=TipoMovimientoEconomico.INVERSION,
+            categoria=CategoriaMovimientoEconomico.EQUIPOS,
+            concepto='Bandejas de acero',
+            monto=Decimal('15.00'),
+            fecha_hora=_cuando(2026, 11, 10),
+            anulado=False,
+        )
+
+        # 6. Gasto anulado (50.00 Bs -> NO debe sumarse)
+        self.gasto_anulado = MovimientoEconomico.objects.create(
+            id_usuario=self.propietario,
+            tipo=TipoMovimientoEconomico.GASTO,
+            categoria=CategoriaMovimientoEconomico.ALQUILER,
+            concepto='Alquiler cancelado',
+            monto=Decimal('50.00'),
+            fecha_hora=_cuando(2026, 11, 10),
+            anulado=True,
+        )
+
+    def test_resultados_economicos_calculo_correcto(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.get('/api/reportes/resultados-economicos/', {
+            'desde': '2026-11-01',
+            'hasta': '2026-11-30',
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        data = respuesta.data
+
+        # Verificaciones de componentes financieros:
+        # Ingresos: 100.00
+        self.assertEqual(Decimal(data['ingresos']['total']), Decimal('100.00'))
+        # Costos directos: Compras (30) + Mermas (5) = 35.00
+        self.assertEqual(Decimal(data['costos']['compras_materia_prima']), Decimal('30.00'))
+        self.assertEqual(Decimal(data['costos']['mermas_perdidas']), Decimal('5.00'))
+        self.assertEqual(Decimal(data['costos']['total_costos_directos']), Decimal('35.00'))
+        # Utilidad Bruta: 100 - 35 = 65.00
+        self.assertEqual(Decimal(data['resumen_financiero']['utilidad_bruta']), Decimal('65.00'))
+        # Gastos operativos: 20.00 (el anulado de 50 no entra)
+        self.assertEqual(Decimal(data['gastos_operativos']['total']), Decimal('20.00'))
+        # Utilidad Operativa: 65 - 20 = 45.00
+        self.assertEqual(Decimal(data['resumen_financiero']['utilidad_operativa']), Decimal('45.00'))
+        # Inversiones: 15.00
+        self.assertEqual(Decimal(data['inversiones']['total']), Decimal('15.00'))
+        # Resultado Neto: 45 - 15 = 30.00
+        self.assertEqual(Decimal(data['resumen_financiero']['utilidad_neta']), Decimal('30.00'))
+        # Margen neto: 30 / 100 * 100 = 30.00%
+        self.assertEqual(Decimal(data['resumen_financiero']['margen_neto_pct']), Decimal('30.00'))
+
+    def test_control_acceso_rbac_reporte_economico(self):
+        # 1. Sin autenticar -> 401
+        resp_anon = self.client.get('/api/reportes/resultados-economicos/', {'desde': '2026-11-01', 'hasta': '2026-11-30'})
+        self.assertEqual(resp_anon.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        # 2. Personal de ventas sin permiso generar_reportes -> 403
+        self.client.force_authenticate(self.vendedor)
+        resp_vend = self.client.get('/api/reportes/resultados-economicos/', {'desde': '2026-11-01', 'hasta': '2026-11-30'})
+        self.assertEqual(resp_vend.status_code, status.HTTP_403_FORBIDDEN)
+
+        # 3. Propietario con permiso -> 200
+        self.client.force_authenticate(self.propietario)
+        resp_prop = self.client.get('/api/reportes/resultados-economicos/', {'desde': '2026-11-01', 'hasta': '2026-11-30'})
+        self.assertEqual(resp_prop.status_code, status.HTTP_200_OK)
+
+    def test_fechas_invalidas_responde_400(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.get('/api/reportes/resultados-economicos/', {
+            'desde': '2026-11-30',
+            'hasta': '2026-11-01',
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_exportacion_csv_resultados_economicos(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.get('/api/reportes/resultados-economicos/csv/', {
+            'desde': '2026-11-01',
+            'hasta': '2026-11-30',
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertTrue(respuesta['Content-Type'].startswith('text/csv'))
+        self.assertIn('attachment; filename="resultados-economicos-', respuesta['Content-Disposition'])
+        contenido = respuesta.content.decode('utf-8-sig')
+        self.assertIn('Reporte de Resultados Económicos y Balance Operativo (CU25)', contenido)
+        self.assertIn('Ingresos Totales por Ventas', contenido)
+
+    def test_exportacion_pdf_resultados_economicos(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.get('/api/reportes/resultados-economicos/pdf/', {
+            'desde': '2026-11-01',
+            'hasta': '2026-11-30',
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta['Content-Type'], 'application/pdf')
+        self.assertTrue(respuesta.content.startswith(b'%PDF-'))
+
