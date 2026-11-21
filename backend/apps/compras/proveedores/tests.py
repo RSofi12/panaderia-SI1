@@ -105,6 +105,45 @@ class PruebasCRUDProveedores(BasePruebasProveedores):
             ).exists()
         )
 
+    def test_crear_proveedor_guarda_descripcion_recortada(self):
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.post(
+            '/api/proveedores/',
+            {
+                'nombre': 'Envases del Este',
+                'telefono': '70111222',
+                'direccion': 'Av. Banzer, 3er anillo',
+                'descripcion': '  Bolsas y cajas para el mostrador.  ',
+            },
+            format='json',
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data['descripcion'], 'Bolsas y cajas para el mostrador.')
+
+    def test_crear_proveedor_sin_descripcion_queda_vacia(self):
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.post(
+            '/api/proveedores/',
+            {
+                'nombre': 'Sal del Oriente',
+                'telefono': '70333444',
+                'direccion': 'Mercado Abasto',
+            },
+            format='json',
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data['descripcion'], '')
+
+    def test_buscar_por_descripcion(self):
+        self.client.force_authenticate(user=self.admin)
+        self.proveedor_activo.descripcion = 'Harina de trigo a granel.'
+        self.proveedor_activo.save(update_fields=['descripcion'])
+
+        res = self.client.get('/api/proveedores/', {'q': 'harina'})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data[0]['nombre'], 'Molinos Central')
+
     def test_toggle_activo_inactiva_y_registra_bitacora(self):
         self.client.force_authenticate(user=self.admin)
         res = self.client.patch(f'/api/proveedores/{self.proveedor_activo.id_proveedor}/toggle-activo/')

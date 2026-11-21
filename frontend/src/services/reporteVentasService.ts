@@ -55,6 +55,18 @@ export function mesActual(): string {
   return `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
 }
 
+/** Convierte una fecha ISO (YYYY-MM-DD) al valor de input type="week" (YYYY-Www). */
+export function semanaIsoDesdeFecha(fechaIso: string): string {
+  const fecha = new Date(`${fechaIso}T12:00:00`);
+  const jueves = new Date(fecha);
+  jueves.setDate(fecha.getDate() + 3 - ((fecha.getDay() + 6) % 7));
+  const anio = jueves.getFullYear();
+  const inicio = new Date(anio, 0, 4);
+  inicio.setDate(inicio.getDate() - ((inicio.getDay() + 6) % 7));
+  const semana = 1 + Math.round((jueves.getTime() - inicio.getTime()) / 604800000);
+  return `${anio}-W${String(semana).padStart(2, '0')}`;
+}
+
 export function rangoDelDia(fecha: string): { desde: string; hasta: string } {
   return { desde: fecha, hasta: fecha };
 }

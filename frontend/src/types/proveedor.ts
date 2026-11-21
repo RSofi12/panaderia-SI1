@@ -3,6 +3,7 @@ export interface Proveedor {
   nombre: string;
   telefono: string | null;
   direccion: string | null;
+  descripcion: string;
   fecha_registro: string;
   activo: boolean;
 }
@@ -11,6 +12,7 @@ export interface ProveedorPayload {
   nombre: string;
   telefono: string;
   direccion: string;
+  descripcion: string;
 }
 
 export interface ProveedorFiltros {

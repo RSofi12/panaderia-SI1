@@ -17,8 +17,9 @@ def normalizar_telefono(valor: str) -> str:
 class ProveedorSerializer(serializers.ModelSerializer):
     """
     Serializador del maestro de proveedores (CU6).
-    Nombre, teléfono y dirección son obligatorios en el caso de uso;
-    el estado (activo) no se edita aquí: va por toggle-activo.
+    Nombre, teléfono y dirección son obligatorios en el caso de uso.
+    La descripción es opcional: anota qué insumos vende el proveedor.
+    El estado (activo) no se edita aquí: va por toggle-activo.
     """
 
     class Meta:
@@ -28,6 +29,7 @@ class ProveedorSerializer(serializers.ModelSerializer):
             'nombre',
             'telefono',
             'direccion',
+            'descripcion',
             'fecha_registro',
             'activo',
         ]
@@ -45,6 +47,10 @@ class ProveedorSerializer(serializers.ModelSerializer):
                 'required': True,
                 'allow_null': False,
                 'error_messages': {'required': 'La dirección del proveedor es obligatoria.'},
+            },
+            'descripcion': {
+                'required': False,
+                'allow_blank': True,
             },
         }
 
@@ -80,4 +86,9 @@ class ProveedorSerializer(serializers.ModelSerializer):
     def validate_direccion(self, value):
         if value is None or not str(value).strip():
             raise serializers.ValidationError('La dirección del proveedor es obligatoria.')
+        return str(value).strip()
+
+    def validate_descripcion(self, value):
+        if value is None:
+            return ''
         return str(value).strip()

@@ -15,6 +15,7 @@ from .serializers import ProveedorSerializer
 class ProveedorListCreateView(APIView):
     """
     GET  /api/proveedores/ — Directorio con filtros ?q=, ?nombre=, ?telefono=, ?activo=
+    La búsqueda ?q= mira nombre, teléfono y descripción.
     POST /api/proveedores/ — Alta (requiere gestionar_proveedores)
     """
     permission_classes = [PuedeGestionarProveedores]
@@ -30,7 +31,9 @@ class ProveedorListCreateView(APIView):
         if consulta:
             termino = consulta.strip()
             proveedores = proveedores.filter(
-                Q(nombre__icontains=termino) | Q(telefono__icontains=termino)
+                Q(nombre__icontains=termino)
+                | Q(telefono__icontains=termino)
+                | Q(descripcion__icontains=termino)
             )
         if nombre:
             proveedores = proveedores.filter(nombre__icontains=nombre.strip())

@@ -31,6 +31,41 @@ class VentaItemReporteSerializer(serializers.Serializer):
     cajero = serializers.CharField()
 
 
+class InterpretarComandoVozEntradaSerializer(serializers.Serializer):
+    """Entrada para POST /api/reportes/voz/interpretar/ (comando hablado o escrito)."""
+
+    texto = serializers.CharField(max_length=500, trim_whitespace=True)
+    cu_actual = serializers.RegexField(
+        regex=r'^CU2[1-5]$',
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+
+
+class FiltrosComandoVozSerializer(serializers.Serializer):
+    periodo = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    desde = serializers.DateField(required=False, allow_null=True)
+    hasta = serializers.DateField(required=False, allow_null=True)
+    metodo_pago = serializers.CharField(required=False, allow_blank=True)
+    columnas = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        allow_null=True,
+    )
+
+
+class InterpretarComandoVozSalidaSerializer(serializers.Serializer):
+    caso_uso = serializers.CharField()
+    formato = serializers.CharField()
+    accion = serializers.CharField()
+    requiere_seleccion_formato = serializers.BooleanField()
+    filtros = FiltrosComandoVozSerializer()
+    respuesta_voz = serializers.CharField()
+    modulo_disponible = serializers.BooleanField()
+    motor = serializers.CharField()
+
+
 class ReporteVentasSerializer(serializers.Serializer):
     """Esquema de salida para el reporte de ventas del período."""
     desde = serializers.DateField()
