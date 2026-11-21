@@ -35,7 +35,7 @@ export const DashboardHome: React.FC = () => {
     );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mostrador-aparecer mx-auto max-w-5xl space-y-6">
       <section className="overflow-hidden rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-600 via-amber-700 to-amber-800 shadow-sm">
         <div className="flex flex-col items-center gap-5 p-6 text-center sm:flex-row sm:p-8 sm:text-left">
           <div className="rounded-full bg-white/15 p-1.5 backdrop-blur-sm">
@@ -48,7 +48,7 @@ export const DashboardHome: React.FC = () => {
               Sesión iniciada (CU1)
             </span>
 
-            <h2 className="mt-2.5 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            <h2 className="font-sugo mt-2.5 text-2xl font-normal tracking-wide text-white sm:text-3xl">
               ¡Bienvenido/a, {user.nombre_completo}!
             </h2>
 

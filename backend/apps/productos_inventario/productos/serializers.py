@@ -38,12 +38,35 @@ class ProductoSerializer(serializers.ModelSerializer):
             'activo',
         ]
         read_only_fields = ['id_producto', 'precio_sugerido', 'fecha_registro']
+        extra_kwargs = {
+            'id_categoria': {
+                'required': True,
+                'allow_null': False,
+                'error_messages': {
+                    'required': 'Debes seleccionar una categoría.',
+                    'null': 'Debes seleccionar una categoría.',
+                },
+            },
+        }
 
     def validate_nombre(self, value):
         nombre = value.strip()
         if not nombre:
             raise serializers.ValidationError('El nombre del producto es obligatorio.')
+
+        # Validación de unicidad insensible a mayúsculas/minúsculas
+        qs = Producto.objects.filter(nombre__iexact=nombre)
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError('Ya existe un producto registrado con este nombre.')
+
         return nombre
+
+    def validate_id_categoria(self, value):
+        if value is None:
+            raise serializers.ValidationError('Debes seleccionar una categoría.')
+        return value
 
     def validate_costo_produccion(self, value):
         if value < Decimal('0'):

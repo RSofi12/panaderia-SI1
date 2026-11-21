@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { isAxiosError } from 'axios';
-import { AlertCircle, AlertTriangle, Calculator, X } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Calculator, Loader2 } from 'lucide-react';
 import productoService from '../../../../services/productoService';
 import type { CategoriaProducto, Producto, ProductoPayload } from '../../../../types/producto';
+import ModalFormulario from '../../components/ModalFormulario';
 import { calcularPrecioSugerido, formatearBs } from '../precios';
 
 interface ProductoFormModalProps {
@@ -80,6 +81,23 @@ export const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
   const cambioDePrecio =
     esEdicion && form.precio_venta.trim() !== '' && Number(form.precio_venta) !== Number(producto.precio_venta);
 
+  // Detección de modificaciones para el modal
+  const tieneCambios = esEdicion
+    ? form.nombre.trim() !== (producto.nombre ?? '').trim() ||
+      form.id_categoria !== (producto.id_categoria ?? null) ||
+      form.descripcion.trim() !== (producto.descripcion ?? '').trim() ||
+      form.costo_produccion !== String(producto.costo_produccion ?? '') ||
+      form.porcentaje_ganancia !== String(producto.porcentaje_ganancia ?? '') ||
+      form.precio_venta !== String(producto.precio_venta ?? '')
+    : Boolean(
+        form.nombre.trim() ||
+          form.id_categoria !== null ||
+          form.descripcion.trim() ||
+          form.costo_produccion.trim() ||
+          form.porcentaje_ganancia.trim() ||
+          form.precio_venta.trim()
+      );
+
   const actualizar = <K extends keyof ProductoPayload>(campo: K, valor: ProductoPayload[K]) => {
     setForm((actual) => ({ ...actual, [campo]: valor }));
     setErrores((actual) => ({ ...actual, [campo]: undefined, general: undefined }));
@@ -117,31 +135,22 @@ export const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="titulo-producto"
-        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl border border-amber-100"
-      >
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-          <div>
-            <h2 id="titulo-producto" className="text-base font-bold text-slate-900">
-              {esEdicion ? 'Editar producto' : 'Nuevo producto'}
-            </h2>
-            <p className="text-xs text-slate-500">Catálogo base de la panadería (CU5)</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5" noValidate>
+    <ModalFormulario
+      titulo={esEdicion ? 'Editar producto' : 'Nuevo producto'}
+      subtitulo="Catálogo base de la panadería (CU5)"
+      onCerrar={onClose}
+      tieneCambios={tieneCambios}
+      guardando={guardando}
+      tituloDescarte={esEdicion ? '¿Descartar cambios del producto?' : '¿Descartar producto sin guardar?'}
+      mensajeDescarte={
+        esEdicion
+          ? 'Tienes modificaciones sin guardar en los datos de este producto. Si sales ahora, se perderán los cambios.'
+          : 'Has comenzado a ingresar los datos de un nuevo producto. Si sales ahora, la información escrita no se guardará.'
+      }
+      ancho="md"
+    >
+      {({ solicitarCierre }) => (
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           {errores.general && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-start gap-2">
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
@@ -289,22 +298,25 @@ export const ProductoFormModal: React.FC<ProductoFormModalProps> = ({
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
             <button
               type="button"
-              onClick={onClose}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+              onClick={solicitarCierre}
+              disabled={guardando}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={guardando}
-              className="rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-amber-600/20 hover:from-amber-700 hover:to-amber-800 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+              aria-busy={guardando}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-amber-600/20 hover:from-amber-700 hover:to-amber-800 disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
             >
+              {guardando && <Loader2 className="w-4 h-4 animate-spin" />}
               {guardando ? 'Guardando...' : esEdicion ? 'Guardar cambios' : 'Crear producto'}
             </button>
           </div>
         </form>
-      </div>
-    </div>
+      )}
+    </ModalFormulario>
   );
 };
 

@@ -298,3 +298,10 @@ STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY', default='')
 STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY', default='')
 STRIPE_CURRENCY = config('STRIPE_CURRENCY', default='bob')
 
+# ==================================================================
+# Gemini — interpretación de comandos de voz para reportes (CU21–CU25)
+# Si GEMINI_API_KEY está vacía, el backend usa un intérprete local por reglas.
+# ==================================================================
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+GEMINI_MODEL = config('GEMINI_MODEL', default='gemini-2.5-flash')
+

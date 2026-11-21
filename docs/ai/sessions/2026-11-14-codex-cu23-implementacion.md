@@ -161,3 +161,9 @@ Persisten únicamente los avisos preexistentes y la validación funcional del um
 - Se prepara exclusivamente la lista de once archivos de la sección 12, mediante rutas explícitas. La auditoría permanece local sin seguimiento; las configuraciones privadas, dependencias, capturas y logs quedan fuera. Antes del commit se comprueba el listado exacto, las estadísticas y `git diff --cached --check`.
 - La publicación requiere comprobar después que la referencia remota de CU23 coincide con el nuevo commit. El hash y el resultado efectivo del push se entregan en el informe final, junto con enlaces para revisar la rama y abrir manualmente un PR con base `prueba`.
 - Continúa pendiente la validación del equipo del umbral provisional de 20 unidades. No se modifican bases de datos, Render, otras carpetas ni las ramas de integración.
+
+## 14. Actualización para resolver conflictos con `prueba`
+
+- Al preparar la integración del Pull Request #22, `prueba` había avanzado con cambios de CU21, incluidos el asistente de voz y el rechazo de exportaciones vacías. La combinación automática marcó conflictos en `backend/apps/reportes/urls.py`, `backend/apps/reportes/views.py` y `frontend/src/apps/dashboard/reportes/ReportesPage.tsx`.
+- La resolución conserva ambos comportamientos: las rutas y la vista de voz de CU21, sus validaciones de exportación, el endpoint de existencias de CU23 y su enlace protegido en la tarjeta de reportes. Para CU23 se mantiene el texto del mínimo referencial y provisional; para el resto de casos permanece el mensaje de voz existente.
+- No se cambian modelos, migraciones, base de datos, permisos, CU09, CU12, CU19 ni la lógica de ventas de CU21. Tras resolver los marcadores se validarán las rutas Django, las pruebas de reportes afectadas, la compilación frontend y la ausencia de conflictos antes de actualizar la rama del Pull Request.

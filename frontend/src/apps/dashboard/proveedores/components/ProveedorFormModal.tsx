@@ -16,6 +16,7 @@ const estadoInicial = (proveedor: Proveedor | null): ProveedorPayload => ({
   nombre: proveedor?.nombre ?? '',
   telefono: proveedor?.telefono ?? '',
   direccion: proveedor?.direccion ?? '',
+  descripcion: proveedor?.descripcion ?? '',
 });
 
 const validar = (form: ProveedorPayload): ErroresCampo => {
@@ -75,6 +76,7 @@ export const ProveedorFormModal: React.FC<ProveedorFormModalProps> = ({
       nombre: form.nombre.trim(),
       telefono: form.telefono.trim(),
       direccion: form.direccion.trim(),
+      descripcion: form.descripcion.trim(),
     };
 
     setGuardando(true);
@@ -173,6 +175,22 @@ export const ProveedorFormModal: React.FC<ProveedorFormModalProps> = ({
               className={inputClass(Boolean(errores.direccion))}
             />
             <CampoError mensaje={errores.direccion} />
+          </div>
+
+          <div>
+            <label htmlFor="descripcion" className="block text-xs font-semibold text-slate-700 mb-1.5">
+              Descripción <span className="font-normal text-slate-400">(opcional)</span>
+            </label>
+            <textarea
+              id="descripcion"
+              maxLength={300}
+              rows={3}
+              value={form.descripcion}
+              onChange={(e) => actualizar('descripcion', e.target.value)}
+              placeholder="ej. Harina de trigo, azúcar y sal a granel."
+              className={inputClass(Boolean(errores.descripcion))}
+            />
+            <CampoError mensaje={errores.descripcion} />
           </div>
 
           <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">

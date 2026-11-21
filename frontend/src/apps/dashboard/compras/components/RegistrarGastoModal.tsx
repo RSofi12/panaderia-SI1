@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, Loader2, X } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 import { normalizarErrorApi } from '../../../../services/erroresApi';
 import gastosService from '../../../../services/gastosService';
 import { CATEGORIAS_MOVIMIENTO, TIPOS_MOVIMIENTO } from '../../../../types/gasto';
@@ -8,6 +8,7 @@ import type {
   MovimientoEconomico,
   TipoMovimiento,
 } from '../../../../types/gasto';
+import ModalFormulario from '../../components/ModalFormulario';
 
 interface Props {
   onCerrar: () => void;
@@ -78,21 +79,9 @@ export const RegistrarGastoModal: React.FC<Props> = ({ onCerrar, onRegistrado })
     conceptoRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    function alPresionar(evento: KeyboardEvent) {
-      if (evento.key === 'Escape' && !guardando && !exito) onCerrar();
-    }
-    document.addEventListener('keydown', alPresionar);
-    const overflowPrevio = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', alPresionar);
-      document.body.style.overflow = overflowPrevio;
-    };
-  }, [guardando, exito, onCerrar]);
+  const tieneCambios = Boolean(concepto.trim() || monto.trim() || descripcion.trim());
 
-  // El panel de confirmación se muestra un instante antes de cerrar: el usuario
-  // ve que el registro sí entró, sin un modal que quede abierto de más.
+  // El panel de confirmación se muestra un instante antes de cerrar
   useEffect(() => {
     if (!exito) return;
     const temporizador = window.setTimeout(onCerrar, 1100);
@@ -136,39 +125,18 @@ export const RegistrarGastoModal: React.FC<Props> = ({ onCerrar, onRegistrado })
   const indiceTipo = TIPOS_MOVIMIENTO.findIndex((opcion) => opcion.valor === tipo);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
-      onMouseDown={(evento) => {
-        if (evento.target === evento.currentTarget && !guardando && !exito) onCerrar();
-      }}
+    <ModalFormulario
+      titulo="Registrar gasto o inversión"
+      subtitulo="Queda guardado a tu nombre en la bitácora del sistema."
+      onCerrar={onCerrar}
+      tieneCambios={tieneCambios}
+      guardando={guardando || Boolean(exito)}
+      tituloDescarte="¿Descartar gasto sin guardar?"
+      mensajeDescarte="Has comenzado a ingresar los datos de este movimiento económico. Si sales ahora, la información escrita no se guardará."
+      ancho="lg"
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="titulo-registrar-gasto"
-        className="mostrador-aparecer w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-amber-100 bg-white shadow-xl"
-      >
-        <header className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
-          <div>
-            <h2 id="titulo-registrar-gasto" className="text-lg font-bold text-slate-900">
-              Registrar gasto o inversión
-            </h2>
-            <p className="mt-0.5 text-xs text-slate-500">
-              Queda guardado a tu nombre en la bitácora del sistema.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onCerrar}
-            disabled={guardando || Boolean(exito)}
-            aria-label="Cerrar el formulario"
-            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-40"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </header>
-
-        {exito ? (
+      {({ solicitarCierre }) =>
+        exito ? (
           <div className="mostrador-aparecer flex flex-col items-center gap-3 px-5 py-12 text-center">
             <CheckCircle2 className="h-12 w-12 text-emerald-600" />
             <p className="text-base font-semibold text-slate-900">Registro guardado</p>
@@ -179,14 +147,14 @@ export const RegistrarGastoModal: React.FC<Props> = ({ onCerrar, onRegistrado })
             </p>
           </div>
         ) : (
-          <form onSubmit={enviar} noValidate className="space-y-4 px-5 py-4">
+          <form onSubmit={enviar} noValidate className="space-y-4">
             {errorGeneral && (
               <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                 {errorGeneral}
               </div>
             )}
 
-            {/* Selector de tipo con indicador deslizante: el cambio se ve, no se adivina. */}
+            {/* Selector de tipo con indicador deslizante */}
             <fieldset>
               <legend className="mb-1.5 text-xs font-semibold text-slate-600">Tipo de egreso</legend>
               <div className="relative grid grid-cols-2 rounded-xl bg-slate-100 p-1">
@@ -319,9 +287,9 @@ export const RegistrarGastoModal: React.FC<Props> = ({ onCerrar, onRegistrado })
             <footer className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
               <button
                 type="button"
-                onClick={onCerrar}
+                onClick={solicitarCierre}
                 disabled={guardando}
-                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
               >
                 Cancelar
               </button>
@@ -329,16 +297,16 @@ export const RegistrarGastoModal: React.FC<Props> = ({ onCerrar, onRegistrado })
                 type="submit"
                 disabled={guardando}
                 aria-busy={guardando}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-amber-600/20 transition-all hover:from-amber-700 hover:to-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-amber-600/20 transition-all hover:from-amber-700 hover:to-amber-800 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
               >
                 {guardando && <Loader2 className="h-4 w-4 animate-spin" />}
                 {guardando ? 'Guardando…' : 'Registrar gasto'}
               </button>
             </footer>
           </form>
-        )}
-      </div>
-    </div>
+        )
+      }
+    </ModalFormulario>
   );
 };
 

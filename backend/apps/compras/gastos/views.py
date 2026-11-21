@@ -26,8 +26,23 @@ class GastoListCreateView(APIView):
         filtros, error = leer_filtros_gasto(request.query_params)
         if error:
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
+
+        queryset = gastos_filtrados(filtros)
+
+        # Si el cliente solicita paginación (?page=), usamos el paginador de DRF
+        if 'page' in request.query_params or 'page_size' in request.query_params:
+            from rest_framework.pagination import PageNumberPagination
+            paginator = PageNumberPagination()
+            page_size = request.query_params.get('page_size')
+            if page_size and page_size.isdigit():
+                paginator.page_size = int(page_size)
+            page = paginator.paginate_queryset(queryset, request)
+            if page is not None:
+                serializer = MovimientoEconomicoSerializer(page, many=True)
+                return paginator.get_paginated_response(serializer.data)
+
         return Response(
-            MovimientoEconomicoSerializer(gastos_filtrados(filtros), many=True).data
+            MovimientoEconomicoSerializer(queryset, many=True).data
         )
 
     def post(self, request):
@@ -64,15 +79,18 @@ class GastoAnularView(APIView):
 
     Un egreso real no se elimina: se marca `anulado` y queda la traza en
     bitácora. El listado lo excluye por defecto.
+    Acepta opcionalmente un campo 'motivo' en el cuerpo de la petición.
     """
     permission_classes = [PuedeGestionarGastos]
 
     def post(self, request, pk):
         get_object_or_404(MovimientoEconomico, pk=pk)
+        motivo = request.data.get('motivo') if isinstance(request.data, dict) else None
         try:
             movimiento = anular_movimiento(
                 usuario=request.user,
                 id_movimiento=pk,
+                motivo=motivo,
                 agente_usuario=request.META.get('HTTP_USER_AGENT'),
             )
         except DjangoValidationError as exc:
