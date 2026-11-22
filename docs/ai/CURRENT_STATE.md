@@ -69,17 +69,19 @@
 
 ---
 
-### 📌 Ciclo 4 (6 Casos de Uso) — *CU20 completo (backend + frontend)*
+### 📌 Ciclo 4 (6 Casos de Uso) — *CU20, CU21, CU23 y CU24 completos (backend + frontend)*
 | CU | Nombre del Caso de Uso | Paquete Backend | Estado |
-|---|---|---|---|
+|---|---|---|:---:|
 | **CU20**| Registrar gasto / inversión | `apps.compras` | ✅ |
-| **CU21**| Generar reporte de ventas | `apps.reportes` | ⚪ |
+| **CU21**| Generar reporte de ventas | `apps.reportes` | ✅ |
 | **CU22**| Generar reporte de producción | `apps.reportes` | ⚪ |
-| **CU23**| Generar reporte de existencias | `apps.reportes` | ⚪ |
-| **CU24**| Generar reporte de compras y gastos | `apps.reportes` | ⚪ |
+| **CU23**| Generar reporte de existencias | `apps.reportes` | ✅ |
+| **CU24**| Generar reporte de compras y gastos | `apps.reportes` | ✅ |
 | **CU25**| Generar reporte de resultados económicos | `apps.reportes` | ⚪ |
 
 **CU20 (2026-11-13):** API backend de gastos e inversiones en `apps.compras.gastos` (rama `prueba`). `POST /api/gastos/` (tipo, categoría, concepto, monto, descripción y fecha no futura), `GET /api/gastos/` con filtros (`tipo`, `categoria`, `fecha_desde`, `fecha_hasta`, `anulado`, `search`), `GET /api/gastos/<id>/` y `POST /api/gastos/<id>/anular/` (anulación lógica, sin borrar). RBAC con permiso `registrar_gastos` (Administrador y Propietario); el responsable sale de la sesión y nunca del payload. Integridad en base de datos: `CHECK (monto > 0)`, `CHECK (tipo IN ...)`, `CHECK (categoria IN ...)` e índice por `fecha_hora` (migración `gastos.0002`). Bitácora `ALTA_MOVIMIENTO_ECONOMICO` y `ANULACION_MOVIMIENTO_ECONOMICO` en la misma transacción (migración `bitacora.0016`). 32 pruebas nuevas, 49 en `apps.compras` en verde. **Frontend:** pestaña "Gastos e inversiones" en Compras y Proveedores (`ComprasModuloPage`, visible con `registrar_gastos`), `GastosPage` con filtros (tipo, categoría, fechas, anulados, búsqueda), resumen de egresos con proporción gasto/inversión, alta y anulación lógica con modales accesibles (`role="dialog"` / `alertdialog`), `types/gasto.ts` y `services/gastosService.ts`. Verificado con `npx tsc -b`, `npm run build` y `npm run lint` (sin hallazgos en los archivos nuevos). Pendiente: recorrido visual con sesión real.
+
+**CU24 (2026-11-22):** Generación de reporte de compras y gastos para el Propietario en `apps.reportes`. Backend: endpoints `/api/reportes/compras/` (cálculo dinámico en vivo con agregaciones ORM `Sum`, `Count`, `Coalesce` por proveedor y por materia prima), `/api/reportes/compras/csv/` (exportación delimitada por `;` con UTF-8 BOM para Excel), `/api/reportes/compras/cierres/` (POST para congelar instantánea contable inmutable en `cierre_reporte_compras` y `linea_cierre_reporte_compras` con auditoría en `Bitacora`), y `/api/reportes/compras/cierres/<id>/pdf/` (generación formal en PDF con membrete oficial mediante ReportLab). RBAC restringido al Propietario con `PuedeGenerarReportes` (`generar_reportes`). Suite completa de 20 pruebas en `apps.reportes` pasando al 100%. Comando de datos demo `seed_compras_demo` con 12 compras realistas entre septiembre y noviembre de 2026. Frontend: servicio `reporteComprasService.ts`, componente de control `ReporteComprasCu24.tsx` (filtros reactivos por día/semana/mes, selector opcional de proveedor e insumo, tarjetas KPI, tablas conmutables de insumos y proveedores, historial de cierres y descargas), página dedicada `ReporteComprasPage.tsx` y navegación integrada en `ReportesPage.tsx`. Build Vite compilado sin errores (0 errores de TypeScript).
 
 
 ---

@@ -464,6 +464,37 @@ export const ReportesPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Pestañas de navegación rápida entre Reportes disponibles (ordenados por número de CU) */}
+      <div className="flex border-b border-amber-200 bg-white px-3 pt-2 rounded-2xl shadow-xs gap-1">
+        <span className="inline-flex items-center gap-2 border-b-2 border-amber-700 bg-amber-50/70 px-4 py-2.5 text-xs font-bold text-amber-900 rounded-t-xl">
+          <TrendingUp className="h-4 w-4 text-amber-700" />
+          CU21: Reporte de Ventas
+          <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+            Disponible
+          </span>
+        </span>
+        <Link
+          to="/dashboard/reportes/existencias"
+          className="inline-flex items-center gap-2 border-b-2 border-transparent px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-amber-900 hover:bg-amber-50/40 rounded-t-xl transition-colors"
+        >
+          <PieChart className="h-4 w-4 text-slate-500" />
+          CU23: Reporte de Existencias
+          <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+            Disponible
+          </span>
+        </Link>
+        <Link
+          to="/dashboard/reportes/compras"
+          className="inline-flex items-center gap-2 border-b-2 border-transparent px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-amber-900 hover:bg-amber-50/40 rounded-t-xl transition-colors"
+        >
+          <Wallet className="h-4 w-4 text-amber-700" />
+          CU24: Reporte de Compras y Gastos
+          <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+            Disponible
+          </span>
+        </Link>
+      </div>
+
       <AsistenteVozReporte cuActual="CU21" onComando={handleComandoVoz} />
 
       {pendienteFormatoVoz ? (
@@ -919,6 +950,7 @@ export const ReportesPage: React.FC = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {REPORTES_CASOS.map((item) => {
             const Icono = item.icono;
+            const activo = item.cu === 'CU21' || item.cu === 'CU23' || item.cu === 'CU24';
             return (
               <div
                 key={item.cu}
@@ -930,8 +962,10 @@ export const ReportesPage: React.FC = () => {
                       {item.cu}
                     </span>
                     <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500">
-                      <AlertCircle className="h-3 w-3 text-amber-600" />
-                      {item.cu === 'CU21' || item.cu === 'CU23' ? 'Activo y Funcional' : 'Planificado'}
+                      <AlertCircle className={`h-3 w-3 ${activo ? 'text-emerald-600' : 'text-amber-600'}`} />
+                      <span className={activo ? 'text-emerald-700 font-bold' : ''}>
+                        {activo ? 'Activo y Funcional' : 'Planificado'}
+                      </span>
                     </span>
                   </div>
 
@@ -953,6 +987,11 @@ export const ReportesPage: React.FC = () => {
                     <>
                       <Link to="/dashboard/reportes/existencias" className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-amber-800 underline underline-offset-4 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2">Abrir reporte de existencias</Link>
                       <p className="text-[10px] text-slate-500">Disponible para usuarios autorizados a generar reportes. Mínimo de productos terminados referencial y provisional.</p>
+                    </>
+                  ) : item.cu === 'CU24' ? (
+                    <>
+                      <Link to="/dashboard/reportes/compras" className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-amber-800 underline underline-offset-4 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2">Abrir reporte de compras y gastos</Link>
+                      <p className="text-[10px] text-slate-500">Disponible para Propietario. Reporte dinámico y estático de compras a proveedores y gastos operativos con exportación PDF/CSV.</p>
                     </>
                   ) : (
                     <p className="text-[10px] text-slate-500">

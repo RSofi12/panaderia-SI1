@@ -1,6 +1,11 @@
 from django.urls import path
 
 from apps.reportes.views import (
+    CierreReporteComprasDetailView,
+    CierreReporteComprasPdfView,
+    CierresReporteComprasView,
+    ReporteComprasCsvView,
+    ReporteComprasView,
     ReporteExistenciasView,
     ReporteInterpretarVozView,
     ReporteVentasCsvView,
@@ -11,9 +16,27 @@ from apps.reportes.views import (
 app_name = 'reportes'
 
 urlpatterns = [
-    path('reportes/existencias/', ReporteExistenciasView.as_view(), name='reporte-existencias'),
-    path('reportes/voz/interpretar/', ReporteInterpretarVozView.as_view(), name='reporte-voz-interpretar'),
+    # CU21: Reporte de ventas y comandos por voz
     path('reportes/ventas/', ReporteVentasView.as_view(), name='reporte-ventas'),
     path('reportes/ventas/csv/', ReporteVentasCsvView.as_view(), name='reporte-ventas-csv'),
     path('reportes/ventas/pdf/', ReporteVentasPdfView.as_view(), name='reporte-ventas-pdf'),
+    path('reportes/voz/interpretar/', ReporteInterpretarVozView.as_view(), name='reporte-voz-interpretar'),
+
+    # CU23: Reporte de existencias
+    path('reportes/existencias/', ReporteExistenciasView.as_view(), name='reporte-existencias'),
+
+    # CU24: Reporte de compras y gastos
+    path('reportes/compras/', ReporteComprasView.as_view(), name='reporte-compras'),
+    path('reportes/compras/csv/', ReporteComprasCsvView.as_view(), name='reporte-compras-csv'),
+    path('reportes/compras/cierres/', CierresReporteComprasView.as_view(), name='cierres-reporte-compras'),
+    path(
+        'reportes/compras/cierres/<int:id_cierre>/pdf/',
+        CierreReporteComprasPdfView.as_view(),
+        name='cierre-reporte-compras-pdf',
+    ),
+    path(
+        'reportes/compras/cierres/<int:id_cierre>/',
+        CierreReporteComprasDetailView.as_view(),
+        name='cierre-reporte-compras',
+    ),
 ]
