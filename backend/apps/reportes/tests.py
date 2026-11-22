@@ -284,6 +284,43 @@ class PruebasReporteVoz(TestCase):
         self.assertEqual(respuesta.data['filtros']['hasta'], '20250-12-31')
         self.assertEqual(respuesta.data['formato'], 'pdf')
 
+    def test_analizar_consulta_roles(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.post(
+            '/api/reportes/voz/analizar/',
+            {'texto': 'reporte de roles del sistema'},
+            format='json',
+        )
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data['tema'], 'roles')
+        self.assertIn('rol', respuesta.data['analisis'].lower())
+        self.assertTrue(respuesta.data['desde'])
+        self.assertTrue(respuesta.data['hasta'])
+
+    def test_analizar_pdf_respuesta_formal(self):
+        self.client.force_authenticate(self.propietario)
+        analisis = self.client.post(
+            '/api/reportes/voz/analizar/',
+            {'texto': 'reporte de roles del sistema'},
+            format='json',
+        )
+        self.assertEqual(analisis.status_code, status.HTTP_200_OK)
+        pdf = self.client.post(
+            '/api/reportes/voz/analizar/pdf/',
+            {
+                'consulta': analisis.data['consulta'],
+                'tema': analisis.data['tema'],
+                'desde': analisis.data['desde'],
+                'hasta': analisis.data['hasta'],
+                'analisis': analisis.data['analisis'],
+                'motor': analisis.data['motor'],
+            },
+            format='json',
+        )
+        self.assertEqual(pdf.status_code, status.HTTP_200_OK)
+        self.assertEqual(pdf['Content-Type'], 'application/pdf')
+        self.assertTrue(pdf.content.startswith(b'%PDF'))
+
     def test_cierre_inexistente_responde_404(self):
         self.client.force_authenticate(self.propietario)
         detalle = self.client.get('/api/reportes/ventas/cierres/99999/')

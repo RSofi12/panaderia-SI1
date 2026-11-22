@@ -302,6 +302,20 @@ STRIPE_CURRENCY = config('STRIPE_CURRENCY', default='bob')
 # Gemini — interpretación de comandos de voz para reportes (CU21–CU25)
 # Si GEMINI_API_KEY está vacía, el backend usa un intérprete local por reglas.
 # ==================================================================
-GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+def _normalizar_gemini_api_key(raw: str) -> str:
+    clave = (raw or '').strip()
+    if not clave:
+        return ''
+    # Plantilla .env.example pegada por error delante del token real (AQ....)
+    prefijo = 'tu_clave_de_google_ai_studio='
+    if clave.startswith(prefijo):
+        clave = clave[len(prefijo) :].strip()
+    elif 'AQ.' in clave and not clave.startswith('AQ.'):
+        idx = clave.find('AQ.')
+        clave = clave[idx:].strip()
+    return clave
+
+
+GEMINI_API_KEY = _normalizar_gemini_api_key(config('GEMINI_API_KEY', default=''))
 GEMINI_MODEL = config('GEMINI_MODEL', default='gemini-2.5-flash')
 

@@ -29,14 +29,14 @@ import {
   type PeriodoReporte,
   type ReporteVentas,
 } from '../../../services/reporteVentasService';
-import type { ComandoVozInterpretado, PendienteDescargaVoz } from '../../../types/reporteVoz';
+import {
+  descargarAnalisisReporteCsv,
+  descargarAnalisisReportePdf,
+} from '../../../services/reporteVozService';
+import type { AnalisisVozReporte, ContextoDescargaAsistente } from '../../../types/reporteVoz';
 import AsistenteVozReporte from './components/AsistenteVozReporte';
 
 const MENSAJE_SIN_DATOS_REPORTE = 'No hay datos disponibles para el período solicitado.';
-
-function avisarSinDatosReporte(): string {
-  return MENSAJE_SIN_DATOS_REPORTE;
-}
 
 interface CasoUsoReporte {
   cu: string;
@@ -138,7 +138,7 @@ export const ReportesPage: React.FC = () => {
   const [cargando, setCargando] = useState(false);
   const [descargando, setDescargando] = useState<'csv' | 'excel' | 'pdf' | ''>('');
   const [error, setError] = useState('');
-  const [pendienteFormatoVoz, setPendienteFormatoVoz] = useState<PendienteDescargaVoz | null>(null);
+  const [descargandoAsistente, setDescargandoAsistente] = useState('');
 
   // Pestaña activa dentro del reporte: Ventas individuales o Desglose por producto
   const [vistaTabla, setVistaTabla] = useState<'ventas' | 'productos'>('ventas');
@@ -347,21 +347,15 @@ export const ReportesPage: React.FC = () => {
     }
   }
 
-  async function handleComandoVoz(comando: ComandoVozInterpretado): Promise<string | void> {
-    if (!comando.modulo_disponible || comando.caso_uso !== 'CU21') {
-      setError(
-        `${comando.respuesta_voz} El módulo ${comando.caso_uso} aún no está integrado en pantalla; el backend ya entiende el comando.`,
-      );
-      return comando.respuesta_voz;
-    }
-
-    const { desde, hasta, metodo_pago: metodoPago, columnas, periodo: periodoVoz } = comando.filtros;
+  async function handleAnalisisVoz(resultado: AnalisisVozReporte): Promise<void> {
+    const { desde, hasta, metodo_pago: metodoPago, periodo: periodoVoz, columnas } =
+      resultado.comando.filtros;
     if (!desde || !hasta) {
-      setError('El comando no trajo un rango de fechas válido.');
-      return 'El comando no trajo un rango de fechas válido.';
+      setError('No se pudo inferir el período de la consulta.');
+      return;
     }
 
-    sincronizarSelectoresDesdeRango(desde, hasta, periodoVoz);
+    sincronizarSelectoresDesdeRango(desde, hasta, periodoVoz ?? undefined);
     const metodoFiltro = metodoPago ?? '';
     setMetodo(metodoFiltro);
 
@@ -375,68 +369,59 @@ export const ReportesPage: React.FC = () => {
       });
     }
 
+    const debeTablaVentas =
+      resultado.exportar_ventas ||
+      resultado.tema === 'ventas' ||
+      resultado.tema === 'productos' ||
+      resultado.comando.caso_uso === 'CU21';
+
+    if (debeTablaVentas) {
+      const datos = await consultarConRango(desde, hasta, metodoFiltro);
+      if (datos && datos.cantidad === 0) {
+        setError(MENSAJE_SIN_DATOS_REPORTE);
+      }
+    }
+  }
+
+  async function handleDescargaAsistente(
+    formato: 'pdf' | 'csv' | 'excel',
+    ctx: ContextoDescargaAsistente,
+  ): Promise<void> {
+    setError('');
+    setDescargandoAsistente(formato);
     const columnasActivas =
-      columnas && columnas.length > 0
-        ? columnas
+      ctx.columnas.length > 0
+        ? ctx.columnas
         : Object.entries(columnasVisibles)
             .filter(([, visible]) => visible)
             .map(([id]) => id);
 
-    const datos = await consultarConRango(desde, hasta, metodoFiltro);
-    if (!datos) {
-      return 'No se pudo consultar el reporte de ese período.';
-    }
-    if (datos.cantidad === 0) {
-      setPendienteFormatoVoz(null);
-      setError(MENSAJE_SIN_DATOS_REPORTE);
-      return avisarSinDatosReporte();
-    }
-
-    if (comando.requiere_seleccion_formato) {
-      setPendienteFormatoVoz({
-        desde,
-        hasta,
-        metodo: metodoFiltro,
-        columnas: columnasActivas,
-      });
-      return comando.respuesta_voz;
-    }
-
-    if (comando.accion !== 'descargar' || comando.formato === 'pantalla') {
-      setPendienteFormatoVoz(null);
-      return comando.respuesta_voz;
-    }
-
-    await descargarReportePorVoz(desde, hasta, metodoFiltro, columnasActivas, comando.formato);
-    return comando.respuesta_voz;
-  }
-
-  async function descargarReportePorVoz(
-    desde: string,
-    hasta: string,
-    metodoFiltro: string,
-    columnasActivas: string[],
-    formato: 'pdf' | 'csv' | 'excel',
-  ) {
-    if (reporte && reporte.cantidad === 0) {
-      setPendienteFormatoVoz(null);
-      setError(MENSAJE_SIN_DATOS_REPORTE);
-      return;
-    }
-    setPendienteFormatoVoz(null);
-    setError('');
     try {
+      if (ctx.exportarVentas) {
+        if (formato === 'pdf') {
+          await descargarReportePdf(ctx.desde, ctx.hasta, ctx.metodo, columnasActivas);
+        } else {
+          await descargarReporteCsv(ctx.desde, ctx.hasta, ctx.metodo, columnasActivas);
+        }
+        return;
+      }
+
+      const payload = {
+        consulta: ctx.consulta,
+        tema: ctx.tema,
+        desde: ctx.desde,
+        hasta: ctx.hasta,
+        analisis: ctx.analisis,
+      };
       if (formato === 'pdf') {
-        setDescargando('pdf');
-        await descargarReportePdf(desde, hasta, metodoFiltro, columnasActivas);
+        await descargarAnalisisReportePdf(payload);
       } else {
-        setDescargando(formato === 'excel' ? 'excel' : 'csv');
-        await descargarReporteCsv(desde, hasta, metodoFiltro, columnasActivas);
+        await descargarAnalisisReporteCsv(payload);
       }
     } catch {
-      setError(MENSAJE_SIN_DATOS_REPORTE);
+      setError('No se pudo generar el archivo.');
     } finally {
-      setDescargando('');
+      setDescargandoAsistente('');
     }
   }
 
@@ -495,51 +480,12 @@ export const ReportesPage: React.FC = () => {
         </Link>
       </div>
 
-      <AsistenteVozReporte cuActual="CU21" onComando={handleComandoVoz} />
-
-      {pendienteFormatoVoz ? (
-        <section
-          className="rounded-2xl border border-amber-300 bg-amber-50/90 p-4 shadow-2xs"
-          role="dialog"
-          aria-labelledby="titulo-elegir-formato-voz"
-        >
-          <h3 id="titulo-elegir-formato-voz" className="text-sm font-bold text-amber-950">
-            ¿En qué formato quieres el reporte?
-          </h3>
-          <p className="mt-1 text-xs text-amber-900/90">
-            No indicaste PDF, CSV ni Excel en el comando. El reporte ya está cargado en pantalla; elige cómo
-            descargarlo.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {(['pdf', 'csv', 'excel'] as const).map((formato) => (
-              <button
-                key={formato}
-                type="button"
-                disabled={Boolean(descargando)}
-                onClick={() =>
-                  void descargarReportePorVoz(
-                    pendienteFormatoVoz.desde,
-                    pendienteFormatoVoz.hasta,
-                    pendienteFormatoVoz.metodo,
-                    pendienteFormatoVoz.columnas,
-                    formato,
-                  )
-                }
-                className="rounded-xl border border-amber-400 bg-white px-4 py-2 text-sm font-bold uppercase tracking-wide text-amber-950 shadow-2xs hover:bg-amber-100 disabled:opacity-50"
-              >
-                {formato}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setPendienteFormatoVoz(null)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-            >
-              Solo ver en pantalla
-            </button>
-          </div>
-        </section>
-      ) : null}
+      <AsistenteVozReporte
+        cuActual="CU21"
+        onAnalisis={handleAnalisisVoz}
+        onDescargar={handleDescargaAsistente}
+        descargando={descargandoAsistente}
+      />
 
       {/* 2. Barra de Selección de Período y Filtros */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">

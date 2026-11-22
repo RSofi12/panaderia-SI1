@@ -71,6 +71,38 @@ class InterpretarComandoVozSalidaSerializer(serializers.Serializer):
     motor = serializers.CharField()
 
 
+class AnalizarVozEntradaSerializer(serializers.Serializer):
+    texto = serializers.CharField(max_length=800, trim_whitespace=True)
+    cu_actual = serializers.RegexField(
+        regex=r'^CU2[1-5]$',
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+
+
+class AnalizarVozSalidaSerializer(serializers.Serializer):
+    consulta = serializers.CharField()
+    tema = serializers.CharField()
+    caso_uso = serializers.CharField()
+    desde = serializers.DateField()
+    hasta = serializers.DateField()
+    analisis = serializers.CharField()
+    motor = serializers.CharField()
+    exportar_ventas = serializers.BooleanField()
+    respuesta_voz = serializers.CharField()
+    comando = InterpretarComandoVozSalidaSerializer()
+
+
+class AnalizarVozPdfEntradaSerializer(serializers.Serializer):
+    consulta = serializers.CharField(max_length=800, trim_whitespace=True)
+    tema = serializers.CharField(max_length=40)
+    desde = serializers.DateField()
+    hasta = serializers.DateField()
+    analisis = serializers.CharField(max_length=50000, trim_whitespace=True)
+    motor = serializers.CharField(max_length=20, required=False, default='local')
+
+
 class ReporteVentasSerializer(serializers.Serializer):
     """Esquema de salida para el reporte de ventas del período."""
     desde = serializers.DateField()

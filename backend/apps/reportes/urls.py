@@ -4,6 +4,9 @@ from apps.reportes.views import (
     CierreReporteComprasDetailView,
     CierreReporteComprasPdfView,
     CierresReporteComprasView,
+    ReporteAnalizarVozCsvView,
+    ReporteAnalizarVozPdfView,
+    ReporteAnalizarVozView,
     ReporteComprasCsvView,
     ReporteComprasView,
     ReporteExistenciasView,
@@ -20,6 +23,9 @@ urlpatterns = [
     path('reportes/ventas/', ReporteVentasView.as_view(), name='reporte-ventas'),
     path('reportes/ventas/csv/', ReporteVentasCsvView.as_view(), name='reporte-ventas-csv'),
     path('reportes/ventas/pdf/', ReporteVentasPdfView.as_view(), name='reporte-ventas-pdf'),
+    path('reportes/voz/analizar/', ReporteAnalizarVozView.as_view(), name='reporte-voz-analizar'),
+    path('reportes/voz/analizar/pdf/', ReporteAnalizarVozPdfView.as_view(), name='reporte-voz-analizar-pdf'),
+    path('reportes/voz/analizar/csv/', ReporteAnalizarVozCsvView.as_view(), name='reporte-voz-analizar-csv'),
     path('reportes/voz/interpretar/', ReporteInterpretarVozView.as_view(), name='reporte-voz-interpretar'),
 
     # CU23: Reporte de existencias

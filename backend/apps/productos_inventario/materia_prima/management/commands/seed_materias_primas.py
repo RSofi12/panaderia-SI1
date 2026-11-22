@@ -11,7 +11,8 @@ from apps.productos_inventario.materia_prima.models import (
     MateriaPrima,
 )
 
-# Fuente: docs/informes/Poblacion_4_Dias_Panaderia_Santiago.sql (módulo inventario MP)
+# 20 materias primas (expansión 2026-11-14). SQL de 4 días: 7 insumos en Poblacion_4_Dias_Panaderia_Santiago.sql
+# Guía: docs/informes/POBLACION_SEEDERS_DJANGO.md
 # (nombre, unidad_medida, stock_minimo, precio_inicial_bs)
 INSUMOS = [
     ('Harina', 'kg', '20.000', '4.50'),

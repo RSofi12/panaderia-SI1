@@ -7,6 +7,9 @@ from rest_framework.views import APIView
 
 from apps.reportes.permissions import PuedeGenerarReportes
 from apps.reportes.serializers import (
+    AnalizarVozEntradaSerializer,
+    AnalizarVozPdfEntradaSerializer,
+    AnalizarVozSalidaSerializer,
     CierreReporteComprasConsultaSerializer,
     CierreReporteComprasSerializer,
     InterpretarComandoVozEntradaSerializer,
@@ -18,12 +21,18 @@ from apps.reportes.serializers import (
     ReporteVentasConsultaSerializer,
     ReporteVentasSerializer,
 )
+from apps.reportes.services.analisis_ia import analizar_consulta_reporte
 from apps.reportes.services.cierre_compras import (
     cierre_como_reporte as cierre_compras_como_reporte,
     guardar_cierre_compras,
     listar_cierres_compras,
 )
-from apps.reportes.services.exportar_reporte import csv_reporte, pdf_reporte_ventas
+from apps.reportes.services.exportar_reporte import (
+    csv_reporte,
+    csv_reporte_analisis,
+    pdf_reporte_analisis,
+    pdf_reporte_ventas,
+)
 from apps.reportes.services.exportar_reporte_compras import csv_reporte_compras, pdf_cierre_compras
 from apps.reportes.services.interprete_voz import interpretar_comando_voz
 from apps.reportes.services.reporte_compras import reporte_compras
@@ -49,6 +58,72 @@ def _rechazar_exportacion_sin_datos(reporte: dict) -> None:
         raise serializers.ValidationError(
             {'detail': 'No hay datos disponibles para el período solicitado.'}
         )
+
+
+class ReporteAnalizarVozView(APIView):
+    """POST /api/reportes/voz/analizar/ — consulta libre + análisis narrativo (única ventana de reportes)."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def post(self, request):
+        entrada = AnalizarVozEntradaSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+        datos = entrada.validated_data
+        cu_actual = (datos.get('cu_actual') or '').strip() or None
+        try:
+            resultado = analizar_consulta_reporte(datos['texto'], cu_actual=cu_actual)
+        except ValueError as exc:
+            raise serializers.ValidationError({'texto': str(exc)}) from exc
+        salida = AnalizarVozSalidaSerializer(resultado)
+        return Response(salida.data, status=status.HTTP_200_OK)
+
+
+class ReporteAnalizarVozPdfView(APIView):
+    """POST /api/reportes/voz/analizar/pdf/ — PDF con membrete oficial del análisis narrativo."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def post(self, request):
+        entrada = AnalizarVozPdfEntradaSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+        datos = entrada.validated_data
+        contenido = pdf_reporte_analisis(
+            consulta=datos['consulta'],
+            tema=datos['tema'],
+            desde=datos['desde'].isoformat(),
+            hasta=datos['hasta'].isoformat(),
+            analisis=datos['analisis'],
+            motor=datos.get('motor') or 'local',
+        )
+        slug_tema = datos['tema'].replace('_', '-')[:24]
+        nombre = f'reporte-{slug_tema}-{datos["desde"]}-{datos["hasta"]}.pdf'
+        respuesta = HttpResponse(contenido, content_type='application/pdf')
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
+        return respuesta
+
+
+class ReporteAnalizarVozCsvView(APIView):
+    """POST /api/reportes/voz/analizar/csv/ — CSV UTF-8 con BOM para Excel."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def post(self, request):
+        entrada = AnalizarVozPdfEntradaSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+        datos = entrada.validated_data
+        contenido = csv_reporte_analisis(
+            consulta=datos['consulta'],
+            tema=datos['tema'],
+            desde=datos['desde'].isoformat(),
+            hasta=datos['hasta'].isoformat(),
+            analisis=datos['analisis'],
+            motor=datos.get('motor') or 'local',
+        )
+        slug_tema = datos['tema'].replace('_', '-')[:24]
+        nombre = f'reporte-{slug_tema}-{datos["desde"]}-{datos["hasta"]}.csv'
+        respuesta = HttpResponse(contenido, content_type='text/csv; charset=utf-8')
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
+        return respuesta
 
 
 class ReporteInterpretarVozView(APIView):

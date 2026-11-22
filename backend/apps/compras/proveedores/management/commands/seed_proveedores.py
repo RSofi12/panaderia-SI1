@@ -6,7 +6,8 @@ from django.utils import timezone
 
 from apps.compras.proveedores.models import Proveedor
 
-# Fuente: docs/informes/Poblacion_4_Dias_Panaderia_Santiago.sql
+# 9 proveedores (expansión 2026-11-14). SQL de 4 días solo tenía 3: Poblacion_4_Dias_Panaderia_Santiago.sql
+# Guía: docs/informes/POBLACION_SEEDERS_DJANGO.md
 PROVEEDORES = [
     (
         'Molinos del Oriente S.R.L.',
