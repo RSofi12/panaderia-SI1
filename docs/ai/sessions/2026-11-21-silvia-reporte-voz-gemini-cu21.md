@@ -44,6 +44,9 @@ Motor transversal de comandos por voz/texto con API Gemini (y fallback local) pa
 - Backend: `requiere_seleccion_formato=true` cuando pide descargar sin decir PDF/CSV/Excel.
 - Frontend: tarjeta ámbar con botones **PDF · CSV · Excel** tras cargar el reporte en pantalla.
 
+## Documentación CU (misma sesión)
+- Ficha de caso de uso: `docs/informes/CU26_generar_reportes_por_comando_de_voz.md` (formato informe, flujo + excepción A1 sin datos).
+
 ## 6. Corrección UX voz (misma sesión)
 - Modo `continuous: true`, acumulación completa del texto y **interpretación solo al pulsar Detener** (evita corte al primer silencio del navegador).
 - Idioma `es-ES` (mejor soporte que `es-BO` en Chrome/Edge).

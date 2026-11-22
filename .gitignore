@@ -39,6 +39,7 @@ htmlcov/
 .ruff_cache/
 .tox/
 .nox/
+scratch/
 
 # Frontend (Node / Vite / React)
 # ==============================================================================

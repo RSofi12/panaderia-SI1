@@ -419,7 +419,7 @@ class PruebasBaseProduccion(TestCase):
         call_command('seed_recetas')
         recetas_marraqueta = ProductoMateriaPrima.objects.filter(id_producto__nombre='Marraqueta')
         self.assertEqual(recetas_marraqueta.count(), 3)
-        self.assertEqual(ProductoMateriaPrima.objects.count(), 37)
+        self.assertEqual(ProductoMateriaPrima.objects.count(), 108)
 
     def _registrar(self, fecha, jornada, cantidad):
         return self.client.post('/api/produccion/', data={

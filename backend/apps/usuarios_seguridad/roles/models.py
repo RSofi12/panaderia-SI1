@@ -5,6 +5,13 @@ from django.db.models.functions import Lower
 class Rol(models.Model):
     id_rol = models.BigAutoField(primary_key=True)
     nombre = models.CharField(max_length=50, unique=True, verbose_name='Nombre del Rol')
+    tipo_rol = models.CharField(
+        max_length=50,
+        blank=True,
+        default='',
+        verbose_name='Tipo de Rol',
+        help_text='Clasificación o categoría del rol (ej: Administrativo, Operativo, Gerencial, Mostrador).'
+    )
     descripcion = models.TextField(blank=True, null=True, verbose_name='Descripción')
     permisos = models.ManyToManyField(
         'permisos.Permiso',

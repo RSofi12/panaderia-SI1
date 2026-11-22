@@ -19,6 +19,8 @@ import RegistrarPedidoPage from '../apps/dashboard/comercializacion/pedidos/Regi
 import PedidosEstadoPage from '../apps/dashboard/comercializacion/PedidosEstadoPage';
 import DisponibilidadPage from '../apps/dashboard/comercializacion/DisponibilidadPage';
 import ReportesPage from '../apps/dashboard/reportes/ReportesPage';
+import ReporteExistenciasPage from '../apps/dashboard/reportes/ReporteExistenciasPage';
+import ReporteComprasPage from '../apps/dashboard/reportes/ReporteComprasPage';
 import { ROLES_ALERTAS_BAJO_STOCK } from '../types/materiaPrima';
 
 export const AppRoutes: React.FC = () => {
@@ -138,6 +140,22 @@ export const AppRoutes: React.FC = () => {
               element={
                 <ProtectedRoute requiredPermission="generar_reportes">
                   <ReportesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="reportes/existencias"
+              element={
+                <ProtectedRoute requiredPermission="generar_reportes">
+                  <ReporteExistenciasPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="reportes/compras"
+              element={
+                <ProtectedRoute requiredPermission="generar_reportes">
+                  <ReporteComprasPage />
                 </ProtectedRoute>
               }
             />

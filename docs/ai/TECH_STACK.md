@@ -91,6 +91,7 @@ El frontend se organiza **por ventanas / flujo visual del usuario** en `frontend
   - Backend: `python -m venv venv` $\rightarrow$ `python manage.py runserver`
   - Frontend: `npm install` $\rightarrow$ `npm run dev`
   - Mailpit: binario independiente en puerto 1025/8025.
+- **Población demo de la BD:** Tras migraciones, `python manage.py seed_all` (12 pasos: catálogo 36 productos + escenario 4 días + octubre 2026). Ver [`docs/informes/POBLACION_SEEDERS_DJANGO.md`](../informes/POBLACION_SEEDERS_DJANGO.md).
 - **Preparación para la Nube (Producción):**
   - **Backend:** Compatible directamente con Railway, Render y Google Cloud Run mediante `backend/Dockerfile`.
   - **Frontend:** Compatible con Vercel (compilación estática vía `npm run build`), Render o Railway.

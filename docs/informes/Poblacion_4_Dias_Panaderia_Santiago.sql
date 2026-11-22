@@ -15,6 +15,10 @@
 -- "usuario" (ver Perfil §1.7.1 - Módulo de Usuarios y Seguridad).
 --
 -- Ejecutar este script después de correr el DDL que crea las tablas y FK.
+--
+-- NOTA (2026-11): El catálogo ampliado (36 productos, 9 proveedores, 20 MP) y el mes
+-- operativo de Octubre 2026 NO están en este SQL; viven en los seeders Django.
+-- Ver docs/informes/POBLACION_SEEDERS_DJANGO.md y: python manage.py seed_all
 -- =========================================================
 
 

@@ -22,9 +22,26 @@ export interface ComandoVozInterpretado {
   motor: 'gemini' | 'local' | string;
 }
 
-export interface PendienteDescargaVoz {
+export interface AnalisisVozReporte {
+  consulta: string;
+  tema: string;
+  caso_uso: CasoUsoReporte;
+  desde: string;
+  hasta: string;
+  analisis: string;
+  motor: 'gemini' | 'local' | string;
+  exportar_ventas: boolean;
+  respuesta_voz: string;
+  comando: ComandoVozInterpretado;
+}
+
+export interface ContextoDescargaAsistente {
+  consulta: string;
   desde: string;
   hasta: string;
   metodo: string;
   columnas: string[];
+  exportarVentas: boolean;
+  analisis: string;
+  tema: string;
 }

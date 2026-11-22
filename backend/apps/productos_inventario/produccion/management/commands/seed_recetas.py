@@ -6,7 +6,8 @@ from django.db import transaction
 from apps.productos_inventario.materia_prima.models import MateriaPrima
 from apps.productos_inventario.productos.models import Producto, ProductoMateriaPrima
 
-# Fuente: docs/informes/Poblacion_4_Dias_Panaderia_Santiago.sql (§ 2. MÓDULO PRODUCTOS - Recetas BOM / MRP)
+# BOM/MRP para 36 variedades (expansión 2026-11-14). Base SQL 4 días: 12 recetas en Poblacion_4_Dias…
+# Guía: docs/informes/POBLACION_SEEDERS_DJANGO.md
 RECETAS = [
     # 1. Marraqueta
     ('Marraqueta', 'Harina', '0.060', 'kg'),
@@ -156,7 +157,7 @@ RECETAS = [
 
 
 class Command(BaseCommand):
-    help = 'Puebla las recetas oficiales (BOM / MRP) de los 12 panes según Poblacion_4_Dias_Panaderia_Santiago.sql.'
+    help = 'Puebla las recetas BOM/MRP de las 36 variedades del catálogo ampliado (CU10).'
 
     def handle(self, *args, **options):
         self.stdout.write('Iniciando poblado de recetas de producción (CU10)...')

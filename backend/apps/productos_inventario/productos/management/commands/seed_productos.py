@@ -7,7 +7,9 @@ from django.utils import timezone
 
 from apps.productos_inventario.productos.models import CategoriaProducto, HistorialPrecioProducto, Producto
 
-# Fuente: docs/informes/Poblacion_4_Dias_Panaderia_Santiago.sql
+# Catálogo ampliado (36 productos, 5 categorías): expansión 2026-11-14 (Raysa / seed_mes_operativo).
+# Escenario SQL de 4 días (12 productos): docs/informes/Poblacion_4_Dias_Panaderia_Santiago.sql
+# Guía: docs/informes/POBLACION_SEEDERS_DJANGO.md
 CATEGORIAS = [
     (
         'Panes Tradicionales y de Mesa',

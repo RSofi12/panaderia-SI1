@@ -1,7 +1,12 @@
 from rest_framework import serializers
 
 from apps.comercializacion.ventas.models import MetodoPago
+from apps.reportes.models import PeriodoReporte
 
+
+# ==============================================================================
+# CU21: Reporte de ventas y Asistente de voz
+# ==============================================================================
 
 class ReporteVentasConsultaSerializer(serializers.Serializer):
     """Parámetros de filtro para el reporte dinámico de ventas (CU21)."""
@@ -66,6 +71,38 @@ class InterpretarComandoVozSalidaSerializer(serializers.Serializer):
     motor = serializers.CharField()
 
 
+class AnalizarVozEntradaSerializer(serializers.Serializer):
+    texto = serializers.CharField(max_length=800, trim_whitespace=True)
+    cu_actual = serializers.RegexField(
+        regex=r'^CU2[1-5]$',
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+
+
+class AnalizarVozSalidaSerializer(serializers.Serializer):
+    consulta = serializers.CharField()
+    tema = serializers.CharField()
+    caso_uso = serializers.CharField()
+    desde = serializers.DateField()
+    hasta = serializers.DateField()
+    analisis = serializers.CharField()
+    motor = serializers.CharField()
+    exportar_ventas = serializers.BooleanField()
+    respuesta_voz = serializers.CharField()
+    comando = InterpretarComandoVozSalidaSerializer()
+
+
+class AnalizarVozPdfEntradaSerializer(serializers.Serializer):
+    consulta = serializers.CharField(max_length=800, trim_whitespace=True)
+    tema = serializers.CharField(max_length=40)
+    desde = serializers.DateField()
+    hasta = serializers.DateField()
+    analisis = serializers.CharField(max_length=50000, trim_whitespace=True)
+    motor = serializers.CharField(max_length=20, required=False, default='local')
+
+
 class ReporteVentasSerializer(serializers.Serializer):
     """Esquema de salida para el reporte de ventas del período."""
     desde = serializers.DateField()
@@ -76,6 +113,124 @@ class ReporteVentasSerializer(serializers.Serializer):
     tarjeta = serializers.DecimalField(max_digits=10, decimal_places=2)
     productos = ProductoVendidoSerializer(many=True)
     ventas = VentaItemReporteSerializer(many=True, required=False)
+
+
+class CierreReporteConsultaSerializer(ReporteVentasConsultaSerializer):
+    periodo = serializers.ChoiceField(choices=PeriodoReporte.choices)
+
+
+class CierreReporteVentasSerializer(ReporteVentasSerializer):
+    id_cierre = serializers.IntegerField()
+    periodo = serializers.ChoiceField(choices=PeriodoReporte.choices)
+    metodo_pago = serializers.CharField(allow_null=True)
+    fecha_generacion = serializers.DateTimeField()
+    generado_por = serializers.CharField()
+
+
+# ==============================================================================
+# CU23: Reporte de existencias
+# ==============================================================================
+
+class ReporteExistenciasConsultaSerializer(serializers.Serializer):
+    """Filtros validados del reporte de existencias (CU23)."""
+
+    tipo = serializers.ChoiceField(
+        choices=('todos', 'materia_prima', 'producto_terminado'),
+        default='todos',
+    )
+    q = serializers.CharField(
+        max_length=100, allow_blank=True, trim_whitespace=True, default='',
+    )
+    estado = serializers.ChoiceField(
+        choices=('todos', 'normal', 'bajo_stock', 'sin_inventario'),
+        default='todos',
+    )
+
+
+class ExistenciaItemReporteSerializer(serializers.Serializer):
+    """Fila de catálogo; una cantidad nula indica que falta su inventario."""
+
+    id = serializers.IntegerField()
+    nombre = serializers.CharField()
+    tipo = serializers.ChoiceField(choices=('materia_prima', 'producto_terminado'))
+    stock_actual = serializers.DecimalField(
+        max_digits=13, decimal_places=3, allow_null=True, coerce_to_string=True,
+    )
+    stock_minimo = serializers.DecimalField(
+        max_digits=13, decimal_places=3, coerce_to_string=True,
+    )
+    origen_minimo = serializers.ChoiceField(choices=('catalogo', 'referencial_global'))
+    unidad_medida = serializers.CharField()
+    estado = serializers.ChoiceField(choices=('normal', 'bajo_stock', 'sin_inventario'))
+    activo = serializers.BooleanField()
+
+
+class ResumenExistenciasReporteSerializer(serializers.Serializer):
+    total = serializers.IntegerField()
+    materias_primas = serializers.IntegerField()
+    productos_terminados = serializers.IntegerField()
+    bajo_stock = serializers.IntegerField()
+    sin_inventario = serializers.IntegerField()
+
+
+class ReporteExistenciasSerializer(serializers.Serializer):
+    umbral_productos_terminados = serializers.DecimalField(
+        max_digits=13, decimal_places=3, coerce_to_string=True,
+    )
+    resumen = ResumenExistenciasReporteSerializer()
+    resultados = ExistenciaItemReporteSerializer(many=True)
+
+
+# ==============================================================================
+# CU24: Generar reporte de compras y gastos
+# ==============================================================================
+
+class ReporteComprasConsultaSerializer(serializers.Serializer):
+    desde = serializers.DateField()
+    hasta = serializers.DateField()
+    id_proveedor = serializers.IntegerField(required=False, allow_null=True)
+    id_materia_prima = serializers.IntegerField(required=False, allow_null=True)
+
+
+class ProveedorComprasSerializer(serializers.Serializer):
+    id_proveedor = serializers.IntegerField()
+    nombre = serializers.CharField()
+    cantidad_compras = serializers.IntegerField()
+    total = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+
+class InsumoCompradoSerializer(serializers.Serializer):
+    id_materia_prima = serializers.IntegerField(required=False)
+    nombre = serializers.CharField()
+    unidad_medida = serializers.CharField(allow_blank=True, default='')
+    cantidad = serializers.DecimalField(max_digits=10, decimal_places=3)
+    subtotal = serializers.DecimalField(max_digits=10, decimal_places=2)
+
+
+class ReporteComprasSerializer(serializers.Serializer):
+    desde = serializers.DateField()
+    hasta = serializers.DateField()
+    cantidad = serializers.IntegerField()
+    total = serializers.DecimalField(max_digits=10, decimal_places=2)
+    proveedores = ProveedorComprasSerializer(many=True)
+    insumos = InsumoCompradoSerializer(many=True)
+
+
+class CierreReporteComprasConsultaSerializer(ReporteComprasConsultaSerializer):
+    periodo = serializers.ChoiceField(choices=PeriodoReporte.choices)
+
+
+class CierreReporteComprasSerializer(serializers.Serializer):
+    id_cierre = serializers.IntegerField()
+    desde = serializers.DateField()
+    hasta = serializers.DateField()
+    periodo = serializers.ChoiceField(choices=PeriodoReporte.choices)
+    proveedor = serializers.CharField(allow_null=True)
+    cantidad = serializers.IntegerField()
+    total = serializers.DecimalField(max_digits=10, decimal_places=2)
+    fecha_generacion = serializers.DateTimeField()
+    generado_por = serializers.CharField()
+    insumos = InsumoCompradoSerializer(many=True)
 
 
 # =============================================================================
@@ -151,4 +306,3 @@ class ReporteResultadosEconomicosSerializer(serializers.Serializer):
     inversiones = InversionesReporteSerializer()
     resumen_financiero = ResumenFinancieroSerializer()
     estado_resultados = EstadoResultadosFilaSerializer(many=True)
-

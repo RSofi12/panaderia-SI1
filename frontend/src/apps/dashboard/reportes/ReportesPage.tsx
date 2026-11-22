@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   BarChart3,
   TrendingUp,
@@ -28,15 +29,15 @@ import {
   type PeriodoReporte,
   type ReporteVentas,
 } from '../../../services/reporteVentasService';
-import type { ComandoVozInterpretado, PendienteDescargaVoz } from '../../../types/reporteVoz';
+import {
+  descargarAnalisisReporteCsv,
+  descargarAnalisisReportePdf,
+} from '../../../services/reporteVozService';
+import type { AnalisisVozReporte, ContextoDescargaAsistente } from '../../../types/reporteVoz';
 import AsistenteVozReporte from './components/AsistenteVozReporte';
 import { ResultadosEconomicosView } from './components/ResultadosEconomicosView';
 
 const MENSAJE_SIN_DATOS_REPORTE = 'No hay datos disponibles para el período solicitado.';
-
-function avisarSinDatosReporte(): string {
-  return MENSAJE_SIN_DATOS_REPORTE;
-}
 
 interface CasoUsoReporte {
   cu: string;
@@ -64,7 +65,7 @@ const REPORTES_CASOS: CasoUsoReporte[] = [
     cu: 'CU23',
     titulo: 'Generar reporte de existencias',
     descripcion:
-      'Reporte del estado y valorización de existencias de materias primas y productos terminados en mostrador.',
+      'Consulta del stock actual de materias primas y productos terminados, con mínimos utilizados, bajo stock y registros sin inventario.',
     icono: PieChart,
   },
   {
@@ -147,7 +148,7 @@ export const ReportesPage: React.FC = () => {
   const [cargando, setCargando] = useState(false);
   const [descargando, setDescargando] = useState<'csv' | 'excel' | 'pdf' | ''>('');
   const [error, setError] = useState('');
-  const [pendienteFormatoVoz, setPendienteFormatoVoz] = useState<PendienteDescargaVoz | null>(null);
+  const [descargandoAsistente, setDescargandoAsistente] = useState('');
 
   // Pestaña activa dentro del reporte: Ventas individuales o Desglose por producto
   const [vistaTabla, setVistaTabla] = useState<'ventas' | 'productos'>('ventas');
@@ -356,32 +357,26 @@ export const ReportesPage: React.FC = () => {
     }
   }
 
-  async function handleComandoVoz(comando: ComandoVozInterpretado): Promise<string | void> {
-    if (comando.caso_uso === 'CU25') {
+  async function handleAnalisisVoz(resultado: AnalisisVozReporte): Promise<void> {
+    if (resultado.comando.caso_uso === 'CU25' || resultado.caso_uso === 'CU25') {
       setCuActivo('CU25');
       setComandoEconomicoPendiente({
-        formato: comando.formato,
-        accion: comando.accion,
-        desde: comando.filtros.desde ?? undefined,
-        hasta: comando.filtros.hasta ?? undefined,
+        formato: resultado.comando.formato,
+        accion: resultado.comando.accion,
+        desde: resultado.comando.filtros.desde ?? undefined,
+        hasta: resultado.comando.filtros.hasta ?? undefined,
       });
-      return comando.respuesta_voz;
+      return;
     }
 
-    if (!comando.modulo_disponible || comando.caso_uso !== 'CU21') {
-      setError(
-        `${comando.respuesta_voz} El módulo ${comando.caso_uso} aún no está integrado en pantalla; el backend ya entiende el comando.`,
-      );
-      return comando.respuesta_voz;
-    }
-
-    const { desde, hasta, metodo_pago: metodoPago, columnas, periodo: periodoVoz } = comando.filtros;
+    const { desde, hasta, metodo_pago: metodoPago, periodo: periodoVoz, columnas } =
+      resultado.comando.filtros;
     if (!desde || !hasta) {
-      setError('El comando no trajo un rango de fechas válido.');
-      return 'El comando no trajo un rango de fechas válido.';
+      setError('No se pudo inferir el período de la consulta.');
+      return;
     }
 
-    sincronizarSelectoresDesdeRango(desde, hasta, periodoVoz);
+    sincronizarSelectoresDesdeRango(desde, hasta, periodoVoz ?? undefined);
     const metodoFiltro = metodoPago ?? '';
     setMetodo(metodoFiltro);
 
@@ -395,68 +390,59 @@ export const ReportesPage: React.FC = () => {
       });
     }
 
+    const debeTablaVentas =
+      resultado.exportar_ventas ||
+      resultado.tema === 'ventas' ||
+      resultado.tema === 'productos' ||
+      resultado.comando.caso_uso === 'CU21';
+
+    if (debeTablaVentas) {
+      const datos = await consultarConRango(desde, hasta, metodoFiltro);
+      if (datos && datos.cantidad === 0) {
+        setError(MENSAJE_SIN_DATOS_REPORTE);
+      }
+    }
+  }
+
+  async function handleDescargaAsistente(
+    formato: 'pdf' | 'csv' | 'excel',
+    ctx: ContextoDescargaAsistente,
+  ): Promise<void> {
+    setError('');
+    setDescargandoAsistente(formato);
     const columnasActivas =
-      columnas && columnas.length > 0
-        ? columnas
+      ctx.columnas.length > 0
+        ? ctx.columnas
         : Object.entries(columnasVisibles)
             .filter(([, visible]) => visible)
             .map(([id]) => id);
 
-    const datos = await consultarConRango(desde, hasta, metodoFiltro);
-    if (!datos) {
-      return 'No se pudo consultar el reporte de ese período.';
-    }
-    if (datos.cantidad === 0) {
-      setPendienteFormatoVoz(null);
-      setError(MENSAJE_SIN_DATOS_REPORTE);
-      return avisarSinDatosReporte();
-    }
-
-    if (comando.requiere_seleccion_formato) {
-      setPendienteFormatoVoz({
-        desde,
-        hasta,
-        metodo: metodoFiltro,
-        columnas: columnasActivas,
-      });
-      return comando.respuesta_voz;
-    }
-
-    if (comando.accion !== 'descargar' || comando.formato === 'pantalla') {
-      setPendienteFormatoVoz(null);
-      return comando.respuesta_voz;
-    }
-
-    await descargarReportePorVoz(desde, hasta, metodoFiltro, columnasActivas, comando.formato);
-    return comando.respuesta_voz;
-  }
-
-  async function descargarReportePorVoz(
-    desde: string,
-    hasta: string,
-    metodoFiltro: string,
-    columnasActivas: string[],
-    formato: 'pdf' | 'csv' | 'excel',
-  ) {
-    if (reporte && reporte.cantidad === 0) {
-      setPendienteFormatoVoz(null);
-      setError(MENSAJE_SIN_DATOS_REPORTE);
-      return;
-    }
-    setPendienteFormatoVoz(null);
-    setError('');
     try {
+      if (ctx.exportarVentas) {
+        if (formato === 'pdf') {
+          await descargarReportePdf(ctx.desde, ctx.hasta, ctx.metodo, columnasActivas);
+        } else {
+          await descargarReporteCsv(ctx.desde, ctx.hasta, ctx.metodo, columnasActivas);
+        }
+        return;
+      }
+
+      const payload = {
+        consulta: ctx.consulta,
+        tema: ctx.tema,
+        desde: ctx.desde,
+        hasta: ctx.hasta,
+        analisis: ctx.analisis,
+      };
       if (formato === 'pdf') {
-        setDescargando('pdf');
-        await descargarReportePdf(desde, hasta, metodoFiltro, columnasActivas);
+        await descargarAnalisisReportePdf(payload);
       } else {
-        setDescargando(formato === 'excel' ? 'excel' : 'csv');
-        await descargarReporteCsv(desde, hasta, metodoFiltro, columnasActivas);
+        await descargarAnalisisReporteCsv(payload);
       }
     } catch {
-      setError(MENSAJE_SIN_DATOS_REPORTE);
+      setError('No se pudo generar el archivo.');
     } finally {
-      setDescargando('');
+      setDescargandoAsistente('');
     }
   }
 
@@ -484,35 +470,66 @@ export const ReportesPage: React.FC = () => {
         </div>
       </div>
 
-      <AsistenteVozReporte cuActual={cuActivo} onComando={handleComandoVoz} />
-
-      {/* Selector de Pestañas de Reportes Disponibles */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+      {/* Pestañas de navegación rápida entre Reportes disponibles (ordenados por número de CU) */}
+      <div className="flex border-b border-amber-200 bg-white px-3 pt-2 rounded-2xl shadow-xs gap-1 overflow-x-auto">
         <button
           type="button"
           onClick={() => setCuActivo('CU21')}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+          className={`inline-flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-bold rounded-t-xl transition-colors ${
             cuActivo === 'CU21'
-              ? 'bg-amber-800 text-white shadow-xs'
-              : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+              ? 'border-amber-700 bg-amber-50/70 text-amber-900'
+              : 'border-transparent text-slate-600 hover:text-amber-900 hover:bg-amber-50/40'
           }`}
         >
-          <TrendingUp className="h-4 w-4" />
-          CU21 · Ventas y Facturación
+          <TrendingUp className="h-4 w-4 text-amber-700" />
+          CU21: Reporte de Ventas
+          <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+            Disponible
+          </span>
         </button>
+        <Link
+          to="/dashboard/reportes/existencias"
+          className="inline-flex items-center gap-2 border-b-2 border-transparent px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-amber-900 hover:bg-amber-50/40 rounded-t-xl transition-colors"
+        >
+          <PieChart className="h-4 w-4 text-slate-500" />
+          CU23: Reporte de Existencias
+          <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+            Disponible
+          </span>
+        </Link>
+        <Link
+          to="/dashboard/reportes/compras"
+          className="inline-flex items-center gap-2 border-b-2 border-transparent px-4 py-2.5 text-xs font-bold text-slate-600 hover:text-amber-900 hover:bg-amber-50/40 rounded-t-xl transition-colors"
+        >
+          <Wallet className="h-4 w-4 text-amber-700" />
+          CU24: Reporte de Compras y Gastos
+          <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+            Disponible
+          </span>
+        </Link>
         <button
           type="button"
           onClick={() => setCuActivo('CU25')}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+          className={`inline-flex items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-bold rounded-t-xl transition-colors ${
             cuActivo === 'CU25'
-              ? 'bg-emerald-800 text-white shadow-xs'
-              : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+              ? 'border-emerald-700 bg-emerald-50 text-emerald-900'
+              : 'border-transparent text-slate-600 hover:text-emerald-900 hover:bg-emerald-50/40'
           }`}
         >
-          <FileSpreadsheet className="h-4 w-4" />
-          CU25 · Resultados Económicos y Balance
+          <FileSpreadsheet className="h-4 w-4 text-emerald-700" />
+          CU25: Resultados Económicos
+          <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+            Disponible
+          </span>
         </button>
       </div>
+
+      <AsistenteVozReporte
+        cuActual={cuActivo}
+        onAnalisis={handleAnalisisVoz}
+        onDescargar={handleDescargaAsistente}
+        descargando={descargandoAsistente}
+      />
 
       {cuActivo === 'CU25' ? (
         <ResultadosEconomicosView
@@ -522,49 +539,6 @@ export const ReportesPage: React.FC = () => {
         />
       ) : (
         <>
-          {pendienteFormatoVoz ? (
-        <section
-          className="rounded-2xl border border-amber-300 bg-amber-50/90 p-4 shadow-2xs"
-          role="dialog"
-          aria-labelledby="titulo-elegir-formato-voz"
-        >
-          <h3 id="titulo-elegir-formato-voz" className="text-sm font-bold text-amber-950">
-            ¿En qué formato quieres el reporte?
-          </h3>
-          <p className="mt-1 text-xs text-amber-900/90">
-            No indicaste PDF, CSV ni Excel en el comando. El reporte ya está cargado en pantalla; elige cómo
-            descargarlo.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {(['pdf', 'csv', 'excel'] as const).map((formato) => (
-              <button
-                key={formato}
-                type="button"
-                disabled={Boolean(descargando)}
-                onClick={() =>
-                  void descargarReportePorVoz(
-                    pendienteFormatoVoz.desde,
-                    pendienteFormatoVoz.hasta,
-                    pendienteFormatoVoz.metodo,
-                    pendienteFormatoVoz.columnas,
-                    formato,
-                  )
-                }
-                className="rounded-xl border border-amber-400 bg-white px-4 py-2 text-sm font-bold uppercase tracking-wide text-amber-950 shadow-2xs hover:bg-amber-100 disabled:opacity-50"
-              >
-                {formato}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setPendienteFormatoVoz(null)}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-            >
-              Solo ver en pantalla
-            </button>
-          </div>
-        </section>
-      ) : null}
 
       {/* 2. Barra de Selección de Período y Filtros */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
@@ -977,9 +951,9 @@ export const ReportesPage: React.FC = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {REPORTES_CASOS.map((item) => {
             const Icono = item.icono;
-            const esActivo = item.cu === 'CU21' || item.cu === 'CU25';
+            const esActivo =
+              item.cu === 'CU21' || item.cu === 'CU23' || item.cu === 'CU24' || item.cu === 'CU25';
             const estaSeleccionado = cuActivo === item.cu;
-
             return (
               <div
                 key={item.cu}
@@ -998,7 +972,9 @@ export const ReportesPage: React.FC = () => {
                     </span>
                     <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500">
                       <AlertCircle className={`h-3 w-3 ${esActivo ? 'text-emerald-600' : 'text-amber-600'}`} />
-                      {esActivo ? 'Activo y Funcional' : 'Planificado'}
+                      <span className={esActivo ? 'text-emerald-700 font-bold' : ''}>
+                        {esActivo ? 'Activo y Funcional' : 'Planificado'}
+                      </span>
                     </span>
                   </div>
 
@@ -1016,13 +992,34 @@ export const ReportesPage: React.FC = () => {
                   <p className="text-[11px] text-slate-400">
                     <span className="font-semibold text-slate-600">Actor autorizado:</span> Propietario
                   </p>
-                  <p className="text-[10px] text-slate-500">
-                    {item.cu === 'CU21'
-                      ? 'Voz activa: PDF, CSV y Excel para este reporte.'
-                      : item.cu === 'CU25'
-                      ? 'Activo: Estado de resultados, balance y descarga PDF/Excel.'
-                      : `Voz en backend listo (${item.cu}); falta pantalla del equipo.`}
-                  </p>
+                  {item.cu === 'CU23' ? (
+                    <>
+                      <Link to="/dashboard/reportes/existencias" className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-amber-800 underline underline-offset-4 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2">Abrir reporte de existencias</Link>
+                      <p className="text-[10px] text-slate-500">Disponible para usuarios autorizados a generar reportes. Mínimo de productos terminados referencial y provisional.</p>
+                    </>
+                  ) : item.cu === 'CU24' ? (
+                    <>
+                      <Link to="/dashboard/reportes/compras" className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-amber-800 underline underline-offset-4 hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2">Abrir reporte de compras y gastos</Link>
+                      <p className="text-[10px] text-slate-500">Disponible para Propietario. Reporte dinámico y estático de compras a proveedores y gastos operativos con exportación PDF/CSV.</p>
+                    </>
+                  ) : item.cu === 'CU25' ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setCuActivo('CU25')}
+                        className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-emerald-800 underline underline-offset-4 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
+                      >
+                        Ver resultados económicos
+                      </button>
+                      <p className="text-[10px] text-slate-500">Activo: Estado de resultados, balance y descarga PDF/Excel.</p>
+                    </>
+                  ) : (
+                    <p className="text-[10px] text-slate-500">
+                      {item.cu === 'CU21'
+                        ? 'Voz activa arriba: PDF, CSV y Excel para este reporte.'
+                        : `Voz en backend listo (${item.cu}); falta pantalla del equipo.`}
+                    </p>
+                  )}
                 </div>
               </div>
             );

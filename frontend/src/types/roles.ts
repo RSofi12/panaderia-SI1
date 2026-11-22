@@ -26,6 +26,7 @@ export interface GrupoModuloPermisos {
 export interface RolListado {
   id_rol: number;
   nombre: string;
+  tipo_rol: string;
   descripcion: string | null;
   total_permisos: number;
   total_usuarios: number;
@@ -36,6 +37,7 @@ export interface RolListado {
 export interface RolDetalle {
   id_rol: number;
   nombre: string;
+  tipo_rol: string;
   descripcion: string | null;
   es_protegido: boolean;
   total_permisos: number;
@@ -46,12 +48,14 @@ export interface RolDetalle {
 /** Datos requeridos para dar de alta un nuevo rol. */
 export interface CrearRol {
   nombre: string;
+  tipo_rol?: string;
   descripcion?: string | null;
 }
 
 /** Datos para modificar un rol existente. */
 export interface EditarRol {
   nombre?: string;
+  tipo_rol?: string;
   descripcion?: string | null;
 }
 

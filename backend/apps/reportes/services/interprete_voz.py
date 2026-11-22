@@ -23,8 +23,8 @@ MODULOS_DISPONIBLES = frozenset({'CU21', 'CU25'})
 _PROMPT_SISTEMA = """Eres el asistente de reportes de la Panadería Santiago (Bolivia).
 Traduce el comando del usuario a JSON estricto.
 
-Casos de uso:
-- CU21: ventas, ingresos, facturación, comprobantes, tickets
+Casos de uso (prioriza el que mejor encaje; consultas de roles/usuarios siguen siendo CU21 para período pero el análisis puede ser de seguridad):
+- CU21: ventas, ingresos, facturación, comprobantes, tickets, roles, usuarios, cajeros
 - CU22: producción, jornadas, horneado, pan producido
 - CU23: existencias, inventario, stock, materia prima, productos terminados
 - CU24: compras, proveedores, gastos, inversiones, egresos
@@ -75,6 +75,22 @@ def _filtros_vacios() -> dict[str, Any]:
         'metodo_pago': '',
         'columnas': None,
     }
+
+
+def _completar_fechas_filtros(filtros: dict[str, Any], texto: str) -> dict[str, Any]:
+    """Gemini a veces omite desde/hasta; el análisis narrativo siempre necesita un rango."""
+    filtros = dict(filtros)
+    if not filtros.get('desde') or not filtros.get('hasta'):
+        detectados = _detectar_fechas(texto)
+        if detectados.get('desde') and detectados.get('hasta'):
+            filtros['desde'] = detectados['desde']
+            filtros['hasta'] = detectados['hasta']
+            if detectados.get('periodo'):
+                filtros['periodo'] = detectados['periodo']
+    if not filtros.get('desde') or not filtros.get('hasta'):
+        filtros['periodo'] = filtros.get('periodo') or 'mes'
+        filtros['desde'], filtros['hasta'] = _rango_mes(_hoy().year, _hoy().month)
+    return filtros
 
 
 def _enriquecer_resultado(data: dict[str, Any]) -> dict[str, Any]:
@@ -181,6 +197,8 @@ def _llamar_gemini(texto: str, cu_actual: str | None) -> dict[str, Any] | None:
 
 def _detectar_caso_uso(texto: str, cu_actual: str | None) -> str:
     t = texto.lower()
+    if any(p in t for p in ('rol', 'roles', 'permiso', 'usuario', 'usuarios', 'matriz de permiso')):
+        return 'CU21'
     reglas = (
         ('CU25', ('resultado', 'económico', 'economico', 'utilidad', 'margen', 'ganancia', 'balance')),
         ('CU24', ('compra', 'gasto', 'inversión', 'inversion', 'proveedor', 'egreso')),
@@ -359,5 +377,8 @@ def interpretar_comando_voz(texto: str, cu_actual: str | None = None) -> dict[st
     cu = cu_actual if cu_actual in CASOS_USO else None
     gemini = _llamar_gemini(limpio, cu)
     if gemini:
-        return _aplicar_rango_anual_si_corresponde(limpio, gemini)
-    return _interpretar_local(limpio, cu)
+        resultado = _aplicar_rango_anual_si_corresponde(limpio, gemini)
+    else:
+        resultado = _interpretar_local(limpio, cu)
+    resultado['filtros'] = _completar_fechas_filtros(resultado.get('filtros') or {}, limpio)
+    return resultado

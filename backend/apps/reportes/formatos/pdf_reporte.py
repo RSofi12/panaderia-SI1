@@ -195,6 +195,25 @@ class HojaReporte:
             self.hoja.drawString(MARGEN, self.y, linea)
             self.y -= 12
 
+    def cuerpo(self, texto: str, tamano: int = 10) -> None:
+        """Párrafos narrativos (p. ej. análisis del asistente de voz)."""
+        from apps.reportes.formatos.texto_informe import sin_markdown
+
+        texto = sin_markdown(str(texto))
+        for parrafo in texto.split('\n'):
+            fragmento = parrafo.strip()
+            if not fragmento:
+                self.y -= 6
+                continue
+            for linea in self._lineas(fragmento, 'Helvetica', tamano, UTIL):
+                if self.y < 58:
+                    self._saltar(None)
+                self.hoja.setFillColor(TINTA)
+                self.hoja.setFont('Helvetica', tamano)
+                self.hoja.drawString(MARGEN, self.y, linea)
+                self.y -= tamano + 4
+            self.y -= 4
+
     def cerrar(self) -> bytes:
         self._pie()
         self.hoja.save()
