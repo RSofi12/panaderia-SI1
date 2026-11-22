@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
   Boxes,
@@ -81,6 +81,7 @@ export const ProductosPage: React.FC = () => {
   const puedeConsultarAlertas = hasPermission('gestionar_inventario')
     && ROLES_ALERTAS_BAJO_STOCK.some((rol) => hasRole(rol));
   const puedeGestionar = hasPermission('gestionar_productos');
+  const puedeConsultarHistorialPrecios = puedeGestionar && hasRole('Propietario');
   const puedeRegistrarProduccion = hasPermission('registrar_produccion');
   const puedeConsultarInventario = hasPermission('gestionar_inventario') || hasPermission('registrar_ventas');
   // CU08: Solo Propietario, Administrador y Personal de Producción ven stock de materia prima
@@ -244,16 +245,27 @@ export const ProductosPage: React.FC = () => {
             <p className="mt-1 text-sm text-slate-500">{encabezado.descripcion}</p>
           </div>
 
-          {pestanaActiva === 'catalogo' && puedeGestionar && (
-            <button
-              type="button"
-              onClick={() => setModal({ tipo: 'formulario', producto: null })}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-amber-600/20 hover:from-amber-700 hover:to-amber-800 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              Nuevo producto
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-3">
+            {puedeConsultarHistorialPrecios && (
+              <Link
+                to="/dashboard/productos/historial-precios"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2"
+              >
+                <History aria-hidden="true" className="h-4 w-4" />
+                Historial de precios
+              </Link>
+            )}
+            {pestanaActiva === 'catalogo' && puedeGestionar && (
+              <button
+                type="button"
+                onClick={() => setModal({ tipo: 'formulario', producto: null })}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-amber-600/20 hover:from-amber-700 hover:to-amber-800 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Nuevo producto
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Selector de pestañas: solo muestra las secciones autorizadas */}

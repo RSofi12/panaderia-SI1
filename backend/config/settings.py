@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'apps.compras.compra_materia_prima',
     'apps.comercializacion',
     'apps.comercializacion.ventas',
+    'apps.comercializacion.pedidos',
     'apps.reportes',
 ]
 

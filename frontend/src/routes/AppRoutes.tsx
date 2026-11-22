@@ -9,10 +9,14 @@ import DashboardLayout from '../apps/dashboard/DashboardLayout';
 import DashboardHome from '../apps/dashboard/DashboardHome';
 import UsuariosPage from '../apps/dashboard/usuarios/UsuariosPage';
 import ProductosPage from '../apps/dashboard/productos/ProductosPage';
+import HistorialPreciosPage from '../apps/dashboard/productos/historial-precios/HistorialPreciosPage';
 import ComprasModuloPage from '../apps/dashboard/compras/ComprasModuloPage';
 import AlertasBajoStockPage from '../apps/dashboard/inventario/AlertasBajoStockPage';
 import ComercializacionPage from '../apps/dashboard/comercializacion/ComercializacionPage';
 import RegistrarVentaPage from '../apps/dashboard/comercializacion/ventas/RegistrarVentaPage';
+import RegistrarPedidoPage from '../apps/dashboard/comercializacion/pedidos/RegistrarPedidoPage';
+import PedidosEstadoPage from '../apps/dashboard/comercializacion/PedidosEstadoPage';
+import DisponibilidadPage from '../apps/dashboard/comercializacion/DisponibilidadPage';
 import ReportesPage from '../apps/dashboard/reportes/ReportesPage';
 import { ROLES_ALERTAS_BAJO_STOCK } from '../types/materiaPrima';
 
@@ -81,6 +85,14 @@ export const AppRoutes: React.FC = () => {
                 permite el backend a cualquier autenticado; la escritura exige
                 `gestionar_productos` y la controla la propia pantalla + API. */}
             <Route path="productos" element={<ProductosPage />} />
+            <Route
+              path="productos/historial-precios"
+              element={
+                <ProtectedRoute requiredPermission="gestionar_productos" requiredRole="Propietario">
+                  <HistorialPreciosPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="inventario/alertas-bajo-stock" element={
               <ProtectedRoute requiredPermission="gestionar_inventario" requiredRole={ROLES_ALERTAS_BAJO_STOCK}>
                 <AlertasBajoStockPage />
@@ -94,6 +106,8 @@ export const AppRoutes: React.FC = () => {
                 responde 403 al resto. */}
             <Route path="compras" element={<ComprasModuloPage />} />
             <Route path="comercializacion" element={<ComercializacionPage />} />
+            <Route path="comercializacion/pedidos/estado" element={<ProtectedRoute requiredPermission={['registrar_pedidos', 'registrar_produccion']}><PedidosEstadoPage /></ProtectedRoute>} />
+            <Route path="comercializacion/disponibilidad" element={<ProtectedRoute requiredPermission={['registrar_pedidos', 'registrar_ventas', 'gestionar_inventario', 'registrar_produccion']}><DisponibilidadPage /></ProtectedRoute>} />
             <Route
               path="comercializacion/ventas"
               element={
@@ -102,7 +116,22 @@ export const AppRoutes: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-            <Route path="reportes" element={<ReportesPage />} />
+            <Route
+              path="comercializacion/pedidos"
+              element={
+                <ProtectedRoute requiredPermission="registrar_pedidos">
+                  <RegistrarPedidoPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="reportes"
+              element={
+                <ProtectedRoute requiredPermission="generar_reportes">
+                  <ReportesPage />
+                </ProtectedRoute>
+              }
+            />
           </Route>
 
           {/* Redirecciones por defecto */}

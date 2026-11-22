@@ -2,7 +2,11 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
-from apps.productos_inventario.productos.models import CategoriaProducto, Producto
+from apps.productos_inventario.productos.models import (
+    CategoriaProducto,
+    HistorialPrecioProducto,
+    Producto,
+)
 
 
 class CategoriaProductoSerializer(serializers.ModelSerializer):
@@ -55,3 +59,41 @@ class ProductoSerializer(serializers.ModelSerializer):
         if value <= Decimal('0'):
             raise serializers.ValidationError('El precio de venta debe ser mayor a cero.')
         return value
+
+
+class FiltrosHistorialPreciosSerializer(serializers.Serializer):
+    """Parámetros opcionales del listado CU19; no cambia datos del catálogo."""
+
+    id_producto = serializers.IntegerField(
+        required=False, min_value=1, max_value=9223372036854775807
+    )
+    fecha_desde = serializers.DateField(required=False, input_formats=['iso-8601'])
+    fecha_hasta = serializers.DateField(required=False, input_formats=['iso-8601'])
+
+    def validate(self, attrs):
+        desde = attrs.get('fecha_desde')
+        hasta = attrs.get('fecha_hasta')
+        if desde and hasta and desde > hasta:
+            raise serializers.ValidationError({
+                'fecha_hasta': 'La fecha final no puede ser anterior a la fecha inicial.'
+            })
+        return attrs
+
+
+class HistorialPrecioProductoSerializer(serializers.ModelSerializer):
+    """Contrato de consulta: el precio se conserva como cadena decimal exacta."""
+
+    id_producto = serializers.IntegerField(source='id_producto_id', read_only=True)
+    producto_nombre = serializers.CharField(source='id_producto.nombre', read_only=True)
+    producto_activo = serializers.BooleanField(source='id_producto.activo', read_only=True)
+    precio = serializers.DecimalField(
+        max_digits=10, decimal_places=2, coerce_to_string=True, read_only=True
+    )
+
+    class Meta:
+        model = HistorialPrecioProducto
+        fields = [
+            'id_historial', 'id_producto', 'producto_nombre',
+            'producto_activo', 'precio', 'fecha_inicio',
+        ]
+        read_only_fields = fields

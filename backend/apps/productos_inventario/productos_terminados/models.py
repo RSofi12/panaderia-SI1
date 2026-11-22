@@ -80,6 +80,15 @@ class MovimientoProductoTerminado(models.Model):
         related_name='movimientos_producto',
         verbose_name='Venta de origen',
     )
+    id_pedido = models.ForeignKey(
+        'pedidos.Pedido',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        db_column='id_pedido',
+        related_name='movimientos_producto',
+        verbose_name='Pedido de origen',
+    )
     fecha_hora = models.DateTimeField(default=timezone.now, verbose_name='Fecha y hora')
     tipo = models.CharField(
         max_length=10,

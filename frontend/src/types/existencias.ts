@@ -1,5 +1,7 @@
-/**
- * Tipos e interfaces TypeScript para CU12: Consultar existencias de productos terminados.
+﻿/**
+ * Tipos e interfaces TypeScript para:
+ *  - CU12: Consultar existencias de productos terminados.
+ *  - CU18: Registrar baja de productos terminados (mermas/pérdidas).
  * Autor: Roberto (Equipo Panadería Santiago).
  */
 
@@ -56,4 +58,38 @@ export interface FiltrosExistencias {
   estado_stock?: '' | 'disponible' | 'critico' | 'agotado';
   solo_activos?: boolean;
   ordenar_por?: 'nombre_asc' | 'nombre_desc' | 'stock_asc' | 'stock_desc' | 'precio_asc' | 'precio_desc';
+}
+
+/**
+ * Entidades para CU18: Registrar baja de productos terminados (Mermas / Pérdidas)
+ */
+export interface NotaPerdida {
+  id_nota_perdida: number;
+  id_detalle_produccion: number;
+  id_producto: number;
+  producto_nombre: string;
+  categoria_nombre: string;
+  id_usuario: number;
+  registrado_por: string;
+  produccion_id: number;
+  cantidad: number;
+  costo_unitario: string;
+  costo_total: string;
+  fecha_salida: string;
+}
+
+export interface RegistrarBajaPayload {
+  id_producto: number;
+  cantidad: number;
+  id_detalle_produccion?: number | null;
+  motivo?: string;
+  observaciones?: string;
+  costo_unitario?: number | string | null;
+}
+
+export interface FiltrosMermas {
+  id_producto?: number;
+  q?: string;
+  fecha_desde?: string;
+  fecha_hasta?: string;
 }

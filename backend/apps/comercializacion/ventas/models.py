@@ -12,10 +12,19 @@ class MetodoPago(models.TextChoices):
 
 class Venta(models.Model):
     """
-    Venta directa de mostrador (CU13).
-    id_pedido se agrega en CU14: hoy toda venta nace sin pedido.
+    Venta de mostrador (CU13) o de un pedido entregado (CU14).
+    id_pedido queda vacío en el mostrador. Al entregar, una venta apunta a un solo pedido.
     """
     id_venta = models.BigAutoField(primary_key=True)
+    id_pedido = models.OneToOneField(
+        'pedidos.Pedido',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        db_column='id_pedido',
+        related_name='venta',
+        verbose_name='Pedido de origen',
+    )
     id_usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,

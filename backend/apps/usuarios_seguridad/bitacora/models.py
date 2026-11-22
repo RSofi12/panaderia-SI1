@@ -73,6 +73,11 @@ class AccionBitacora(models.TextChoices):
     # --- CU13: Registrar venta ---
     ALTA_VENTA = 'ALTA_VENTA', 'Registro de venta en mostrador'
 
+    # --- CU14: Registrar pedido ---
+    ALTA_PEDIDO = 'ALTA_PEDIDO', 'Registro de pedido'
+    PAGO_PEDIDO = 'PAGO_PEDIDO', 'Pago de pedido'
+    CAMBIAR_ESTADO_PEDIDO = 'CAMBIAR_ESTADO_PEDIDO', 'Cambio de estado de pedido'
+
     # --- CU8: Gestionar materia prima ---
     ALTA_MATERIA_PRIMA = 'ALTA_MATERIA_PRIMA', 'Alta de materia prima'
     EDICION_MATERIA_PRIMA = 'EDICION_MATERIA_PRIMA', 'Modificación de materia prima'
@@ -83,6 +88,12 @@ class AccionBitacora(models.TextChoices):
 
     # --- CU16: Generar comprobante de venta ---
     EMISION_COMPROBANTE = 'EMISION_COMPROBANTE', 'Emisión de comprobante de venta'
+
+    # --- CU18: Registrar baja de productos terminados (merma) ---
+    REGISTRO_BAJA_PRODUCTO = 'REGISTRO_BAJA_PRODUCTO', 'Registro de baja de productos terminados (merma)'
+
+    # --- CU21: Generar reporte de ventas ---
+    CIERRE_REPORTE_VENTAS = 'CIERRE_REPORTE_VENTAS', 'Cierre estático del reporte de ventas'
 
 
 class Bitacora(models.Model):

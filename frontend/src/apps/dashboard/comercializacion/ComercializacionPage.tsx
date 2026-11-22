@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRight, Banknote, CreditCard, Receipt, ShoppingBag, TrendingUp } from 'lucide-react';
+import { ArrowRight, Banknote, CreditCard, ClipboardList, PackageSearch, Receipt, ShoppingBag, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import type { VentaResumen } from '../../../types/venta';
@@ -43,6 +43,9 @@ type EstadoCarga = 'cargando' | 'listo' | 'error';
 export const ComercializacionPage: React.FC = () => {
   const { hasPermission } = useAuth();
   const puedeVender = hasPermission('registrar_ventas');
+  const puedePedir = hasPermission('registrar_pedidos');
+  const puedeConsultarPedidos = hasPermission('registrar_pedidos') || hasPermission('registrar_produccion');
+  const puedeConsultarDisponibilidad = hasPermission('registrar_pedidos') || hasPermission('registrar_ventas') || hasPermission('gestionar_inventario');
   const [ventas, setVentas] = useState<VentaResumen[]>([]);
   const [estado, setEstado] = useState<EstadoCarga>('cargando');
   const [idVentaComprobante, setIdVentaComprobante] = useState<number | null>(null);
@@ -109,20 +112,36 @@ export const ComercializacionPage: React.FC = () => {
               mostrador se descuenta al confirmar.
             </p>
           </div>
-          {puedeVender ? (
-            <Link
-              to="/dashboard/comercializacion/ventas"
-              className="group inline-flex shrink-0 items-center justify-center gap-3 rounded-2xl bg-amber-400 px-6 py-4 text-base font-bold text-[#2b1a10] shadow-md transition hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/50"
-            >
-              Abrir mostrador
-              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-            </Link>
-          ) : (
-            <p className="max-w-xs rounded-2xl bg-white/5 p-4 text-sm text-amber-100/80">
-              Tu rol no tiene el permiso para registrar ventas. Pídeselo al administrador.
-            </p>
-          )}
+          <div className="flex shrink-0 flex-col gap-3">
+            {puedeVender ? (
+              <Link
+                to="/dashboard/comercializacion/ventas"
+                className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-amber-400 px-6 py-4 text-base font-bold text-[#2b1a10] shadow-md transition hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/50"
+              >
+                Abrir mostrador
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+              </Link>
+            ) : (
+              <p className="max-w-xs rounded-2xl bg-white/5 p-4 text-sm text-amber-100/80">
+                Tu rol no tiene el permiso para registrar ventas. Pídeselo al administrador.
+              </p>
+            )}
+            {puedePedir ? (
+              <Link
+                to="/dashboard/comercializacion/pedidos"
+                className="group inline-flex items-center justify-center gap-3 rounded-2xl bg-amber-100 px-6 py-4 text-base font-bold text-[#2b1a10] shadow-md transition hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/50"
+              >
+                Registrar pedido
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+              </Link>
+            ) : null}
+          </div>
         </div>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2" aria-label="Consultas de comercialización">
+        {puedeConsultarPedidos ? <Link to="/dashboard/comercializacion/pedidos/estado" className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-amber-300 hover:shadow-md"><span><ClipboardList className="h-6 w-6 text-amber-700" aria-hidden="true" /><strong className="mt-3 block text-slate-900">CU15 · Estado de pedidos</strong><span className="mt-1 block text-sm text-slate-500">Consulta pedidos pendientes, en preparación y listos.</span></span><ArrowRight className="h-5 w-5 text-slate-400" aria-hidden="true" /></Link> : null}
+        {puedeConsultarDisponibilidad ? <Link to="/dashboard/comercializacion/disponibilidad" className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-amber-300 hover:shadow-md"><span><PackageSearch className="h-6 w-6 text-amber-700" aria-hidden="true" /><strong className="mt-3 block text-slate-900">CU17 · Disponibilidad</strong><span className="mt-1 block text-sm text-slate-500">Consulta los panes activos disponibles para la venta.</span></span><ArrowRight className="h-5 w-5 text-slate-400" aria-hidden="true" /></Link> : null}
       </section>
 
       {puedeVender ? (

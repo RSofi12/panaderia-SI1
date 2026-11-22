@@ -11,16 +11,19 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import type { DetalleVentaEntrada } from '../../../../types/venta';
+import type { DetalleVentaEntrada, IntencionStripe } from '../../../../types/venta';
 import { ventaService } from './ventaService';
 
 interface ModalPagoTarjetaProps {
   abierto: boolean;
   totalTexto: string;
   totalCentavos: number;
-  detalles: DetalleVentaEntrada[];
+  detalles?: DetalleVentaEntrada[];
   procesando: boolean;
   errorMensaje?: string;
+  titularInicial?: string;
+  obtenerIntencion?: () => Promise<IntencionStripe>;
+  obtenerClavePublica?: () => Promise<string>;
   onCerrar: () => void;
   onVentaConfirmada: (idTransaccionStripe: string) => Promise<void>;
 }
@@ -28,8 +31,10 @@ interface ModalPagoTarjetaProps {
 interface FormularioCardElementProps {
   totalTexto: string;
   totalCentavos: number;
-  detalles: DetalleVentaEntrada[];
+  detalles?: DetalleVentaEntrada[];
   procesandoPadre: boolean;
+  titularInicial?: string;
+  obtenerIntencion?: () => Promise<IntencionStripe>;
   onCerrar: () => void;
   onVentaConfirmada: (idTransaccionStripe: string) => Promise<void>;
 }
@@ -39,12 +44,14 @@ function FormularioCardElement({
   totalCentavos,
   detalles,
   procesandoPadre,
+  titularInicial,
+  obtenerIntencion,
   onCerrar,
   onVentaConfirmada,
 }: FormularioCardElementProps) {
   const stripe = useStripe();
   const elements = useElements();
-  const [titular, setTitular] = useState('Cliente Mostrador');
+  const [titular, setTitular] = useState(titularInicial?.trim() || 'Cliente Mostrador');
   const [guardando, setGuardando] = useState(false);
   const [errorLocal, setErrorLocal] = useState('');
 
@@ -74,7 +81,9 @@ function FormularioCardElement({
 
     try {
       // 1. Crear el PaymentIntent en el backend para obtener el client_secret
-      const intencion = await ventaService.crearIntencion(detalles);
+      const intencion = obtenerIntencion
+        ? await obtenerIntencion()
+        : await ventaService.crearIntencion(detalles ?? []);
 
       // 2. Confirmar el pago directamente con el SDK oficial de Stripe
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(
@@ -104,11 +113,14 @@ function FormularioCardElement({
       // 3. Registrar la venta en la base de datos con el id oficial de Stripe
       await onVentaConfirmada(paymentIntent.id);
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { detalles?: string | string[] } } })?.response?.data
-          ?.detalles ||
-        (err instanceof Error ? err.message : 'Error inesperado al procesar la venta.');
-      setErrorLocal(Array.isArray(msg) ? msg.join(' ') : String(msg));
+      const datos = (err as { response?: { data?: unknown } })?.response?.data;
+      let msg = '';
+      if (datos && typeof datos === 'object') {
+        msg = Object.values(datos as Record<string, unknown>)
+          .flatMap((valor) => (Array.isArray(valor) ? valor.map(String) : [String(valor)]))
+          .join(' ');
+      }
+      setErrorLocal(msg || (err instanceof Error ? err.message : 'Error inesperado al procesar el pago.'));
       setGuardando(false);
     }
   }
@@ -230,6 +242,9 @@ export function ModalPagoTarjeta({
   detalles,
   procesando,
   errorMensaje,
+  titularInicial,
+  obtenerIntencion,
+  obtenerClavePublica,
   onCerrar,
   onVentaConfirmada,
 }: ModalPagoTarjetaProps) {
@@ -247,13 +262,14 @@ export function ModalPagoTarjeta({
   // Si no hay clave en el entorno, consultar al backend si tiene STRIPE_PUBLISHABLE_KEY
   useEffect(() => {
     if (!claveStripe) {
-      void ventaService.obtenerConfigStripe().then((res) => {
-        if (res.publishable_key) {
-          setClaveStripe(res.publishable_key);
-        }
+      const cargar = obtenerClavePublica
+        ? obtenerClavePublica()
+        : ventaService.obtenerConfigStripe().then((res) => res.publishable_key);
+      void cargar.then((clave) => {
+        if (clave) setClaveStripe(clave);
       });
     }
-  }, [claveStripe]);
+  }, [claveStripe, obtenerClavePublica]);
 
   // Manejar tecla Escape
   useEffect(() => {
@@ -326,6 +342,8 @@ export function ModalPagoTarjeta({
               totalCentavos={totalCentavos}
               detalles={detalles}
               procesandoPadre={procesando}
+              titularInicial={titularInicial}
+              obtenerIntencion={obtenerIntencion}
               onCerrar={onCerrar}
               onVentaConfirmada={onVentaConfirmada}
             />

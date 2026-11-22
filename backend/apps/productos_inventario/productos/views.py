@@ -2,14 +2,48 @@ from django.db import transaction
 from django.db.models import F
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+from rest_framework.generics import ListAPIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.usuarios_seguridad.bitacora.models import AccionBitacora, Bitacora
 from apps.productos_inventario.productos.models import CategoriaProducto, HistorialPrecioProducto, Producto
-from apps.productos_inventario.productos.permissions import PuedeGestionarProductos
-from apps.productos_inventario.productos.serializers import CategoriaProductoSerializer, ProductoSerializer
+from apps.productos_inventario.productos.permissions import (
+    EsPropietarioCU19,
+    PuedeGestionarProductos,
+)
+from apps.productos_inventario.productos.selectors import obtener_historial_precios_productos
+from apps.productos_inventario.productos.serializers import (
+    CategoriaProductoSerializer,
+    FiltrosHistorialPreciosSerializer,
+    HistorialPrecioProductoSerializer,
+    ProductoSerializer,
+)
+from apps.usuarios_seguridad.users.permissions import TienePermiso
+
+
+class HistorialPreciosListView(ListAPIView):
+    """GET /api/productos/historial-precios/ — Consulta de solo lectura (CU19)."""
+
+    serializer_class = HistorialPrecioProductoSerializer
+    pagination_class = PageNumberPagination
+    http_method_names = ['get', 'head', 'options']
+
+    def get_permissions(self):
+        return [
+            IsAuthenticated(),
+            TienePermiso('gestionar_productos'),
+            EsPropietarioCU19(),
+        ]
+
+    def get_queryset(self):
+        # Un diccionario plano conserva parámetros presentes pero vacíos como
+        # entradas inválidas; QueryDict puede tratarlos como campos HTML omitidos.
+        filtros = FiltrosHistorialPreciosSerializer(data=self.request.query_params.dict())
+        filtros.is_valid(raise_exception=True)
+        return obtener_historial_precios_productos(**filtros.validated_data)
 
 
 class CategoriaProductoListView(APIView):

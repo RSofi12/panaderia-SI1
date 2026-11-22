@@ -76,7 +76,7 @@ export const NAV_MODULES: NavModule[] = [
     to: '/dashboard/reportes',
     icon: BarChart3,
     casosDeUso: 'CU21–CU25',
-    permisos: ['generar_reportes', 'gestionar_usuarios'],
+    permisos: ['generar_reportes'],
     implemented: true,
   },
 ];

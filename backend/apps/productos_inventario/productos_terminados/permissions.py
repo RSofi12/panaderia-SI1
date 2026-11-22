@@ -1,33 +1,39 @@
 """
-Permisos RBAC para la sub-app de Productos Terminados (CU12: Consultar existencias de productos terminados).
+Permisos RBAC para la sub-app de Productos Terminados:
+  - CU12: Consultar existencias de productos terminados.
+  - CU18: Registrar baja de productos terminados (mermas/pérdidas).
 
-Reglas de negocio y seguridad:
-  - Actores autorizados según PUDS (PACKAGE_CU_MAP.md):
-      * Propietario (supervisión de existencias en vitrina y valor del inventario)
-      * Personal de Ventas (consulta rápida de panes disponibles para despacho)
-      * Administrador (control total)
-      * Personal de Producción (consulta para reposición)
-  - Permisos evaluados:
-      * 'gestionar_inventario' (permiso base asignado a Propietario, Ventas y Producción)
-      * 'gestionar_productos' (Administrador y Propietario)
-      * 'registrar_ventas' (Personal de Ventas)
-      * 'registrar_pedidos' (Personal de Ventas)
+Reglas de negocio y seguridad segun PUDS (PACKAGE_CU_MAP.md):
+  - Actores autorizados CU12:
+      * Propietario
+      * Personal de Ventas
+      * Administrador
+      * Personal de Produccion
+  - Actores autorizados CU18:
+      * Personal de Produccion
+      * Propietario
+      * Administrador
 """
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
-# Permisos que habilitan la lectura de existencias de productos terminados
 PERMISOS_CONSULTA_EXISTENCIAS = {
     'gestionar_inventario',
     'gestionar_productos',
     'registrar_ventas',
     'registrar_pedidos',
+    'registrar_produccion',
+}
+
+PERMISOS_REGISTRO_BAJAS = {
+    'gestionar_inventario',
+    'registrar_produccion',
+    'gestionar_productos',
 }
 
 
 class PuedeConsultarExistenciasTerminados(BasePermission):
     """
-    Verifica que el usuario autenticado cuente con al menos uno de los permisos
-    requeridos para consultar el inventario de pan listo para la venta (CU12).
+    Verifica que el usuario autenticado cuente con permisos para consultar existencias (CU12).
     """
     message = 'Tu rol no cuenta con permisos para consultar las existencias de productos terminados.'
 
@@ -36,16 +42,31 @@ class PuedeConsultarExistenciasTerminados(BasePermission):
         if not user or not user.is_authenticated:
             return False
 
-        # Superusuarios y administradores tienen acceso irrestricto
         if user.is_superuser or getattr(user, 'is_staff', False):
             return True
 
-        # Obtener nombres de permisos del usuario mediante el helper del modelo
         permisos_usuario = set(user.get_permisos_nombres())
 
-        # Operaciones de lectura (GET, HEAD, OPTIONS): CU12
         if request.method in SAFE_METHODS:
             return bool(permisos_usuario & PERMISOS_CONSULTA_EXISTENCIAS)
 
-        # Operaciones de modificación (futuras o CU18): exige gestionar_inventario
         return 'gestionar_inventario' in permisos_usuario
+
+
+class PuedeRegistrarBajaProducto(BasePermission):
+    """
+    Verifica que el usuario autenticado cuente con permisos para registrar bajas/mermas (CU18).
+    Actores: Personal de Produccion, Propietario, Administrador.
+    """
+    message = 'Tu rol no cuenta con permisos para registrar bajas o mermas de productos terminados.'
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+
+        if user.is_superuser or getattr(user, 'is_staff', False):
+            return True
+
+        permisos_usuario = set(user.get_permisos_nombres())
+        return bool(permisos_usuario & PERMISOS_REGISTRO_BAJAS)
