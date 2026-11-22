@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   BarChart3,
   TrendingUp,
@@ -26,6 +27,7 @@ import {
   type PeriodoReporte,
   type ReporteVentas,
 } from '../../../services/reporteVentasService';
+import ReporteComprasCu24 from './ReporteComprasCu24';
 
 interface CasoUsoReporte {
   cu: string;
@@ -401,6 +403,8 @@ function ReporteVentasCu21() {
 }
 
 export const ReportesPage: React.FC = () => {
+  const [cuActivo, setCuActivo] = useState<'CU21' | 'CU24'>('CU21');
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Encabezado General */}
@@ -438,7 +442,7 @@ export const ReportesPage: React.FC = () => {
               </h3>
               <p className="mt-1 text-sm text-slate-600 leading-relaxed max-w-2xl">
                 Diseñado exclusivamente para el <strong className="text-slate-800">Propietario</strong>,
-                este módulo consolidará la información generada en Compras, Producción, Inventario y Ventas para
+                este módulo consolida la información generada en Compras, Producción, Inventario y Ventas para
                 ofrecer reportes dinámicos, exportación a PDF/Excel y análisis de rentabilidad.
               </p>
             </div>
@@ -450,10 +454,45 @@ export const ReportesPage: React.FC = () => {
         </div>
       </section>
 
-      <ReporteVentasCu21 />
+      {/* Navegación por Casos de Uso Activos ordenados por número de CU */}
+      <div className="flex border-b border-slate-200 gap-2">
+        <button
+          type="button"
+          onClick={() => setCuActivo('CU21')}
+          className={`inline-flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-all ${
+            cuActivo === 'CU21'
+              ? 'border-amber-700 text-amber-900 bg-amber-50/50 rounded-t-xl'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <TrendingUp className="h-4 w-4 text-amber-700" />
+          CU21: Reporte de Ventas
+          <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+            Disponible
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setCuActivo('CU24')}
+          className={`inline-flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-all ${
+            cuActivo === 'CU24'
+              ? 'border-amber-700 text-amber-900 bg-amber-50/50 rounded-t-xl'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Wallet className="h-4 w-4 text-amber-700" />
+          CU24: Reporte de Compras y Gastos
+          <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+            Disponible
+          </span>
+        </button>
+      </div>
+
+      {/* Renderizado del Reporte Activo */}
+      {cuActivo === 'CU24' ? <ReporteComprasCu24 /> : <ReporteVentasCu21 />}
 
       {/* Casos de Uso Planificados */}
-      <section className="space-y-4">
+      <section className="space-y-4 pt-6">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700">
             Reportes Planificados (5 Casos de Uso)
@@ -464,10 +503,21 @@ export const ReportesPage: React.FC = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {REPORTES_CASOS.map((item) => {
             const Icono = item.icono;
+            const disponible = item.cu === 'CU21' || item.cu === 'CU24';
             return (
               <div
                 key={item.cu}
-                className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition-shadow hover:shadow-md hover:border-amber-200"
+                onClick={() => {
+                  if (item.cu === 'CU21' || item.cu === 'CU24') {
+                    setCuActivo(item.cu);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
+                className={`flex flex-col justify-between rounded-2xl border bg-white p-5 shadow-xs transition-all ${
+                  disponible
+                    ? 'border-amber-300 hover:shadow-md hover:border-amber-500 cursor-pointer ring-1 ring-amber-100'
+                    : 'border-slate-200 opacity-90'
+                }`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-3">
@@ -475,8 +525,12 @@ export const ReportesPage: React.FC = () => {
                       {item.cu}
                     </span>
                     <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500">
-                      <AlertCircle className="h-3 w-3 text-amber-600" />
-                      {item.cu === 'CU21' ? 'Disponible' : 'Planificado'}
+                      <AlertCircle className={`h-3 w-3 ${disponible ? 'text-emerald-600' : 'text-amber-600'}`} />
+                      {disponible ? (
+                        <span className="text-emerald-700 font-bold">Disponible</span>
+                      ) : (
+                        'Planificado'
+                      )}
                     </span>
                   </div>
 
@@ -490,10 +544,21 @@ export const ReportesPage: React.FC = () => {
                   <p className="text-xs text-slate-600 leading-relaxed mb-4">{item.descripcion}</p>
                 </div>
 
-                <div className="border-t border-slate-100 pt-3">
+                <div className="border-t border-slate-100 pt-3 flex items-center justify-between">
                   <p className="text-[11px] text-slate-400">
                     <span className="font-semibold text-slate-600">Actor:</span> Propietario
                   </p>
+                  {item.cu === 'CU24' ? (
+                    <Link
+                      to="/dashboard/reportes/compras"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center text-xs font-bold text-amber-800 hover:text-amber-900 underline underline-offset-4"
+                    >
+                      Abrir reporte de compras &rarr;
+                    </Link>
+                  ) : disponible ? (
+                    <span className="text-[11px] font-bold text-amber-700">Ver reporte &rarr;</span>
+                  ) : null}
                 </div>
               </div>
             );

@@ -70,15 +70,18 @@
 
 ---
 
-### 📌 Ciclo 4 (6 Casos de Uso) — *Planificado*
+### 📌 Ciclo 4 (6 Casos de Uso) — *En Progreso*
 | CU | Nombre del Caso de Uso | Paquete Backend | Estado |
 |---|---|---|:---:|
 | **CU20**| Registrar gasto / inversión | `apps.compras` | ⚪ |
-| **CU21**| Generar reporte de ventas | `apps.reportes` | ⚪ |
+| **CU21**| Generar reporte de ventas | `apps.reportes` | 🟢 |
 | **CU22**| Generar reporte de producción | `apps.reportes` | ⚪ |
 | **CU23**| Generar reporte de existencias | `apps.reportes` | ⚪ |
-| **CU24**| Generar reporte de compras y gastos | `apps.reportes` | ⚪ |
+| **CU24**| Generar reporte de compras y gastos | `apps.reportes` | 🟢 |
 | **CU25**| Generar reporte de resultados económicos | `apps.reportes` | ⚪ |
+
+**CU24 (2026-11-22):** Generación de reporte de compras y gastos para el Propietario en `apps.reportes`. Backend: endpoints `/api/reportes/compras/` (cálculo dinámico en vivo con agregaciones ORM `Sum`, `Count`, `Coalesce` por proveedor y por materia prima), `/api/reportes/compras/csv/` (exportación delimitada por `;` con UTF-8 BOM para Excel), `/api/reportes/compras/cierres/` (POST para congelar instantánea contable inmutable en `cierre_reporte_compras` y `linea_cierre_reporte_compras` con auditoría en `Bitacora`), y `/api/reportes/compras/cierres/<id>/pdf/` (generación formal en PDF con membrete oficial mediante ReportLab). RBAC restringido al Propietario con `PuedeGenerarReportes` (`generar_reportes`). Suite completa de 20 pruebas en `apps.reportes` pasando al 100%. Comando de datos demo `seed_compras_demo` con 12 compras realistas entre septiembre y noviembre de 2026. Frontend: servicio `reporteComprasService.ts`, componente de control `ReporteComprasCu24.tsx` (filtros reactivos por día/semana/mes, selector opcional de proveedor e insumo, tarjetas KPI, tablas conmutables de insumos y proveedores, historial de cierres y descargas), y pestañas integradas en `ReportesPage.tsx`. Build Vite compilado sin errores (0 errores de TypeScript).
+
 
 ---
 

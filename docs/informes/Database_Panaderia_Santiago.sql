@@ -687,3 +687,67 @@ ALTER TABLE "detalle_compra" ADD FOREIGN KEY ("id_materia_prima") REFERENCES
 
 ALTER TABLE "movimiento_economico" ADD FOREIGN KEY ("id_usuario") REFERENCES
 "usuario" ("id_usuario") DEFERRABLE INITIALLY DEFERRED;
+
+
+-- =========================================================
+-- MÓDULO DE REPORTES Y CIERRES ESTÁTICOS (CU21, CU24)
+-- =========================================================
+
+CREATE TABLE "cierre_reporte_ventas" (
+  "id_cierre" bigint PRIMARY KEY,
+  "desde" date NOT NULL,
+  "hasta" date NOT NULL,
+  "periodo" varchar(10) NOT NULL,
+  "metodo_pago" varchar(20),
+  "cantidad" integer NOT NULL,
+  "total" decimal(10,2) NOT NULL,
+  "efectivo" decimal(10,2) NOT NULL,
+  "tarjeta" decimal(10,2) NOT NULL,
+  "id_usuario" bigint NOT NULL,
+  "fecha_generacion" timestamp NOT NULL DEFAULT (now())
+);
+
+CREATE TABLE "linea_cierre_reporte_ventas" (
+  "id_linea" bigint PRIMARY KEY,
+  "id_cierre" bigint NOT NULL,
+  "nombre_producto" varchar(100) NOT NULL,
+  "cantidad" integer NOT NULL,
+  "subtotal" decimal(10,2) NOT NULL
+);
+
+CREATE TABLE "cierre_reporte_compras" (
+  "id_cierre" bigint PRIMARY KEY,
+  "desde" date NOT NULL,
+  "hasta" date NOT NULL,
+  "periodo" varchar(10) NOT NULL,
+  "id_proveedor" bigint,
+  "cantidad" integer NOT NULL,
+  "total" decimal(10,2) NOT NULL,
+  "id_usuario" bigint NOT NULL,
+  "fecha_generacion" timestamp NOT NULL DEFAULT (now())
+);
+
+CREATE TABLE "linea_cierre_reporte_compras" (
+  "id_linea" bigint PRIMARY KEY,
+  "id_cierre" bigint NOT NULL,
+  "nombre_materia_prima" varchar(100) NOT NULL,
+  "unidad_medida" varchar(20) NOT NULL DEFAULT '',
+  "cantidad" decimal(10,3) NOT NULL,
+  "subtotal" decimal(10,2) NOT NULL
+);
+
+ALTER TABLE "cierre_reporte_ventas" ADD FOREIGN KEY ("id_usuario") REFERENCES
+"usuario" ("id_usuario") DEFERRABLE INITIALLY DEFERRED;
+
+ALTER TABLE "linea_cierre_reporte_ventas" ADD FOREIGN KEY ("id_cierre") REFERENCES
+"cierre_reporte_ventas" ("id_cierre") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED;
+
+ALTER TABLE "cierre_reporte_compras" ADD FOREIGN KEY ("id_usuario") REFERENCES
+"usuario" ("id_usuario") DEFERRABLE INITIALLY DEFERRED;
+
+ALTER TABLE "cierre_reporte_compras" ADD FOREIGN KEY ("id_proveedor") REFERENCES
+"proveedor" ("id_proveedor") ON DELETE SET NULL DEFERRABLE INITIALLY DEFERRED;
+
+ALTER TABLE "linea_cierre_reporte_compras" ADD FOREIGN KEY ("id_cierre") REFERENCES
+"cierre_reporte_compras" ("id_cierre") ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED;
+

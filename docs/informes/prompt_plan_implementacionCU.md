@@ -1,7 +1,7 @@
 # VARIABLES DE ESTE PEDIDO
-{{CICLO}} = CICLO
-{{CU_ID}} = CU_ID
-{{CU_NOMBRE}} = CU_NOMBRE
+{{CICLO}} = 4
+{{CU_ID}} = CU_24
+{{CU_NOMBRE}} = CU_Generar_reporte_de_compras_y_gastos
 {{POR_QUE_ES_COMPLEJO}} = 
 
 
@@ -20,7 +20,7 @@ Metodología: PUDS iterativo-incremental, modelado con UML.
 2. panaderia-SI1\docs\ → arquitectura y convenciones del proyecto.
 3. panaderia-SI1\docs\informes\Database_Panaderia_Santiago.sql → DDL vigente.
 4. El código ya existente en backend\apps\ y frontend\ (para respetar
-   nombres, estilo, estructura y lo que ya implementó el Ciclo 1 y 2).
+   nombres, estilo, estructura y lo que ya implementó el Ciclo 1, 2 y 3).
 Si algún archivo no existe o no lo puedes leer, dímelo; no lo inventes.
 
 # REGLAS DE ARQUITECTURA (obligatorias)
@@ -49,7 +49,7 @@ Dame por el chat un plan de implementación del {{CU_ID}}, con estas secciones:
 
 1. Resumen del CU: objetivo, actor, precondiciones, flujo principal,
    flujos alternativos/errores y postcondiciones (qué cambia en la BD).
-2. Dependencias: qué CU o tablas deben existir antes (Ciclo 1 y 2) y qué
+2. Dependencias: qué CU o tablas deben existir antes (Ciclo 1, 2 y 3) y qué
    puedo simular o crear temporalmente si todavía no están.
 3. Base de datos:
    a) Tablas del DDL que usa este CU y cómo se usa cada una (leer/escribir).

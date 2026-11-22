@@ -95,6 +95,9 @@ class AccionBitacora(models.TextChoices):
     # --- CU21: Generar reporte de ventas ---
     CIERRE_REPORTE_VENTAS = 'CIERRE_REPORTE_VENTAS', 'Cierre estático del reporte de ventas'
 
+    # --- CU24: Generar reporte de compras y gastos ---
+    CIERRE_REPORTE_COMPRAS = 'CIERRE_REPORTE_COMPRAS', 'Cierre estático del reporte de compras y gastos'
+
 
 class Bitacora(models.Model):
     """

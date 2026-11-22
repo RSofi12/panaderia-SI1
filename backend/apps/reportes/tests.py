@@ -10,8 +10,11 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.comercializacion.ventas.models import DetalleVenta, Venta
+from apps.compras.compra_materia_prima.models import Compra, DetalleCompra
+from apps.compras.proveedores.models import Proveedor
+from apps.productos_inventario.materia_prima.models import MateriaPrima
 from apps.productos_inventario.productos.models import Producto
-from apps.reportes.models import CierreReporteVentas
+from apps.reportes.models import CierreReporteCompras, CierreReporteVentas
 from apps.usuarios_seguridad.bitacora.models import AccionBitacora, Bitacora
 from apps.usuarios_seguridad.permisos.models import ModuloPermiso, Permiso
 from apps.usuarios_seguridad.roles.models import Rol, RolPermiso
@@ -245,3 +248,214 @@ class PruebasReporteVentas(TestCase):
         pdf = self.client.get('/api/reportes/ventas/cierres/99999/pdf/')
         self.assertEqual(detalle.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(pdf.status_code, status.HTTP_404_NOT_FOUND)
+
+
+# ==============================================================================
+# CU24: Generar reporte de compras y gastos
+# ==============================================================================
+
+@override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
+class PruebasReporteCompras(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.client = APIClient()
+        permiso = Permiso.objects.create(
+            nombre='generar_reportes',
+            descripcion='Reportes',
+            modulo=ModuloPermiso.REPORTES,
+        )
+        rol = Rol.objects.create(nombre='Propietario', descripcion='Dueño')
+        RolPermiso.objects.create(rol=rol, permiso=permiso)
+        self.propietario = Usuario.objects.create_user(
+            nombre_usuario='cvargas',
+            password='PanADERIA2026!',
+            nombre_completo='Carlos Vargas',
+            email='dueno.compras@mail.com',
+            id_rol=rol,
+        )
+        self.ajeno = Usuario.objects.create_user(
+            nombre_usuario='mrojas',
+            password='PanADERIA2026!',
+            nombre_completo='Miguel Rojas',
+            email='horno.compras@mail.com',
+            id_rol=Rol.objects.create(nombre='Personal de Producción', descripcion='Horno'),
+        )
+
+        self.proveedor_a = Proveedor.objects.create(nombre='Molino Central SRL', telefono='77112233')
+        self.proveedor_b = Proveedor.objects.create(nombre='Distribuidora Láctea', telefono='77445566')
+
+        self.harina = MateriaPrima.objects.create(
+            nombre='Harina de Trigo 000',
+            unidad_medida='kg',
+            stock_minimo=Decimal('10.000'),
+        )
+        self.azucar = MateriaPrima.objects.create(
+            nombre='Azúcar Blanca Refinada',
+            unidad_medida='kg',
+            stock_minimo=Decimal('5.000'),
+        )
+
+        # Compra 1: Octubre 2026 (Molino Central, Harina 100kg = Bs 550)
+        self._compra(
+            proveedor=self.proveedor_a,
+            cuando=_cuando(2026, 10, 10),
+            total=Decimal('550.00'),
+            detalles=[(self.harina, Decimal('100.000'), Decimal('5.50'), Decimal('550.00'))],
+        )
+
+        # Compra 2: Noviembre 2026 (Distribuidora Láctea, Azúcar 50kg = Bs 300)
+        self._compra(
+            proveedor=self.proveedor_b,
+            cuando=_cuando(2026, 11, 5),
+            total=Decimal('300.00'),
+            detalles=[(self.azucar, Decimal('50.000'), Decimal('6.00'), Decimal('300.00'))],
+        )
+
+    def _compra(self, proveedor, cuando, total, detalles):
+        compra = Compra.objects.create(
+            id_proveedor=proveedor,
+            id_usuario=self.propietario,
+            fecha_hora=cuando,
+            total=total,
+        )
+        for insumo, cant, precio, subtotal in detalles:
+            DetalleCompra.objects.create(
+                id_compra=compra,
+                id_materia_prima=insumo,
+                cantidad=cant,
+                precio_unitario=precio,
+                subtotal=subtotal,
+            )
+        return compra
+
+    def test_sin_permiso_responde_403(self):
+        self.client.force_authenticate(self.ajeno)
+        respuesta = self.client.get('/api/reportes/compras/', {
+            'desde': '2026-10-01',
+            'hasta': '2026-10-31',
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_fechas_invertidas_responde_400(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.get('/api/reportes/compras/', {
+            'desde': '2026-11-30',
+            'hasta': '2026-11-01',
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('hasta', respuesta.data)
+
+    def test_reporte_dinamico_suma_compras_del_periodo(self):
+        self.client.force_authenticate(self.propietario)
+        # Consultar octubre 2026
+        respuesta = self.client.get('/api/reportes/compras/', {
+            'desde': '2026-10-01',
+            'hasta': '2026-10-31',
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data['cantidad'], 1)
+        self.assertEqual(respuesta.data['total'], '550.00')
+        self.assertEqual(len(respuesta.data['proveedores']), 1)
+        self.assertEqual(respuesta.data['proveedores'][0]['nombre'], 'Molino Central SRL')
+        self.assertEqual(len(respuesta.data['insumos']), 1)
+        self.assertEqual(respuesta.data['insumos'][0]['nombre'], 'Harina de Trigo 000')
+
+    def test_filtro_por_proveedor(self):
+        self.client.force_authenticate(self.propietario)
+        # Rango amplio pero filtrando solo Proveedor B
+        respuesta = self.client.get('/api/reportes/compras/', {
+            'desde': '2026-09-01',
+            'hasta': '2026-11-30',
+            'id_proveedor': self.proveedor_b.pk,
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data['cantidad'], 1)
+        self.assertEqual(respuesta.data['total'], '300.00')
+        self.assertEqual(respuesta.data['proveedores'][0]['nombre'], 'Distribuidora Láctea')
+
+    def test_filtro_por_materia_prima(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.get('/api/reportes/compras/', {
+            'desde': '2026-09-01',
+            'hasta': '2026-11-30',
+            'id_materia_prima': self.harina.pk,
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta.data['cantidad'], 1)
+        self.assertEqual(respuesta.data['total'], '550.00')
+        self.assertEqual(respuesta.data['insumos'][0]['nombre'], 'Harina de Trigo 000')
+
+    def test_guardar_cierre_compras_congela_y_audita_en_bitacora(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.post('/api/reportes/compras/cierres/', {
+            'desde': '2026-10-01',
+            'hasta': '2026-10-31',
+            'periodo': 'mes',
+        }, format='json')
+        self.assertEqual(respuesta.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(respuesta.data['cantidad'], 1)
+        self.assertEqual(respuesta.data['total'], '550.00')
+        self.assertEqual(len(respuesta.data['insumos']), 1)
+        self.assertEqual(respuesta.data['insumos'][0]['nombre'], 'Harina de Trigo 000')
+
+        # Verificar auditoría en Bitácora
+        evento = Bitacora.objects.filter(accion=AccionBitacora.CIERRE_REPORTE_COMPRAS).latest('id_bitacora')
+        self.assertEqual(evento.usuario, self.propietario)
+        self.assertIn('550.00', evento.descripcion)
+
+    def test_cierre_compras_no_se_recalcula_si_entra_compra_nueva(self):
+        self.client.force_authenticate(self.propietario)
+        # Crear cierre
+        creacion = self.client.post('/api/reportes/compras/cierres/', {
+            'desde': '2026-10-01',
+            'hasta': '2026-10-31',
+            'periodo': 'mes',
+        }, format='json')
+        id_cierre = creacion.data['id_cierre']
+
+        # Entra compra posterior en el mismo mes cerrado
+        self._compra(
+            proveedor=self.proveedor_a,
+            cuando=_cuando(2026, 10, 28),
+            total=Decimal('200.00'),
+            detalles=[(self.harina, Decimal('36.000'), Decimal('5.50'), Decimal('200.00'))],
+        )
+
+        # La consulta del cierre estático guardado sigue diciendo 550.00
+        detalle = self.client.get(f'/api/reportes/compras/cierres/{id_cierre}/')
+        self.assertEqual(detalle.status_code, status.HTTP_200_OK)
+        self.assertEqual(detalle.data['total'], '550.00')
+        self.assertEqual(detalle.data['cantidad'], 1)
+
+        # Pero el reporte dinámico ahora sí suma 750.00
+        dinamico = self.client.get('/api/reportes/compras/', {
+            'desde': '2026-10-01',
+            'hasta': '2026-10-31',
+        })
+        self.assertEqual(dinamico.data['total'], '750.00')
+        self.assertEqual(dinamico.data['cantidad'], 2)
+
+    def test_descargar_csv_compras(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.get('/api/reportes/compras/csv/', {
+            'desde': '2026-10-01',
+            'hasta': '2026-10-31',
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta['Content-Type'], 'text/csv; charset=utf-8')
+        self.assertIn('reporte-compras-2026-10-01-2026-10-31.csv', respuesta['Content-Disposition'])
+
+    def test_descargar_pdf_cierre_compras(self):
+        self.client.force_authenticate(self.propietario)
+        creacion = self.client.post('/api/reportes/compras/cierres/', {
+            'desde': '2026-10-01',
+            'hasta': '2026-10-31',
+            'periodo': 'mes',
+        }, format='json')
+        id_cierre = creacion.data['id_cierre']
+
+        respuesta = self.client.get(f'/api/reportes/compras/cierres/{id_cierre}/pdf/')
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta['Content-Type'], 'application/pdf')
+        self.assertTrue(respuesta.content.startswith(b'%PDF'))
+
