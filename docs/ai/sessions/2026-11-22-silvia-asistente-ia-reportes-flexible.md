@@ -55,3 +55,9 @@ Cableado aplicado tras restaurar Pilar: `POST /voz/analizar/`, UI «Análisis po
 - Causa: el front guardaba texto UTF-8 en `.csv` sin BOM; Excel en Windows lo abría como ANSI.
 - `POST /api/reportes/voz/analizar/csv/` + `csv_reporte_analisis` (`utf-8-sig`, tablas `;`).
 - Excel y CSV del asistente usan el backend (misma estructura que el PDF).
+
+## Hot-reload / login “no conecta”
+
+- Tras `git pull` el StatReloader a veces deja Django caído con `ImportError: PeriodoReporte`.
+- Fix: `PeriodoReporte` movido a `apps/reportes/choices.py`; serializers importan desde ahí.
+- Solución operativa: esperar 15–20 s tras cambios o `docker compose restart backend`, luego F5 en login.

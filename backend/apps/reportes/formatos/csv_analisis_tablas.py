@@ -51,10 +51,21 @@ def _roles(writer: csv.writer, contexto: dict[str, Any]) -> None:
 
 def _produccion(writer: csv.writer, contexto: dict[str, Any]) -> None:
     filas = [
-        [p.get('nombre', '—'), p.get('unidades', 0), p.get('jornadas', 0)]
+        [
+            p.get('nombre', '—'),
+            p.get('unidades', p.get('cantidad', 0)),
+            p.get('vendidas', p.get('jornadas', 0)),
+            p.get('diferencia', 0),
+        ]
         for p in contexto.get('productos') or []
     ]
-    _bloque(writer, 'Producción por producto', ['Producto', 'Unidades', 'Jornadas'], filas, 'Sin producción en el período.')
+    _bloque(
+        writer,
+        'Producción vs ventas por producto',
+        ['Producto', 'Producidas', 'Vendidas', 'Diferencia'],
+        filas,
+        'Sin producción en el período.',
+    )
 
 
 def _existencias(writer: csv.writer, contexto: dict[str, Any]) -> None:

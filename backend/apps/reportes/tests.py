@@ -527,6 +527,17 @@ class PruebasReporteCompras(TestCase):
         self.assertEqual(respuesta['Content-Type'], 'text/csv; charset=utf-8')
         self.assertIn('reporte-compras-2026-10-01-2026-10-31.csv', respuesta['Content-Disposition'])
 
+    def test_descargar_pdf_compras_dinamico(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.get('/api/reportes/compras/pdf/', {
+            'desde': '2026-10-01',
+            'hasta': '2026-10-31',
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(respuesta['Content-Type'], 'application/pdf')
+        self.assertTrue(respuesta.content.startswith(b'%PDF'))
+        self.assertIn('reporte-compras-2026-10-01-2026-10-31.pdf', respuesta['Content-Disposition'])
+
     def test_descargar_pdf_cierre_compras(self):
         self.client.force_authenticate(self.propietario)
         creacion = self.client.post('/api/reportes/compras/cierres/', {

@@ -95,6 +95,20 @@ function guardarBlob(contenido: Blob, nombre: string) {
   URL.revokeObjectURL(url);
 }
 
+function paramsCompras(
+  desde: string,
+  hasta: string,
+  idProveedor?: number | '',
+  idMateriaPrima?: number | '',
+) {
+  return {
+    desde,
+    hasta,
+    ...(idProveedor ? { id_proveedor: idProveedor } : {}),
+    ...(idMateriaPrima ? { id_materia_prima: idMateriaPrima } : {}),
+  };
+}
+
 export async function descargarReporteComprasCsv(
   desde: string,
   hasta: string,
@@ -102,15 +116,23 @@ export async function descargarReporteComprasCsv(
   idMateriaPrima?: number | '',
 ): Promise<void> {
   const respuesta = await api.get<Blob>('/reportes/compras/csv/', {
-    params: {
-      desde,
-      hasta,
-      ...(idProveedor ? { id_proveedor: idProveedor } : {}),
-      ...(idMateriaPrima ? { id_materia_prima: idMateriaPrima } : {}),
-    },
+    params: paramsCompras(desde, hasta, idProveedor, idMateriaPrima),
     responseType: 'blob',
   });
   guardarBlob(respuesta.data, `reporte-compras-${desde}-${hasta}.csv`);
+}
+
+export async function descargarReporteComprasPdf(
+  desde: string,
+  hasta: string,
+  idProveedor?: number | '',
+  idMateriaPrima?: number | '',
+): Promise<void> {
+  const respuesta = await api.get<Blob>('/reportes/compras/pdf/', {
+    params: paramsCompras(desde, hasta, idProveedor, idMateriaPrima),
+    responseType: 'blob',
+  });
+  guardarBlob(respuesta.data, `reporte-compras-${desde}-${hasta}.pdf`);
 }
 
 export async function descargarCierreComprasPdf(idCierre: number): Promise<void> {

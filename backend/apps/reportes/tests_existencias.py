@@ -549,6 +549,32 @@ class PruebasApiReporteExistencias(DatosExistencias, TestCase):
         self.assert_solo_select(consultas)
         self.assertEqual(self.snapshot_inventario(), antes)
 
+    def test_descargar_csv_y_pdf_con_datos(self):
+        self.autenticar()
+        csv_respuesta = self.client.get(reverse('reportes:reporte-existencias-csv'))
+        self.assertEqual(csv_respuesta.status_code, status.HTTP_200_OK)
+        self.assertIn('text/csv', csv_respuesta['Content-Type'])
+        self.assertIn('reporte-existencias.csv', csv_respuesta['Content-Disposition'])
+        self.assertTrue(csv_respuesta.content.startswith(b'\xef\xbb\xbf') or b'Panader' in csv_respuesta.content)
+
+        pdf_respuesta = self.client.get(reverse('reportes:reporte-existencias-pdf'))
+        self.assertEqual(pdf_respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(pdf_respuesta['Content-Type'], 'application/pdf')
+        self.assertTrue(pdf_respuesta.content.startswith(b'%PDF'))
+
+    def test_exportar_existencias_sin_filas_responde_400(self):
+        self.autenticar()
+        csv_respuesta = self.client.get(
+            reverse('reportes:reporte-existencias-csv'),
+            {'q': 'ninguna coincidencia'},
+        )
+        pdf_respuesta = self.client.get(
+            reverse('reportes:reporte-existencias-pdf'),
+            {'q': 'ninguna coincidencia'},
+        )
+        self.assertEqual(csv_respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(pdf_respuesta.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_post_put_patch_y_delete_responden_405_sin_mutaciones(self):
         self.autenticar()
         antes = self.snapshot_inventario()

@@ -54,8 +54,14 @@ class Command(BaseCommand):
             action='store_true',
             help='Fuerza la ejecución aunque ya existan datos de noviembre.',
         )
+        parser.add_argument(
+            '--solo-produccion',
+            action='store_true',
+            help='Solo crea jornadas de horno (CU22). No duplica ventas, compras ni gastos.',
+        )
 
     def handle(self, *args, **options):
+        solo_produccion = options.get('solo_produccion', False)
         self.stdout.write(self.style.NOTICE(
             '============================================================\n'
             '  POBLANDO NOVIEMBRE 2026 (01/11/2026 - 22/11/2026)        \n'
@@ -162,6 +168,8 @@ class Command(BaseCommand):
             ]
 
             total_gastos_creados = 0
+            if solo_produccion:
+                gastos_data = []
             for tipo, cat, conc, desc, monto, fecha_h in gastos_data:
                 g, created = MovimientoEconomico.objects.get_or_create(
                     concepto=conc,
@@ -178,12 +186,13 @@ class Command(BaseCommand):
                 if created:
                     total_gastos_creados += 1
 
-            self.stdout.write(f'  [OK] {total_gastos_creados} Gastos e Inversiones creados para Noviembre.')
+            if not solo_produccion:
+                self.stdout.write(f'  [OK] {total_gastos_creados} Gastos e Inversiones creados para Noviembre.')
 
             # =================================================================
             # B. COMPRAS DE MATERIA PRIMA (CU07 / CU25)
             # =================================================================
-            dias_compras = [2, 6, 9, 13, 16, 20]
+            dias_compras = [] if solo_produccion else [2, 6, 9, 13, 16, 20]
             total_compras_creadas = 0
 
             PRECIOS_MP = {
@@ -232,14 +241,18 @@ class Command(BaseCommand):
                 compra.save()
                 total_compras_creadas += 1
 
-            self.stdout.write(f'  [OK] {total_compras_creadas} Compras de Materia Prima creadas en Noviembre.')
+            if not solo_produccion:
+                self.stdout.write(f'  [OK] {total_compras_creadas} Compras de Materia Prima creadas en Noviembre.')
 
             # =================================================================
             # C. PRODUCCIÓN Y MERMAS DIARIAS (CU10 / CU18 / CU25)
             # =================================================================
             total_mermas_creadas = 0
+            total_lotes_creados = 0
             for dia_n in range(1, 23):
                 fecha_p = date(2026, 11, dia_n)
+                if Produccion.objects.filter(fecha=fecha_p, jornada=JornadaProduccion.MANANA).exists():
+                    continue
                 # Crear lote de producción diario
                 prod = Produccion.objects.create(
                     id_usuario=panadero,
@@ -274,8 +287,12 @@ class Command(BaseCommand):
                         fecha_salida=hora_merma,
                     )
                     total_mermas_creadas += 1
+                total_lotes_creados += 1
 
-            self.stdout.write(f'  [OK] 22 Jornadas de producción y {total_mermas_creadas} Notas de Merma registradas.')
+            self.stdout.write(
+                f'  [OK] {total_lotes_creados} Jornadas de producción y '
+                f'{total_mermas_creadas} Notas de Merma registradas.'
+            )
 
             # =================================================================
             # D. VENTAS DIARIAS EN MOSTRADOR (01/11/2026 al 22/11/2026)
@@ -283,53 +300,56 @@ class Command(BaseCommand):
             total_ventas = 0
             total_recaudado = Decimal('0.00')
 
-            for dia_n in range(1, 23):
-                fecha_v = date(2026, 11, dia_n)
-                num_ventas = rng.randint(18, 26)  # 18 a 26 ventas por día
+            if solo_produccion:
+                self.stdout.write('  [SKIP] Ventas omitidas (--solo-produccion).')
+            else:
+                for dia_n in range(1, 23):
+                    fecha_v = date(2026, 11, dia_n)
+                    num_ventas = rng.randint(18, 26)  # 18 a 26 ventas por día
 
-                for _ in range(num_ventas):
-                    cajera = rng.choice(cajeras)
-                    # Hora entre 06:30 y 14:00
-                    h = rng.randint(6, 13)
-                    m = rng.randint(0, 59)
-                    hora_venta = timezone.make_aware(datetime.combine(fecha_v, time(h, m)), tz)
+                    for _ in range(num_ventas):
+                        cajera = rng.choice(cajeras)
+                        # Hora entre 06:30 y 14:00
+                        h = rng.randint(6, 13)
+                        m = rng.randint(0, 59)
+                        hora_venta = timezone.make_aware(datetime.combine(fecha_v, time(h, m)), tz)
 
-                    metodo = MetodoPago.STRIPE if rng.random() < 0.25 else MetodoPago.EFECTIVO
-                    stripe_id = f'pi_mes_nov_{dia_n}_{comp_cursor}' if metodo == MetodoPago.STRIPE else None
+                        metodo = MetodoPago.STRIPE if rng.random() < 0.25 else MetodoPago.EFECTIVO
+                        stripe_id = f'pi_mes_nov_{dia_n}_{comp_cursor}' if metodo == MetodoPago.STRIPE else None
 
-                    venta = Venta.objects.create(
-                        id_usuario=cajera,
-                        numero_comprobante=comp_cursor,
-                        fecha_hora=hora_venta,
-                        metodo_pago=metodo,
-                        id_transaccion_stripe=stripe_id,
-                        total=Decimal('0.00'),
-                    )
-                    comp_cursor += 1
-
-                    subtotal_venta = Decimal('0.00')
-                    # Cada ticket lleva de 1 a 3 productos distintos
-                    k_prods = rng.randint(1, 3)
-                    prods_ticket = rng.sample(productos, k=min(len(productos), k_prods))
-
-                    for p in prods_ticket:
-                        cant = rng.randint(2, 15)  # 2 a 15 panes
-                        precio_u = p.precio_venta or Decimal('1.00')
-                        subt = (Decimal(cant) * precio_u).quantize(Decimal('0.01'))
-
-                        DetalleVenta.objects.create(
-                            id_venta=venta,
-                            id_producto=p,
-                            cantidad=cant,
-                            precio_unitario=precio_u,
-                            subtotal=subt,
+                        venta = Venta.objects.create(
+                            id_usuario=cajera,
+                            numero_comprobante=comp_cursor,
+                            fecha_hora=hora_venta,
+                            metodo_pago=metodo,
+                            id_transaccion_stripe=stripe_id,
+                            total=Decimal('0.00'),
                         )
-                        subtotal_venta += subt
+                        comp_cursor += 1
 
-                    venta.total = subtotal_venta
-                    venta.save()
-                    total_ventas += 1
-                    total_recaudado += subtotal_venta
+                        subtotal_venta = Decimal('0.00')
+                        # Cada ticket lleva de 1 a 3 productos distintos
+                        k_prods = rng.randint(1, 3)
+                        prods_ticket = rng.sample(productos, k=min(len(productos), k_prods))
+
+                        for p in prods_ticket:
+                            cant = rng.randint(2, 15)  # 2 a 15 panes
+                            precio_u = p.precio_venta or Decimal('1.00')
+                            subt = (Decimal(cant) * precio_u).quantize(Decimal('0.01'))
+
+                            DetalleVenta.objects.create(
+                                id_venta=venta,
+                                id_producto=p,
+                                cantidad=cant,
+                                precio_unitario=precio_u,
+                                subtotal=subt,
+                            )
+                            subtotal_venta += subt
+
+                        venta.total = subtotal_venta
+                        venta.save()
+                        total_ventas += 1
+                        total_recaudado += subtotal_venta
 
             self.stdout.write(self.style.SUCCESS(
                 f'\n============================================================\n'

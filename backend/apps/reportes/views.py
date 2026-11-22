@@ -18,6 +18,8 @@ from apps.reportes.serializers import (
     ReporteComprasSerializer,
     ReporteExistenciasConsultaSerializer,
     ReporteExistenciasSerializer,
+    ReporteProduccionConsultaSerializer,
+    ReporteProduccionSerializer,
     ReporteResultadosEconomicosConsultaSerializer,
     ReporteResultadosEconomicosSerializer,
     ReporteVentasConsultaSerializer,
@@ -35,7 +37,19 @@ from apps.reportes.services.exportar_reporte import (
     pdf_reporte_analisis,
     pdf_reporte_ventas,
 )
-from apps.reportes.services.exportar_reporte_compras import csv_reporte_compras, pdf_cierre_compras
+from apps.reportes.services.exportar_reporte_compras import (
+    csv_reporte_compras,
+    pdf_cierre_compras,
+    pdf_reporte_compras,
+)
+from apps.reportes.services.exportar_reporte_existencias import (
+    csv_reporte_existencias,
+    pdf_reporte_existencias,
+)
+from apps.reportes.services.exportar_reporte_produccion import (
+    csv_reporte_produccion,
+    pdf_reporte_produccion,
+)
 from apps.reportes.services.exportar_resultados_economicos import (
     csv_resultados_economicos,
     pdf_resultados_economicos,
@@ -43,6 +57,7 @@ from apps.reportes.services.exportar_resultados_economicos import (
 from apps.reportes.services.interprete_voz import interpretar_comando_voz
 from apps.reportes.services.reporte_compras import reporte_compras
 from apps.reportes.services.reporte_existencias import reporte_existencias
+from apps.reportes.services.reporte_produccion import reporte_produccion
 from apps.reportes.services.reporte_resultados_economicos import reporte_resultados_economicos
 from apps.reportes.services.reporte_ventas import reporte_ventas
 
@@ -222,12 +237,87 @@ class ReporteVentasPdfView(APIView):
 
 
 # ==============================================================================
-# CU23: Reporte de existencias
+# CU22: Reporte de producción
 # ==============================================================================
 
-class ReporteExistenciasView(APIView):
-    """GET /api/reportes/existencias/ — CU23, sin modificar inventarios."""
+class ReporteProduccionView(APIView):
+    """GET /api/reportes/produccion/?desde=&hasta=&jornada= — CU22 dinámico."""
 
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        consulta = ReporteProduccionConsultaSerializer(data=request.query_params)
+        consulta.is_valid(raise_exception=True)
+        datos = consulta.validated_data
+        try:
+            reporte = reporte_produccion(
+                desde=datos['desde'],
+                hasta=datos['hasta'],
+                jornada=datos.get('jornada') or None,
+            )
+        except DjangoValidationError as exc:
+            _error_de_validacion(exc)
+        return Response(ReporteProduccionSerializer(reporte).data)
+
+
+class ReporteProduccionCsvView(APIView):
+    """GET /api/reportes/produccion/csv/ — Exportación CSV del reporte dinámico."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        consulta = ReporteProduccionConsultaSerializer(data=request.query_params)
+        consulta.is_valid(raise_exception=True)
+        datos = consulta.validated_data
+        jornada = datos.get('jornada') or None
+        columnas = _parsear_columnas(request.query_params.get('columnas'))
+        try:
+            reporte = reporte_produccion(
+                desde=datos['desde'],
+                hasta=datos['hasta'],
+                jornada=jornada,
+            )
+        except DjangoValidationError as exc:
+            _error_de_validacion(exc)
+        if reporte['cantidad'] == 0 and not reporte.get('productos'):
+            raise serializers.ValidationError(
+                {'detail': 'No hay datos disponibles para el período solicitado.'}
+            )
+        contenido = csv_reporte_produccion(reporte, jornada, columnas)
+        respuesta = HttpResponse(contenido, content_type='text/csv; charset=utf-8-sig')
+        nombre = f'reporte-produccion-{reporte["desde"]}-{reporte["hasta"]}.csv'
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
+        return respuesta
+
+
+class ReporteProduccionPdfView(APIView):
+    """GET /api/reportes/produccion/pdf/ — PDF con columnas dinámicas del detalle."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        consulta = ReporteProduccionConsultaSerializer(data=request.query_params)
+        consulta.is_valid(raise_exception=True)
+        datos = consulta.validated_data
+        jornada = datos.get('jornada') or None
+        columnas = _parsear_columnas(request.query_params.get('columnas'))
+        try:
+            reporte = reporte_produccion(
+                desde=datos['desde'],
+                hasta=datos['hasta'],
+                jornada=jornada,
+            )
+        except DjangoValidationError as exc:
+            _error_de_validacion(exc)
+        if reporte['cantidad'] == 0 and not reporte.get('productos'):
+            raise serializers.ValidationError(
+                {'detail': 'No hay datos disponibles para el período solicitado.'}
+            )
+        contenido = pdf_reporte_produccion(reporte, jornada, columnas)
+        respuesta = HttpResponse(contenido, content_type='application/pdf')
+        nombre = f'reporte-produccion-{reporte["desde"]}-{reporte["hasta"]}.pdf'
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
+        return respuesta
 
 
 # ==============================================================================
@@ -244,6 +334,43 @@ class ReporteExistenciasView(APIView):
         consulta.is_valid(raise_exception=True)
         reporte = reporte_existencias(**consulta.validated_data)
         return Response(ReporteExistenciasSerializer(reporte).data)
+
+
+def _consulta_existencias(request):
+    consulta = ReporteExistenciasConsultaSerializer(data=request.query_params.dict())
+    consulta.is_valid(raise_exception=True)
+    reporte = reporte_existencias(**consulta.validated_data)
+    if reporte['resumen']['total'] == 0:
+        raise serializers.ValidationError(
+            {'detail': 'No hay existencias que coincidan con los filtros.'}
+        )
+    return reporte, consulta.validated_data
+
+
+class ReporteExistenciasCsvView(APIView):
+    """GET /api/reportes/existencias/csv/ — inventario actual en CSV."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        reporte, filtros = _consulta_existencias(request)
+        contenido = csv_reporte_existencias(reporte, **filtros)
+        respuesta = HttpResponse(contenido, content_type='text/csv; charset=utf-8-sig')
+        respuesta['Content-Disposition'] = 'attachment; filename="reporte-existencias.csv"'
+        return respuesta
+
+
+class ReporteExistenciasPdfView(APIView):
+    """GET /api/reportes/existencias/pdf/ — inventario actual en PDF."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        reporte, filtros = _consulta_existencias(request)
+        contenido = pdf_reporte_existencias(reporte, **filtros)
+        respuesta = HttpResponse(contenido, content_type='application/pdf')
+        respuesta['Content-Disposition'] = 'attachment; filename="reporte-existencias.pdf"'
+        return respuesta
 
 
 # ==============================================================================
@@ -297,6 +424,35 @@ class ReporteComprasCsvView(APIView):
         contenido = csv_reporte_compras(reporte, nombre_prov)
         respuesta = HttpResponse(contenido, content_type='text/csv; charset=utf-8')
         nombre = f'reporte-compras-{reporte["desde"]}-{reporte["hasta"]}.csv'
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
+        return respuesta
+
+
+class ReporteComprasPdfView(APIView):
+    """GET /api/reportes/compras/pdf/ — cálculo dinámico en PDF con membrete."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        consulta = ReporteComprasConsultaSerializer(data=request.query_params)
+        consulta.is_valid(raise_exception=True)
+        datos = consulta.validated_data
+        try:
+            reporte = reporte_compras(
+                desde=datos['desde'],
+                hasta=datos['hasta'],
+                id_proveedor=datos.get('id_proveedor'),
+                id_materia_prima=datos.get('id_materia_prima'),
+            )
+        except DjangoValidationError as exc:
+            _error_de_validacion(exc)
+        _rechazar_exportacion_sin_datos(reporte)
+        nombre_prov = None
+        if datos.get('id_proveedor') and reporte['proveedores']:
+            nombre_prov = reporte['proveedores'][0]['nombre']
+        contenido = pdf_reporte_compras(reporte, nombre_prov)
+        respuesta = HttpResponse(contenido, content_type='application/pdf')
+        nombre = f'reporte-compras-{reporte["desde"]}-{reporte["hasta"]}.pdf'
         respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
         return respuesta
 

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertCircle, Download, Loader2, Mic, MicOff, Sparkles } from 'lucide-react';
+import { AlertCircle, Download, Loader2, Mic, MicOff } from 'lucide-react';
+import { EncabezadoCasoUso } from './EncabezadoCasoUso';
 import { analizarConsultaVoz } from '../../../../services/reporteVozService';
 import type {
   AnalisisVozReporte,
@@ -121,8 +122,10 @@ export const AsistenteVozReporte: React.FC<AsistenteVozReporteProps> = ({
           desde: resultado.desde,
           hasta: resultado.hasta,
           metodo,
+          jornada: cmd.jornada || undefined,
           columnas: cmd.columnas ?? [],
           exportarVentas: resultado.exportar_ventas,
+          exportarProduccion: resultado.exportar_produccion,
           analisis: resultado.analisis,
           tema: resultado.tema,
         });
@@ -242,15 +245,15 @@ export const AsistenteVozReporte: React.FC<AsistenteVozReporteProps> = ({
 
   return (
     <section
-      className={`overflow-hidden rounded-2xl border border-indigo-200 bg-white shadow-2xs ${className}`}
-      aria-label="Análisis de reportes por voz"
+      className={`overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xs ${className}`}
+      aria-label="CU27 Generar reportes por voz"
     >
-      <div className="bg-gradient-to-r from-indigo-50 to-violet-50/80 px-4 py-4 sm:px-5">
-        <p className="flex items-center gap-1.5 text-sm font-bold text-indigo-900">
-          <Sparkles className="h-4 w-4 text-indigo-600" aria-hidden="true" />
-          Análisis por voz con IA
-        </p>
-        <p className="mt-1 text-xs text-slate-600">{subtitulo}</p>
+      <div className="px-4 py-4 sm:px-5">
+        <EncabezadoCasoUso
+          cu="CU27"
+          titulo="Generar reportes por voz"
+          descripcion={subtitulo}
+        />
       </div>
 
       <div className="space-y-3 p-4 sm:p-5">
@@ -284,7 +287,7 @@ export const AsistenteVozReporte: React.FC<AsistenteVozReporteProps> = ({
               type="text"
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
-              placeholder='Ej. "Reporte de roles del sistema"'
+              placeholder="Dictá o escribí tu consulta. Ej: ¿Cuánto se vendió este mes?"
               className="min-h-11 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               maxLength={800}
               aria-label="Consulta de reporte"

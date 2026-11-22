@@ -1,15 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  DollarSign,
-  ShoppingCart,
-  Receipt,
-  FileText,
-  FileSpreadsheet,
-  AlertCircle,
-  Loader2,
-  ArrowUpRight,
-  ArrowDownRight,
-} from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import {
   consultarReporteResultadosEconomicos,
   descargarReporteResultadosCsv,
@@ -23,6 +13,10 @@ import {
   type PeriodoReporte,
 } from '../../../../services/reporteVentasService';
 import type { ReporteResultadosEconomicos } from '../../../../types/reporteResultadosEconomicos';
+import { inferirSelectoresPeriodo, type RangoConsultaReportes } from '../rangoConsulta';
+import { EncabezadoCasoUso } from './EncabezadoCasoUso';
+import { BotonesExportacionTabla } from './BotonesExportacionTabla';
+import { TarjetaKpiReporte } from './TarjetaKpiReporte';
 
 function bolivianos(valor: string | number | undefined | null): string {
   if (valor === undefined || valor === null) return 'Bs 0.00';
@@ -38,12 +32,14 @@ interface ResultadosEconomicosViewProps {
     hasta?: string;
   } | null;
   onComandoVozEjecutado?: () => void;
+  rangoCompartido?: RangoConsultaReportes;
 }
 
 export const ResultadosEconomicosView: React.FC<ResultadosEconomicosViewProps> = ({
   onAvisoSinDatos,
   comandoVozPendiente,
   onComandoVozEjecutado,
+  rangoCompartido,
 }) => {
   const [periodo, setPeriodo] = useState<PeriodoReporte>('mes');
   const [fechaDia, setFechaDia] = useState<string>(fechaHoy());
@@ -52,10 +48,9 @@ export const ResultadosEconomicosView: React.FC<ResultadosEconomicosViewProps> =
 
   const [reporte, setReporte] = useState<ReporteResultadosEconomicos | null>(null);
   const [cargando, setCargando] = useState<boolean>(true);
-  const [descargando, setDescargando] = useState<'pdf' | 'csv' | null>(null);
+  const [descargando, setDescargando] = useState<'csv' | 'excel' | 'pdf' | ''>('');
   const [error, setError] = useState<string | null>(null);
 
-  // Obtener fechas desde / hasta según período
   const valorPeriodo = periodo === 'dia' ? fechaDia : periodo === 'semana' ? semanaIso : mesAno;
   const rango = rangoDelPeriodo(periodo, valorPeriodo);
 
@@ -77,7 +72,17 @@ export const ResultadosEconomicosView: React.FC<ResultadosEconomicosViewProps> =
   };
 
   useEffect(() => {
-    cargarReporte(rango.desde, rango.hasta);
+    if (!rangoCompartido) return;
+    const sel = inferirSelectoresPeriodo(rangoCompartido.desde, rangoCompartido.hasta);
+    setPeriodo(sel.periodo);
+    setFechaDia(sel.dia);
+    setSemanaIso(sel.semana);
+    setMesAno(sel.mes);
+  }, [rangoCompartido?.desde, rangoCompartido?.hasta, rangoCompartido?.version]);
+
+  useEffect(() => {
+    void cargarReporte(rango.desde, rango.hasta);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rango.desde, rango.hasta]);
 
   // Manejar comandos automáticos del asistente de voz
@@ -94,7 +99,7 @@ export const ResultadosEconomicosView: React.FC<ResultadosEconomicosViewProps> =
         if (formato === 'pdf') {
           await handleDescargarPdf(fechaDesde, fechaHasta);
         } else if (formato === 'csv' || formato === 'excel') {
-          await handleDescargarCsv(fechaDesde, fechaHasta);
+          await handleDescargarCsv(fechaDesde, fechaHasta, formato === 'excel' ? 'excel' : 'csv');
         }
       }
       if (onComandoVozEjecutado) onComandoVozEjecutado();
@@ -114,48 +119,42 @@ export const ResultadosEconomicosView: React.FC<ResultadosEconomicosViewProps> =
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Error al exportar en PDF.');
     } finally {
-      setDescargando(null);
+      setDescargando('');
     }
   };
 
-  const handleDescargarCsv = async (desde = rango.desde, hasta = rango.hasta) => {
+  const handleDescargarCsv = async (
+    desde = rango.desde,
+    hasta = rango.hasta,
+    tipo: 'csv' | 'excel' = 'csv',
+  ) => {
     if (!reporte?.tiene_movimientos) {
       if (onAvisoSinDatos) onAvisoSinDatos('No hay datos para exportar en este período.');
       return;
     }
-    setDescargando('csv');
+    setDescargando(tipo);
     try {
       await descargarReporteResultadosCsv(desde, hasta);
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Error al exportar en CSV/Excel.');
     } finally {
-      setDescargando(null);
+      setDescargando('');
     }
   };
 
   const financiero = reporte?.resumen_financiero;
-  const utilidadNetaNum = Number(financiero?.utilidad_neta || 0);
-  const esGanancia = utilidadNetaNum >= 0;
 
   return (
-    <div className="space-y-6">
+    <div id="resultados" className="scroll-mt-24 space-y-6">
       {/* 1. Barra de Controles y Filtros de Período */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
-        <div>
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-200">
-            <span className="h-2 w-2 rounded-full bg-emerald-600 animate-pulse" />
-            CU25 · Resultados Económicos y Balance Operativo
-          </span>
-          <h2 className="mt-2 text-xl font-black text-slate-900 tracking-tight">
-            Estado de Resultados y Rentabilidad
-          </h2>
-          <p className="text-xs text-slate-500">
-            Período evaluado: del <span className="font-semibold text-slate-700">{rango.desde}</span> al{' '}
-            <span className="font-semibold text-slate-700">{rango.hasta}</span>
-          </p>
-        </div>
+        <EncabezadoCasoUso
+          cu="CU25"
+          titulo="Generar reporte de resultados económicos"
+          descripcion={`Período evaluado: del ${rango.desde} al ${rango.hasta}.`}
+        />
 
-        {/* Selector de Períodos */}
+        {/* Selector de Períodos original del CU25 */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
             {(['dia', 'semana', 'mes'] as PeriodoReporte[]).map((p) => (
@@ -200,34 +199,14 @@ export const ResultadosEconomicosView: React.FC<ResultadosEconomicosViewProps> =
             />
           )}
 
-          {/* Botones de Descarga */}
-          <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
-            <button
-              type="button"
-              disabled={cargando || descargando !== null || !reporte?.tiene_movimientos}
-              onClick={() => handleDescargarPdf()}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-800 hover:bg-rose-100 disabled:opacity-50 transition-colors shadow-2xs"
-            >
-              {descargando === 'pdf' ? (
-                <Loader2 className="h-4 w-4 animate-spin text-rose-700" />
-              ) : (
-                <FileText className="h-4 w-4 text-rose-700" />
-              )}
-              PDF
-            </button>
-            <button
-              type="button"
-              disabled={cargando || descargando !== null || !reporte?.tiene_movimientos}
-              onClick={() => handleDescargarCsv()}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50 transition-colors shadow-2xs"
-            >
-              {descargando === 'csv' ? (
-                <Loader2 className="h-4 w-4 animate-spin text-emerald-700" />
-              ) : (
-                <FileSpreadsheet className="h-4 w-4 text-emerald-700" />
-              )}
-              Excel / CSV
-            </button>
+          <div className="border-l border-slate-200 pl-3">
+            <BotonesExportacionTabla
+              onCsv={() => void handleDescargarCsv(rango.desde, rango.hasta, 'csv')}
+              onExcel={() => void handleDescargarCsv(rango.desde, rango.hasta, 'excel')}
+              onPdf={() => void handleDescargarPdf()}
+              descargando={descargando}
+              deshabilitado={cargando || !reporte?.tiene_movimientos}
+            />
           </div>
         </div>
       </div>
@@ -239,118 +218,33 @@ export const ResultadosEconomicosView: React.FC<ResultadosEconomicosViewProps> =
         </div>
       )}
 
-      {/* 2. Tarjetas KPI de Balance y Resultados Financieros */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Ingresos por Ventas */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              1. Ingresos por Ventas
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
-              <DollarSign className="h-4 w-4" />
-            </div>
-          </div>
-          <p className="mt-3 text-2xl font-black text-slate-900 tracking-tight">
-            {bolivianos(reporte?.ingresos.total)}
-          </p>
-          <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100 pt-2">
-            <span>Efectivo: {bolivianos(reporte?.ingresos.efectivo)}</span>
-            <span>Tarjeta: {bolivianos(reporte?.ingresos.tarjeta)}</span>
-          </div>
-        </div>
-
-        {/* Costos Directos */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              2. Costos Directos
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-800">
-              <ShoppingCart className="h-4 w-4" />
-            </div>
-          </div>
-          <p className="mt-3 text-2xl font-black text-slate-900 tracking-tight">
-            {bolivianos(reporte?.costos.total_costos_directos)}
-          </p>
-          <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100 pt-2">
-            <span>Insumos: {bolivianos(reporte?.costos.compras_materia_prima)}</span>
-            <span>Mermas: {bolivianos(reporte?.costos.mermas_perdidas)}</span>
-          </div>
-        </div>
-
-        {/* Gastos Operativos */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              3. Gastos Operativos
-            </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-50 text-orange-700">
-              <Receipt className="h-4 w-4" />
-            </div>
-          </div>
-          <p className="mt-3 text-2xl font-black text-slate-900 tracking-tight">
-            {bolivianos(reporte?.gastos_operativos.total)}
-          </p>
-          <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-100 pt-2">
-            <span>{reporte?.gastos_operativos.cantidad || 0} movimientos</span>
-            <span>Inversiones: {bolivianos(reporte?.inversiones.total)}</span>
-          </div>
-        </div>
-
-        {/* Resultado Económico Neto Final */}
-        <div
-          className={`rounded-2xl border p-5 shadow-2xs transition-all ${
-            esGanancia
-              ? 'border-emerald-200 bg-emerald-50/50'
-              : 'border-rose-200 bg-rose-50/50'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span
-              className={`text-[11px] font-bold uppercase tracking-wider ${
-                esGanancia ? 'text-emerald-800' : 'text-rose-800'
-              }`}
-            >
-              4. Resultado Neto Final
-            </span>
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-xl ${
-                esGanancia ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-              }`}
-            >
-              {esGanancia ? (
-                <ArrowUpRight className="h-4 w-4" />
-              ) : (
-                <ArrowDownRight className="h-4 w-4" />
-              )}
-            </div>
-          </div>
-          <p
-            className={`mt-3 text-2xl font-black tracking-tight ${
-              esGanancia ? 'text-emerald-900' : 'text-rose-900'
-            }`}
-          >
-            {bolivianos(financiero?.utilidad_neta)}
-          </p>
-          <div className="mt-2 flex items-center justify-between text-[11px] font-semibold border-t border-slate-200/60 pt-2">
-            <span className={esGanancia ? 'text-emerald-700' : 'text-rose-700'}>
-              Margen Neto: {financiero?.margen_neto_pct}%
-            </span>
-            <span className="text-slate-500">
-              Operativo: {financiero?.margen_operativo_pct}%
-            </span>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <TarjetaKpiReporte
+          etiqueta="Ingresos por ventas"
+          valor={bolivianos(reporte?.ingresos.total)}
+          detalle={`Efectivo ${bolivianos(reporte?.ingresos.efectivo)} · Tarjeta ${bolivianos(reporte?.ingresos.tarjeta)}`}
+        />
+        <TarjetaKpiReporte
+          etiqueta="Costos directos"
+          valor={bolivianos(reporte?.costos.total_costos_directos)}
+          detalle={`Insumos ${bolivianos(reporte?.costos.compras_materia_prima)} · Mermas ${bolivianos(reporte?.costos.mermas_perdidas)}`}
+        />
+        <TarjetaKpiReporte
+          etiqueta="Gastos operativos"
+          valor={bolivianos(reporte?.gastos_operativos.total)}
+          detalle={`${reporte?.gastos_operativos.cantidad || 0} movimientos · Inversiones ${bolivianos(reporte?.inversiones.total)}`}
+        />
+        <TarjetaKpiReporte
+          etiqueta="Resultado neto final"
+          valor={bolivianos(financiero?.utilidad_neta)}
+          detalle={`Margen neto ${financiero?.margen_neto_pct ?? 0}% · Operativo ${financiero?.margen_operativo_pct ?? 0}%`}
+        />
       </div>
 
       {/* 3. Tabla Contable: Estado de Resultados del Período */}
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-2xs space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-amber-900 font-bold text-xs">
-              CU25
-            </div>
             <h3 className="text-base font-bold text-slate-900">
               Estado de Resultados Oficial (Esquema Financiero)
             </h3>
@@ -361,7 +255,7 @@ export const ResultadosEconomicosView: React.FC<ResultadosEconomicosViewProps> =
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-600">
+              <tr className="border-b border-amber-200 bg-amber-50 text-[11px] font-bold uppercase tracking-wider text-amber-900">
                 <th className="py-3 px-4">Concepto Contable / Rubro</th>
                 <th className="py-3 px-4 text-center">Tipo de Movimiento</th>
                 <th className="py-3 px-4 text-right">Monto (Bs)</th>
@@ -393,9 +287,9 @@ export const ResultadosEconomicosView: React.FC<ResultadosEconomicosViewProps> =
                       key={idx}
                       className={`transition-colors ${
                         esTotalNeto
-                          ? 'bg-slate-900 text-white font-black hover:bg-slate-800'
+                          ? 'bg-amber-700 text-white font-black'
                           : esSubtotal
-                          ? 'bg-slate-50 font-bold text-slate-900'
+                          ? 'bg-amber-50 font-bold text-slate-900'
                           : 'hover:bg-slate-50/60 text-slate-700'
                       }`}
                     >
@@ -422,11 +316,11 @@ export const ResultadosEconomicosView: React.FC<ResultadosEconomicosViewProps> =
                       <td
                         className={`py-3 px-4 text-right font-mono ${
                           esTotalNeto
-                            ? 'text-sm font-black text-emerald-400'
+                            ? 'text-sm font-black text-white'
                             : esSubtotal
                             ? 'font-bold text-slate-900'
                             : esIngreso
-                            ? 'font-bold text-emerald-700'
+                            ? 'font-bold text-slate-900'
                             : 'text-slate-800'
                         }`}
                       >
@@ -434,7 +328,7 @@ export const ResultadosEconomicosView: React.FC<ResultadosEconomicosViewProps> =
                       </td>
                       <td
                         className={`py-3 px-4 text-right font-mono ${
-                          esTotalNeto ? 'text-emerald-300 font-bold' : 'text-slate-500'
+                            esTotalNeto ? 'text-amber-100 font-bold' : 'text-slate-500'
                         }`}
                       >
                         {fila.porcentaje_ingresos}%

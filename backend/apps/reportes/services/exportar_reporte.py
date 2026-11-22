@@ -235,7 +235,12 @@ def pdf_reporte_analisis(
             ('Tarjeta', f"Bs {_dinero(contexto.get('tarjeta', 0))}"),
         ]
     elif contexto.get('tipo') == 'produccion':
-        tarjetas[0] = ('Jornadas', str(contexto.get('jornadas', 0)))
+        tarjetas = [
+            ('Jornadas', str(contexto.get('jornadas') or contexto.get('cantidad', 0))),
+            ('Producidas', str(contexto.get('unidades', 0))),
+            ('Vendidas', str(contexto.get('unidades_vendidas', 0))),
+            ('Costo', f"Bs {_dinero(contexto.get('costo', 0))}"),
+        ]
     elif contexto.get('tipo') == 'roles':
         total_usuarios = sum(int(r.get('cantidad_usuarios', 0)) for r in contexto.get('roles') or [])
         tarjetas[0] = ('Roles', str(len(contexto.get('roles') or [])))

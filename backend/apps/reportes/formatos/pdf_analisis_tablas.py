@@ -84,13 +84,18 @@ def _tabla_roles(hoja: HojaReporte, contexto: dict[str, Any]) -> None:
 
 
 def _tabla_produccion(hoja: HojaReporte, contexto: dict[str, Any]) -> None:
-    hoja.seccion('Producción por producto')
-    proporciones = [50, 25, 25]
+    hoja.seccion('Producción vs ventas por producto')
+    proporciones = [40, 20, 20, 20]
 
     def encabezado():
         _fila_tabla(
             hoja,
-            [('Producto', 'izq'), ('Unidades', 'der'), ('Jornadas', 'der')],
+            [
+                ('Producto', 'izq'),
+                ('Producidas', 'der'),
+                ('Vendidas', 'der'),
+                ('Diferencia', 'der'),
+            ],
             proporciones,
             encabezado=True,
         )
@@ -101,12 +106,16 @@ def _tabla_produccion(hoja: HojaReporte, contexto: dict[str, Any]) -> None:
         hoja.nota('No hay producción en el período.')
         return
     for indice, p in enumerate(productos):
+        producidas = p.get('unidades', p.get('cantidad', 0))
+        vendidas = p.get('vendidas', p.get('jornadas', 0))
+        diferencia = p.get('diferencia', producidas - vendidas)
         _fila_tabla(
             hoja,
             [
                 (p.get('nombre', '—'), 'izq'),
-                (str(p.get('unidades', 0)), 'der'),
-                (str(p.get('jornadas', 0)), 'der'),
+                (str(producidas), 'der'),
+                (str(vendidas), 'der'),
+                (str(diferencia), 'der'),
             ],
             proporciones,
             cebra=indice % 2 == 1,

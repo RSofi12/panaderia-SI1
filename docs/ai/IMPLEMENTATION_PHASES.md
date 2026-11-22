@@ -253,7 +253,7 @@
 ### 🔴 Ciclo 4 — Control Financiero y Reportes (6 CU)
 - [ ] **CU 20:** Registrar gasto / inversión operativa (`apps.compras` - Propietario).
 - [ ] **CU 21:** Generar reporte de ventas por periodo/método de pago (`apps.reportes` - Propietario).
-- [ ] **CU 22:** Generar reporte de producción vs. ventas (`apps.reportes` - Propietario).
+- [x] **CU 22:** Generar reporte de producción vs. ventas (`apps.reportes` - Propietario).
 - [ ] **CU 23:** Generar reporte de existencias consolidado (`apps.reportes` - Propietario).
 - [ ] **CU 24:** Generar reporte de compras y gastos (`apps.reportes` - Propietario).
 - [ ] **CU 25:** Generar reporte de resultados económicos / balance general (`apps.reportes` - Propietario).

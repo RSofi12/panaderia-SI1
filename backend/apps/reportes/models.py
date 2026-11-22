@@ -12,14 +12,15 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.comercializacion.ventas.models import MetodoPago
+from apps.reportes.choices import PeriodoReporte
 
-
-class PeriodoReporte(models.TextChoices):
-    """El periodo solo etiqueta el cierre. El cálculo siempre usa desde y hasta."""
-
-    DIA = 'dia', 'Día'
-    SEMANA = 'semana', 'Semana'
-    MES = 'mes', 'Mes'
+__all__ = [
+    'PeriodoReporte',
+    'CierreReporteVentas',
+    'LineaCierreReporteVentas',
+    'CierreReporteCompras',
+    'LineaCierreReporteCompras',
+]
 
 
 class CierreReporteVentas(models.Model):

@@ -9,7 +9,8 @@ from datetime import date
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from apps.reportes.models import CierreReporteCompras, LineaCierreReporteCompras, PeriodoReporte
+from apps.reportes.choices import PeriodoReporte
+from apps.reportes.models import CierreReporteCompras, LineaCierreReporteCompras
 from apps.reportes.services.reporte_compras import reporte_compras
 from apps.usuarios_seguridad.bitacora.models import AccionBitacora, Bitacora
 

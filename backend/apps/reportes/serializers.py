@@ -1,7 +1,8 @@
 from rest_framework import serializers
 
 from apps.comercializacion.ventas.models import MetodoPago
-from apps.reportes.models import PeriodoReporte
+from apps.productos_inventario.produccion.models import JornadaProduccion
+from apps.reportes.choices import PeriodoReporte
 
 
 # ==============================================================================
@@ -53,6 +54,7 @@ class FiltrosComandoVozSerializer(serializers.Serializer):
     desde = serializers.DateField(required=False, allow_null=True)
     hasta = serializers.DateField(required=False, allow_null=True)
     metodo_pago = serializers.CharField(required=False, allow_blank=True)
+    jornada = serializers.CharField(required=False, allow_blank=True)
     columnas = serializers.ListField(
         child=serializers.CharField(),
         required=False,
@@ -90,6 +92,7 @@ class AnalizarVozSalidaSerializer(serializers.Serializer):
     analisis = serializers.CharField()
     motor = serializers.CharField()
     exportar_ventas = serializers.BooleanField()
+    exportar_produccion = serializers.BooleanField()
     respuesta_voz = serializers.CharField()
     comando = InterpretarComandoVozSalidaSerializer()
 
@@ -113,6 +116,59 @@ class ReporteVentasSerializer(serializers.Serializer):
     tarjeta = serializers.DecimalField(max_digits=10, decimal_places=2)
     productos = ProductoVendidoSerializer(many=True)
     ventas = VentaItemReporteSerializer(many=True, required=False)
+
+
+# ==============================================================================
+# CU22: Reporte de producción
+# ==============================================================================
+
+class ReporteProduccionConsultaSerializer(serializers.Serializer):
+    """Parámetros de filtro para el reporte dinámico de producción (CU22)."""
+
+    desde = serializers.DateField(required=True)
+    hasta = serializers.DateField(required=True)
+    jornada = serializers.ChoiceField(
+        choices=JornadaProduccion.choices,
+        required=False,
+        allow_blank=True,
+    )
+    columnas = serializers.CharField(required=False, allow_blank=True)
+
+
+class ProductoProducidoSerializer(serializers.Serializer):
+    nombre = serializers.CharField()
+    cantidad = serializers.IntegerField()
+    vendidas = serializers.IntegerField()
+    diferencia = serializers.IntegerField()
+    costo = serializers.DecimalField(max_digits=12, decimal_places=2)
+
+
+class LoteProduccionItemSerializer(serializers.Serializer):
+    id_produccion = serializers.IntegerField()
+    fecha = serializers.CharField()
+    jornada = serializers.CharField()
+    jornada_codigo = serializers.CharField()
+    responsable = serializers.CharField()
+    unidades = serializers.IntegerField()
+    variedades = serializers.IntegerField()
+    costo = serializers.DecimalField(max_digits=12, decimal_places=2)
+
+
+class ReporteProduccionSerializer(serializers.Serializer):
+    """Esquema de salida para el reporte de producción del período."""
+
+    desde = serializers.DateField()
+    hasta = serializers.DateField()
+    cantidad = serializers.IntegerField()
+    unidades = serializers.IntegerField()
+    unidades_vendidas = serializers.IntegerField()
+    diferencia = serializers.IntegerField()
+    costo = serializers.DecimalField(max_digits=12, decimal_places=2)
+    manana = serializers.IntegerField()
+    tarde = serializers.IntegerField()
+    noche = serializers.IntegerField()
+    lotes = LoteProduccionItemSerializer(many=True)
+    productos = ProductoProducidoSerializer(many=True)
 
 
 class CierreReporteConsultaSerializer(ReporteVentasConsultaSerializer):

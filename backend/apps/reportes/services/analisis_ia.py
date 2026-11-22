@@ -14,8 +14,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Sum
 
-from apps.productos_inventario.produccion.models import DetalleProduccion, Produccion
 from apps.reportes.services.interprete_voz import interpretar_comando_voz
+from apps.reportes.services.reporte_produccion import reporte_produccion
 from apps.reportes.services.reporte_ventas import reporte_ventas
 from apps.usuarios_seguridad.roles.models import Rol
 
@@ -100,20 +100,28 @@ def _contexto_roles() -> dict[str, Any]:
 
 
 def _contexto_produccion(desde: date, hasta: date) -> dict[str, Any]:
-    jornadas = Produccion.objects.filter(fecha__range=(desde, hasta)).count()
-    detalles = (
-        DetalleProduccion.objects.filter(id_produccion__fecha__range=(desde, hasta))
-        .values('id_producto__nombre')
-        .annotate(cantidad=Sum('cantidad'), jornadas=Count('id_produccion', distinct=True))
-        .order_by('-cantidad')[:15]
-    )
+    datos = reporte_produccion(desde=desde, hasta=hasta)
     return {
         'tipo': 'produccion',
-        'jornadas': jornadas,
+        'jornadas': datos['cantidad'],
+        'unidades': datos['unidades'],
+        'unidades_vendidas': datos['unidades_vendidas'],
+        'diferencia': datos['diferencia'],
+        'costo': str(datos['costo']),
+        'cantidad': datos['cantidad'],
         'productos': [
-            {'nombre': d['id_producto__nombre'], 'unidades': d['cantidad'], 'jornadas': d['jornadas']}
-            for d in detalles
+            {
+                'nombre': producto['nombre'],
+                'unidades': producto['cantidad'],
+                'cantidad': producto['cantidad'],
+                'vendidas': producto['vendidas'],
+                'diferencia': producto['diferencia'],
+                'jornadas': producto['vendidas'],
+                'costo': str(producto['costo']),
+            }
+            for producto in datos['productos'][:15]
         ],
+        'lotes': datos['lotes'][:20],
     }
 
 
@@ -199,6 +207,20 @@ def _analisis_local(consulta: str, tema: str, contexto: dict[str, Any], desde: s
                 f"• {fila['rol']}: {fila['cantidad_usuarios']} usuario(s) — {nombres}."
             )
         return '\n'.join(lineas)
+
+    if contexto.get('tipo') == 'produccion':
+        if int(contexto.get('cantidad', 0) or 0) == 0 and int(contexto.get('unidades_vendidas', 0) or 0) == 0:
+            return (
+                f'No hay producción ni ventas registradas entre {desde} y {hasta} para «{consulta}». '
+                'Prueba octubre o noviembre 2026 si ejecutaste seed_mes_operativo o seed_noviembre_demo.'
+            )
+        return (
+            f"Producción del {desde} al {hasta}: {contexto.get('jornadas', 0)} jornadas, "
+            f"{contexto.get('unidades', 0)} unidades horneadas, "
+            f"{contexto.get('unidades_vendidas', 0)} vendidas "
+            f"(diferencia {contexto.get('diferencia', 0)}), "
+            f"costo estimado Bs {contexto.get('costo', '0.00')}."
+        )
 
     if contexto.get('tipo') == 'ventas':
         if contexto.get('cantidad', 0) == 0:
@@ -294,6 +316,11 @@ def analizar_consulta_reporte(texto: str, cu_actual: str | None = None) -> dict[
         and contexto.get('tipo') == 'ventas'
         and int(contexto.get('cantidad', 0)) > 0
     )
+    exportar_produccion = (
+        (tema == 'produccion' or comando.get('caso_uso') == 'CU22')
+        and contexto.get('tipo') == 'produccion'
+        and int(contexto.get('cantidad', 0) or 0) > 0
+    )
 
     return {
         'consulta': texto.strip(),
@@ -305,5 +332,6 @@ def analizar_consulta_reporte(texto: str, cu_actual: str | None = None) -> dict[
         'motor': motor,
         'comando': comando,
         'exportar_ventas': exportar_ventas,
+        'exportar_produccion': exportar_produccion,
         'respuesta_voz': analisis.split('\n')[0][:280],
     }

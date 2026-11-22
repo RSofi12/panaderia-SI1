@@ -3,14 +3,10 @@ import {
   AlertCircle,
   CheckCircle2,
   Download,
-  FileSpreadsheet,
   Filter,
-  Layers,
   Loader2,
-  Package,
   Save,
   ShieldCheck,
-  Truck,
   Wallet,
 } from 'lucide-react';
 import api from '../../../services/api';
@@ -21,6 +17,7 @@ import {
   consultarReporteCompras,
   descargarCierreComprasPdf,
   descargarReporteComprasCsv,
+  descargarReporteComprasPdf,
   fechaHoy,
   guardarCierreCompras,
   listarCierresCompras,
@@ -28,6 +25,10 @@ import {
   rangoDelPeriodo,
   semanaActual,
 } from '../../../services/reporteComprasService';
+import { inferirSelectoresPeriodo, type RangoConsultaReportes } from './rangoConsulta';
+import { EncabezadoCasoUso } from './components/EncabezadoCasoUso';
+import { BotonesExportacionTabla } from './components/BotonesExportacionTabla';
+import { TarjetaKpiReporte } from './components/TarjetaKpiReporte';
 
 interface ProveedorItem {
   id_proveedor: number;
@@ -62,7 +63,11 @@ function fechaLegible(iso: string): string {
   return new Date(iso).toLocaleString('es-BO', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-export const ReporteComprasCu24: React.FC = () => {
+interface ReporteComprasCu24Props {
+  rangoCompartido?: RangoConsultaReportes;
+}
+
+export const ReporteComprasCu24: React.FC<ReporteComprasCu24Props> = ({ rangoCompartido }) => {
   const [modo, setModo] = useState<'dinamico' | 'estatico'>('dinamico');
   const [periodo, setPeriodo] = useState<PeriodoReporte>('mes');
   const [dia, setDia] = useState(fechaHoy);
@@ -86,7 +91,7 @@ export const ReporteComprasCu24: React.FC = () => {
 
   const [cargando, setCargando] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  const [descargando, setDescargando] = useState<'csv' | 'pdf' | ''>('');
+  const [descargando, setDescargando] = useState<'csv' | 'excel' | 'pdf' | ''>('');
   const [error, setError] = useState('');
   const [mensajeExito, setMensajeExito] = useState('');
   const [tabDetalle, setTabDetalle] = useState<'insumos' | 'proveedores'>('insumos');
@@ -122,26 +127,39 @@ export const ReporteComprasCu24: React.FC = () => {
     };
   }, [modo]);
 
-  async function consultar() {
+  async function consultar(desdeOverride?: string, hastaOverride?: string) {
     setError('');
     setMensajeExito('');
     setCargando(true);
     try {
       const rango = rangoDelPeriodo(periodo, valorPeriodo);
+      const desde = desdeOverride ?? rango.desde;
+      const hasta = hastaOverride ?? rango.hasta;
       const resultado = await consultarReporteCompras(
-        rango.desde,
-        rango.hasta,
+        desde,
+        hasta,
         idProveedor,
         idMateriaPrima,
       );
       setReporte(resultado);
-      setConsulta({ ...rango, periodo });
+      setConsulta({ desde, hasta, periodo });
     } catch {
       setError('No se pudo calcular el reporte de compras.');
     } finally {
       setCargando(false);
     }
   }
+
+  useEffect(() => {
+    if (!rangoCompartido) return;
+    const sel = inferirSelectoresPeriodo(rangoCompartido.desde, rangoCompartido.hasta);
+    setPeriodo(sel.periodo);
+    setDia(sel.dia);
+    setSemana(sel.semana);
+    setMes(sel.mes);
+    void consultar(rangoCompartido.desde, rangoCompartido.hasta);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rangoCompartido?.desde, rangoCompartido?.hasta, rangoCompartido?.version]);
 
   async function guardar() {
     if (!consulta) return;
@@ -166,19 +184,28 @@ export const ReporteComprasCu24: React.FC = () => {
     }
   }
 
-  async function exportarCsv() {
+  async function exportar(tipo: 'csv' | 'excel' | 'pdf') {
     if (!consulta) return;
     setError('');
-    setDescargando('csv');
+    setDescargando(tipo);
     try {
-      await descargarReporteComprasCsv(
-        consulta.desde,
-        consulta.hasta,
-        idProveedor,
-        idMateriaPrima,
-      );
+      if (tipo === 'pdf') {
+        await descargarReporteComprasPdf(
+          consulta.desde,
+          consulta.hasta,
+          idProveedor,
+          idMateriaPrima,
+        );
+      } else {
+        await descargarReporteComprasCsv(
+          consulta.desde,
+          consulta.hasta,
+          idProveedor,
+          idMateriaPrima,
+        );
+      }
     } catch {
-      setError('No se pudo descargar el archivo CSV.');
+      setError(tipo === 'pdf' ? 'No se pudo descargar el PDF.' : 'No se pudo descargar el archivo.');
     } finally {
       setDescargando('');
     }
@@ -197,18 +224,14 @@ export const ReporteComprasCu24: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div id="compras" className="scroll-mt-24 space-y-6">
       {/* Selector de Modo: Dinámico vs Estático */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-4">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-amber-700" />
-            CU24 — Reporte de Compras y Gastos de Materia Prima
-          </h2>
-          <p className="text-xs text-slate-500">
-            Análisis consolidado de adquisiciones a proveedores con desglose de insumos y cierres inmutables.
-          </p>
-        </div>
+        <EncabezadoCasoUso
+          cu="CU24"
+          titulo="Generar reporte de compras y gastos"
+          descripcion="Compras a proveedores, insumos adquiridos y cierres estáticos del período."
+        />
 
         <div className="flex rounded-xl bg-slate-100 p-1">
           <button
@@ -351,7 +374,7 @@ export const ReporteComprasCu24: React.FC = () => {
             <div className="flex justify-end pt-2">
               <button
                 type="button"
-                onClick={consultar}
+                onClick={() => void consultar()}
                 disabled={cargando}
                 className="inline-flex items-center gap-2 rounded-xl bg-amber-700 px-5 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-amber-800 disabled:opacity-50"
               >
@@ -365,44 +388,27 @@ export const ReporteComprasCu24: React.FC = () => {
           {reporte && (
             <div className="space-y-6">
               {/* Tarjetas KPI */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <article className="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 shadow-xs">
-                  <div className="flex items-center justify-between text-amber-800">
-                    <p className="text-xs font-bold uppercase tracking-wider">Total Invertido</p>
-                    <Wallet className="h-4 w-4" />
-                  </div>
-                  <p className="mt-2 text-2xl font-black text-slate-900">{bolivianos(reporte.total)}</p>
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    Del {reporte.desde} al {reporte.hasta}
-                  </p>
-                </article>
-
-                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-                  <div className="flex items-center justify-between text-slate-500">
-                    <p className="text-xs font-bold uppercase tracking-wider">Órdenes de Compra</p>
-                    <Package className="h-4 w-4 text-amber-600" />
-                  </div>
-                  <p className="mt-2 text-2xl font-black text-slate-900">{reporte.cantidad}</p>
-                  <p className="text-[11px] text-slate-500 mt-1">Transacciones efectuadas</p>
-                </article>
-
-                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-                  <div className="flex items-center justify-between text-slate-500">
-                    <p className="text-xs font-bold uppercase tracking-wider">Proveedores Activos</p>
-                    <Truck className="h-4 w-4 text-amber-600" />
-                  </div>
-                  <p className="mt-2 text-2xl font-black text-slate-900">{reporte.proveedores.length}</p>
-                  <p className="text-[11px] text-slate-500 mt-1">Con compras en el periodo</p>
-                </article>
-
-                <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-                  <div className="flex items-center justify-between text-slate-500">
-                    <p className="text-xs font-bold uppercase tracking-wider">Variedad de Insumos</p>
-                    <Layers className="h-4 w-4 text-amber-600" />
-                  </div>
-                  <p className="mt-2 text-2xl font-black text-slate-900">{reporte.insumos.length}</p>
-                  <p className="text-[11px] text-slate-500 mt-1">Materias primas adquiridas</p>
-                </article>
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <TarjetaKpiReporte
+                  etiqueta="Total invertido"
+                  valor={bolivianos(reporte.total)}
+                  detalle={`Del ${reporte.desde} al ${reporte.hasta}`}
+                />
+                <TarjetaKpiReporte
+                  etiqueta="Órdenes de compra"
+                  valor={reporte.cantidad}
+                  detalle="Transacciones efectuadas"
+                />
+                <TarjetaKpiReporte
+                  etiqueta="Proveedores activos"
+                  valor={reporte.proveedores.length}
+                  detalle="Con compras en el periodo"
+                />
+                <TarjetaKpiReporte
+                  etiqueta="Variedad de insumos"
+                  valor={reporte.insumos.length}
+                  detalle="Materias primas adquiridas"
+                />
               </div>
 
               {/* Botones de Acción */}
@@ -411,20 +417,14 @@ export const ReporteComprasCu24: React.FC = () => {
                   Acciones para el periodo ({etiquetaPeriodo(consulta?.periodo || 'mes')}):
                 </span>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={exportarCsv}
-                    disabled={descargando === 'csv' || reporte.cantidad === 0}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-100 disabled:opacity-50"
-                  >
-                    {descargando === 'csv' ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-                    )}
-                    Descargar CSV (Excel)
-                  </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <BotonesExportacionTabla
+                    onCsv={() => void exportar('csv')}
+                    onExcel={() => void exportar('excel')}
+                    onPdf={() => void exportar('pdf')}
+                    descargando={descargando}
+                    deshabilitado={reporte.cantidad === 0}
+                  />
 
                   <button
                     type="button"

@@ -8,9 +8,15 @@ from apps.reportes.views import (
     ReporteAnalizarVozPdfView,
     ReporteAnalizarVozView,
     ReporteComprasCsvView,
+    ReporteComprasPdfView,
     ReporteComprasView,
+    ReporteExistenciasCsvView,
+    ReporteExistenciasPdfView,
     ReporteExistenciasView,
     ReporteInterpretarVozView,
+    ReporteProduccionCsvView,
+    ReporteProduccionPdfView,
+    ReporteProduccionView,
     ReporteResultadosEconomicosCsvView,
     ReporteResultadosEconomicosPdfView,
     ReporteResultadosEconomicosView,
@@ -31,12 +37,20 @@ urlpatterns = [
     path('reportes/voz/analizar/csv/', ReporteAnalizarVozCsvView.as_view(), name='reporte-voz-analizar-csv'),
     path('reportes/voz/interpretar/', ReporteInterpretarVozView.as_view(), name='reporte-voz-interpretar'),
 
+    # CU22: Reporte de producción
+    path('reportes/produccion/', ReporteProduccionView.as_view(), name='reporte-produccion'),
+    path('reportes/produccion/csv/', ReporteProduccionCsvView.as_view(), name='reporte-produccion-csv'),
+    path('reportes/produccion/pdf/', ReporteProduccionPdfView.as_view(), name='reporte-produccion-pdf'),
+
     # CU23: Reporte de existencias
     path('reportes/existencias/', ReporteExistenciasView.as_view(), name='reporte-existencias'),
+    path('reportes/existencias/csv/', ReporteExistenciasCsvView.as_view(), name='reporte-existencias-csv'),
+    path('reportes/existencias/pdf/', ReporteExistenciasPdfView.as_view(), name='reporte-existencias-pdf'),
 
     # CU24: Reporte de compras y gastos
     path('reportes/compras/', ReporteComprasView.as_view(), name='reporte-compras'),
     path('reportes/compras/csv/', ReporteComprasCsvView.as_view(), name='reporte-compras-csv'),
+    path('reportes/compras/pdf/', ReporteComprasPdfView.as_view(), name='reporte-compras-pdf'),
     path('reportes/compras/cierres/', CierresReporteComprasView.as_view(), name='cierres-reporte-compras'),
     path(
         'reportes/compras/cierres/<int:id_cierre>/pdf/',

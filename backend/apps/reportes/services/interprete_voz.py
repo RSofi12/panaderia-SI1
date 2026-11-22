@@ -18,7 +18,7 @@ from django.utils import timezone
 
 CASOS_USO = ('CU21', 'CU22', 'CU23', 'CU24', 'CU25')
 FORMATOS = ('pdf', 'csv', 'excel', 'pantalla')
-MODULOS_DISPONIBLES = frozenset({'CU21', 'CU25'})
+MODULOS_DISPONIBLES = frozenset({'CU21', 'CU22', 'CU25'})
 
 _PROMPT_SISTEMA = """Eres el asistente de reportes de la Panadería Santiago (Bolivia).
 Traduce el comando del usuario a JSON estricto.
@@ -39,8 +39,9 @@ Filtros (solo los que apliquen):
 - periodo: dia, semana, mes
 - desde, hasta: YYYY-MM-DD (fecha actual de referencia abajo)
 - Si menciona un año (ej. 2025 o 20250): desde=AAAA-01-01, hasta=AAAA-12-31 (todo el año)
-- metodo_pago: efectivo, stripe o cadena vacía
-- columnas: lista opcional con: comprobante, fecha, metodo, cajero, total
+- metodo_pago: efectivo, stripe o cadena vacía (solo CU21)
+- jornada: Mañana, Tarde, Noche, unica o cadena vacía (solo CU22)
+- columnas: lista opcional; CU21: comprobante, fecha, metodo, cajero, total; CU22: lote, fecha, jornada, responsable, unidades, costo
 
 Responde SOLO JSON con las claves:
 caso_uso, formato, accion, requiere_seleccion_formato (boolean), filtros (objeto),
@@ -73,6 +74,7 @@ def _filtros_vacios() -> dict[str, Any]:
         'desde': None,
         'hasta': None,
         'metodo_pago': '',
+        'jornada': '',
         'columnas': None,
     }
 
@@ -111,6 +113,19 @@ def _enriquecer_resultado(data: dict[str, Any]) -> dict[str, Any]:
     elif metodo not in ('efectivo', 'stripe'):
         metodo = ''
     filtros['metodo_pago'] = metodo
+
+    jornada = str(filtros.get('jornada') or '').strip()
+    jornada_alias = {
+        'mañana': 'Mañana',
+        'manana': 'Mañana',
+        'tarde': 'Tarde',
+        'noche': 'Noche',
+        'unica': 'unica',
+        'única': 'unica',
+        'jornada única': 'unica',
+        'jornada unica': 'unica',
+    }
+    filtros['jornada'] = jornada_alias.get(jornada.lower(), jornada if jornada in ('Mañana', 'Tarde', 'Noche', 'unica') else '')
 
     columnas = filtros.get('columnas')
     if columnas and not isinstance(columnas, list):
@@ -250,6 +265,19 @@ def _detectar_intencion_consulta(texto: str) -> bool:
     return any(v in t for v in ('muestra', 'muéstrame', 'muestrame', 'mostrar', 'consulta', 'ver el', 'ver '))
 
 
+def _detectar_jornada(texto: str) -> str:
+    t = texto.lower()
+    if 'mañana' in t or 'manana' in t:
+        return 'Mañana'
+    if 'noche' in t:
+        return 'Noche'
+    if 'tarde' in t:
+        return 'Tarde'
+    if 'jornada única' in t or 'jornada unica' in t:
+        return 'unica'
+    return ''
+
+
 def _detectar_metodo(texto: str) -> str:
     t = texto.lower()
     if 'efectivo' in t or 'caja' in t:
@@ -347,6 +375,8 @@ def _interpretar_local(texto: str, cu_actual: str | None) -> dict[str, Any]:
     filtros = _filtros_vacios()
     filtros.update(_detectar_fechas(texto))
     filtros['metodo_pago'] = _detectar_metodo(texto)
+    if caso == 'CU22':
+        filtros['jornada'] = _detectar_jornada(texto)
 
     if not filtros['desde']:
         filtros['periodo'] = 'mes'

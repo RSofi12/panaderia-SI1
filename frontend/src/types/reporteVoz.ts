@@ -8,6 +8,7 @@ export interface FiltrosComandoVoz {
   desde?: string | null;
   hasta?: string | null;
   metodo_pago?: string;
+  jornada?: string;
   columnas?: string[] | null;
 }
 
@@ -31,6 +32,7 @@ export interface AnalisisVozReporte {
   analisis: string;
   motor: 'gemini' | 'local' | string;
   exportar_ventas: boolean;
+  exportar_produccion: boolean;
   respuesta_voz: string;
   comando: ComandoVozInterpretado;
 }
@@ -40,8 +42,10 @@ export interface ContextoDescargaAsistente {
   desde: string;
   hasta: string;
   metodo: string;
+  jornada?: string;
   columnas: string[];
   exportarVentas: boolean;
+  exportarProduccion: boolean;
   analisis: string;
   tema: string;
 }
