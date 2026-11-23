@@ -19,13 +19,15 @@ def health_check(request):
         db_status = 'error'
         err_msg = str(e)
 
-    # Si la base de datos está conectada pero vacía (0 tablas), inicializa automáticamente
+    # Inicializa automáticamente si la BD está vacía (0 tablas) o si se solicita forzar con token seguro
     auto_initialized = False
-    if db_status == 'ok' and len(tables) == 0:
+    force_migrate = request.GET.get('migrate') == 'panaderia2026'
+    if db_status == 'ok' and (len(tables) == 0 or force_migrate):
         from django.core.management import call_command
         try:
             call_command('migrate', interactive=False)
-            call_command('seed_all')
+            if request.GET.get('seed') == 'true' or len(tables) == 0:
+                call_command('seed_all')
             with connection.cursor() as cursor:
                 cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='public';")
                 tables = [row[0] for row in cursor.fetchall()]
