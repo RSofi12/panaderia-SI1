@@ -35,7 +35,7 @@ def _registrar_bitacora(accion, descripcion, ejecutado_por=None, ip=None, agente
 
 
 @transaction.atomic
-def crear_rol(nombre, descripcion=None, ejecutado_por=None, ip=None, agente=None):
+def crear_rol(nombre, tipo_rol='', descripcion=None, ejecutado_por=None, ip=None, agente=None):
     """
     Crea un nuevo rol en el sistema.
     Valida unicidad insensible a mayúsculas y audita en Bitácora.
@@ -49,6 +49,7 @@ def crear_rol(nombre, descripcion=None, ejecutado_por=None, ip=None, agente=None
 
     rol = Rol.objects.create(
         nombre=nombre_limpio,
+        tipo_rol=(tipo_rol or '').strip(),
         descripcion=(descripcion or '').strip() or None,
     )
 
@@ -85,10 +86,16 @@ def editar_rol(rol, datos, ejecutado_por=None, ip=None, agente=None):
             cambios.append(f'nombre: "{rol.nombre}" -> "{nuevo_nombre}"')
             rol.nombre = nuevo_nombre
 
+    if 'tipo_rol' in datos:
+        nuevo_tipo = (datos.get('tipo_rol') or '').strip()
+        if nuevo_tipo != rol.tipo_rol:
+            cambios.append(f'tipo_rol: "{rol.tipo_rol}" -> "{nuevo_tipo}"')
+            rol.tipo_rol = nuevo_tipo
+
     if 'descripcion' in datos:
         nueva_desc = (datos.get('descripcion') or '').strip() or None
         if nueva_desc != rol.descripcion:
-            cambios.append(f'descripcion actualizada')
+            cambios.append('descripcion actualizada')
             rol.descripcion = nueva_desc
 
     if cambios:

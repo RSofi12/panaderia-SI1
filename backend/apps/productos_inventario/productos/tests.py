@@ -100,6 +100,40 @@ class PruebasGestionProductos(TestCase):
             ).exists()
         )
 
+    def test_rechaza_crear_producto_con_nombre_duplicado_case_insensitive(self):
+        self.client.force_authenticate(user=self.usuario_admin)
+        Producto.objects.create(
+            nombre='Marraqueta',
+            id_categoria=self.categoria,
+            costo_produccion=Decimal('0.40'),
+            porcentaje_ganancia=Decimal('50.00'),
+            precio_venta=Decimal('0.60'),
+        )
+
+        payload_duplicado = {
+            'nombre': '  marraqueta  ',
+            'id_categoria': self.categoria.id_categoria,
+            'costo_produccion': '0.45',
+            'porcentaje_ganancia': '50.00',
+            'precio_venta': '0.70',
+        }
+        resp = self.client.post('/api/productos/', payload_duplicado, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('nombre', resp.data)
+        self.assertIn('Ya existe un producto', str(resp.data['nombre'][0]))
+
+    def test_rechaza_crear_producto_sin_categoria(self):
+        self.client.force_authenticate(user=self.usuario_admin)
+        payload_sin_cat = {
+            'nombre': 'Pan Sin Categoría',
+            'costo_produccion': '0.45',
+            'porcentaje_ganancia': '50.00',
+            'precio_venta': '0.70',
+        }
+        resp = self.client.post('/api/productos/', payload_sin_cat, format='json')
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('id_categoria', resp.data)
+
     def test_toggle_activo_producto(self):
         self.client.force_authenticate(user=self.usuario_admin)
         prod = Producto.objects.create(

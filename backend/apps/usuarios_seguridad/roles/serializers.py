@@ -23,6 +23,7 @@ class RolListSerializer(serializers.ModelSerializer):
         fields = [
             'id_rol',
             'nombre',
+            'tipo_rol',
             'descripcion',
             'total_permisos',
             'total_usuarios',
@@ -53,6 +54,7 @@ class RolDetalleSerializer(serializers.ModelSerializer):
         fields = [
             'id_rol',
             'nombre',
+            'tipo_rol',
             'descripcion',
             'es_protegido',
             'total_permisos',
@@ -75,6 +77,7 @@ class RolCrearSerializer(serializers.Serializer):
     Validación de entrada para el alta de un nuevo rol.
     """
     nombre = serializers.CharField(max_length=50, required=True)
+    tipo_rol = serializers.CharField(max_length=50, required=False, allow_blank=True, default='')
     descripcion = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 
@@ -83,6 +86,7 @@ class RolActualizarSerializer(serializers.Serializer):
     Validación de entrada para la modificación de un rol existente.
     """
     nombre = serializers.CharField(max_length=50, required=False)
+    tipo_rol = serializers.CharField(max_length=50, required=False, allow_blank=True)
     descripcion = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 
 

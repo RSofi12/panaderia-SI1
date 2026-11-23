@@ -46,3 +46,10 @@
    - Mantener [`docs/ai/HANDOFF_LATEST.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/HANDOFF_LATEST.md) con el resumen de entrega.
    - Registrar decisiones en [`docs/ai/DECISIONS_LOG.md`](file:///c:/Users/PERSONAL/panaderia-SI1/docs/ai/DECISIONS_LOG.md) si hubo cambios arquitectónicos.
    - Sin bitácora en `docs/ai/sessions/`, una tarea se considera **incompleta**, aunque el código funcione. Esto aplica obligatoriamente a todo desarrollador y a los agentes de IA (Antigravity, Claude, OpenCode).
+
+
+7. **ARCHIVOS DE APOYO Y DIAGRAMAS — REGLA UNIVERSAL (docs/informes/archivos de apoyo/):**
+   Todo archivo creado o utilizado como soporte, ayuda, material auxiliar o plantilla (diagramas .drawio, PlantUML .puml, scripts auxiliares .js/.py, visualizadores .html, capturas .png/.jpg, guías .pdf y plantillas de diseño o externas) **DEBE GUARDARSE EXCLUSIVAMENTE DENTRO DE docs/informes/archivos de apoyo/**.
+   - Queda estrictamente prohibido esparcir o crear archivos de diagramación o previews fuera de dicha ruta.
+   - Esta carpeta está ignorada en .gitignore para no contaminar el historial de commits ni los artefactos del sistema.
+   - Jamás se deben confundir ni mover archivos productivos esenciales (rontend/index.html, plantillas Django 	emplates/emails/*.html ni assets del frontend o backend).

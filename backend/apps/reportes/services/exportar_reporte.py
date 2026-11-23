@@ -6,13 +6,17 @@ Permite seleccionar dinámicamente qué columnas incluir en la exportación PDF 
 """
 import csv
 import io
+from datetime import date
 from decimal import Decimal
 
 from django.utils import timezone
 
 from apps.comercializacion.ventas.models import MetodoPago
-from apps.comun.csv_reporte import dinero_local
-from apps.comun.pdf_reporte import HojaReporte, anchos_de, fecha_visible
+from apps.reportes.formatos.csv_reporte import dinero_local
+from apps.reportes.formatos.pdf_analisis_tablas import agregar_tablas_por_contexto
+from apps.reportes.formatos.pdf_reporte import HojaReporte, anchos_de, fecha_visible
+from apps.reportes.formatos.texto_informe import sin_markdown
+from apps.reportes.services.analisis_ia import recolectar_contexto_analisis
 
 
 def _dinero(valor) -> str:
@@ -180,3 +184,127 @@ def pdf_reporte_ventas(reporte: dict, metodo_pago=None, columnas: list[str] | No
 
     hoja.nota('Reporte generado automáticamente desde el Sistema Panadería Santiago.')
     return hoja.cerrar()
+
+
+_TITULOS_ANALISIS = {
+    'roles': 'Reporte de roles y accesos',
+    'ventas': 'Análisis de ventas',
+    'produccion': 'Análisis de producción',
+    'existencias': 'Análisis de existencias',
+    'compras': 'Análisis de compras y gastos',
+    'economico': 'Resultados económicos',
+    'productos': 'Análisis por productos',
+    'general': 'Análisis gerencial',
+}
+
+
+def pdf_reporte_analisis(
+    *,
+    consulta: str,
+    tema: str,
+    desde: str,
+    hasta: str,
+    analisis: str,
+    motor: str = 'local',
+) -> bytes:
+    """PDF con membrete oficial para el texto del asistente por voz."""
+    titulo = _TITULOS_ANALISIS.get(tema, 'Análisis gerencial')
+    cuando = timezone.localtime(timezone.now()).strftime('%d/%m/%Y %H:%M')
+    etiqueta_motor = 'Gemini' if motor == 'gemini' else 'Análisis local'
+    detalle = (
+        f'Consulta: {consulta.strip()}\n'
+        f'Período: del {fecha_visible(desde)} al {fecha_visible(hasta)}   ·   '
+        f'Motor: {etiqueta_motor}\n'
+        f'Generado el {cuando}'
+    )
+
+    desde_d = date.fromisoformat(str(desde))
+    hasta_d = date.fromisoformat(str(hasta))
+    contexto = recolectar_contexto_analisis(tema, desde_d, hasta_d)
+
+    tarjetas = [
+        ('Tema', tema.upper().replace('_', ' ')),
+        ('Desde', fecha_visible(desde)),
+        ('Hasta', fecha_visible(hasta)),
+    ]
+    if contexto.get('tipo') == 'ventas':
+        tarjetas = [
+            ('Ventas', str(contexto.get('cantidad', 0))),
+            ('Total', f"Bs {_dinero(contexto.get('total', 0))}"),
+            ('Efectivo', f"Bs {_dinero(contexto.get('efectivo', 0))}"),
+            ('Tarjeta', f"Bs {_dinero(contexto.get('tarjeta', 0))}"),
+        ]
+    elif contexto.get('tipo') == 'produccion':
+        tarjetas = [
+            ('Jornadas', str(contexto.get('jornadas') or contexto.get('cantidad', 0))),
+            ('Producidas', str(contexto.get('unidades', 0))),
+            ('Vendidas', str(contexto.get('unidades_vendidas', 0))),
+            ('Costo', f"Bs {_dinero(contexto.get('costo', 0))}"),
+        ]
+    elif contexto.get('tipo') == 'roles':
+        total_usuarios = sum(int(r.get('cantidad_usuarios', 0)) for r in contexto.get('roles') or [])
+        tarjetas[0] = ('Roles', str(len(contexto.get('roles') or [])))
+        tarjetas[1] = ('Usuarios activos', str(total_usuarios))
+
+    hoja = HojaReporte(titulo)
+    hoja.abrir(titulo, detalle)
+    hoja.tarjetas(tarjetas)
+    hoja.seccion('Resumen ejecutivo')
+    hoja.cuerpo(sin_markdown(analisis.strip()) or 'Sin contenido de análisis.')
+    agregar_tablas_por_contexto(hoja, contexto)
+    hoja.nota('Documento generado desde el asistente de reportes (Panadería Santiago).')
+    return hoja.cerrar()
+
+
+def csv_reporte_analisis(
+    *,
+    consulta: str,
+    tema: str,
+    desde: str,
+    hasta: str,
+    analisis: str,
+    motor: str = 'local',
+) -> bytes:
+    """CSV con BOM UTF-8 (Excel en español) y tablas reales; sin Markdown."""
+    titulo = _TITULOS_ANALISIS.get(tema, 'Análisis gerencial')
+    cuando = timezone.localtime(timezone.now()).strftime('%d/%m/%Y %H:%M')
+    etiqueta_motor = 'Gemini' if motor == 'gemini' else 'Análisis local'
+    desde_d = date.fromisoformat(str(desde))
+    hasta_d = date.fromisoformat(str(hasta))
+    contexto = recolectar_contexto_analisis(tema, desde_d, hasta_d)
+
+    from apps.reportes.formatos.csv_analisis_tablas import escribir_tablas_csv
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, delimiter=';')
+    writer.writerow(['Panadería Santiago'])
+    writer.writerow([titulo])
+    writer.writerow(['Consulta', consulta.strip()])
+    writer.writerow(['Desde', fecha_visible(desde)])
+    writer.writerow(['Hasta', fecha_visible(hasta)])
+    writer.writerow(['Motor', etiqueta_motor])
+    writer.writerow(['Generado el', cuando])
+
+    if contexto.get('tipo') == 'ventas':
+        writer.writerow([])
+        writer.writerow(['Resumen del período'])
+        writer.writerow(['Ventas', contexto.get('cantidad', 0)])
+        writer.writerow(['Total (Bs)', _dinero(contexto.get('total', 0))])
+        writer.writerow(['Efectivo (Bs)', _dinero(contexto.get('efectivo', 0))])
+        writer.writerow(['Tarjeta (Bs)', _dinero(contexto.get('tarjeta', 0))])
+
+    writer.writerow([])
+    writer.writerow(['Resumen ejecutivo'])
+    texto_limpio = sin_markdown((analisis or '').strip())
+    if texto_limpio:
+        for linea in texto_limpio.splitlines():
+            limpia = linea.strip()
+            if limpia:
+                writer.writerow([limpia])
+    else:
+        writer.writerow(['Sin contenido de análisis.'])
+
+    escribir_tablas_csv(writer, contexto)
+    writer.writerow([])
+    writer.writerow(['Documento generado desde el asistente de reportes (Panadería Santiago).'])
+    return buffer.getvalue().encode('utf-8-sig')

@@ -6,11 +6,63 @@ from django.utils import timezone
 
 from apps.compras.proveedores.models import Proveedor
 
-# Fuente: docs/informes/Poblacion_4_Dias_Panaderia_Santiago.sql
+# 9 proveedores (expansión 2026-11-14). SQL de 4 días solo tenía 3: Poblacion_4_Dias_Panaderia_Santiago.sql
+# Guía: docs/informes/POBLACION_SEEDERS_DJANGO.md
 PROVEEDORES = [
-    ('Molinos del Oriente S.R.L.', '33210099', 'Parque Industrial, Santa Cruz'),
-    ('Distribuidora Lácteos Santa Cruz', '33220188', 'Av. Grigotá, 6to anillo'),
-    ('Insumos y Levaduras Bolivia', '33230277', 'Av. Piraí, 4to anillo'),
+    (
+        'Molinos del Oriente S.R.L.',
+        '33210099',
+        'Parque Industrial, Santa Cruz',
+        'Harina de trigo, azúcar y sal a granel.',
+    ),
+    (
+        'Distribuidora Lácteos Santa Cruz',
+        '33220188',
+        'Av. Grigotá, 6to anillo',
+        'Leche, mantequilla y huevos.',
+    ),
+    (
+        'Insumos y Levaduras Bolivia',
+        '33230277',
+        'Av. Piraí, 4to anillo',
+        'Levadura fresca y mejoradores de masa.',
+    ),
+    (
+        'Avícola Sofía S.A.',
+        '33520011',
+        'Av. Cristo Redentor, Km 8 1/2',
+        'Huevos frescos y derivados avícolas al por mayor.',
+    ),
+    (
+        'Ingenio Azucarero Guabirá S.A.',
+        '39220050',
+        'Carretera al Norte Km 52, Montero',
+        'Azúcar refinada y morena en quintales.',
+    ),
+    (
+        'Distribuidora San Juan (Almidones y Tubérculos)',
+        '33640022',
+        'Mercado Abasto Mayorista, Galpón 4',
+        'Almidón de yuca y harinas especiales para horneado típico.',
+    ),
+    (
+        'Lácteos y Quesos Chaqueños',
+        '33480033',
+        'Av. Tres Pasos al Frente, 3er anillo',
+        'Queso criollo, requesón y manteca para cuñapé y sonso.',
+    ),
+    (
+        'Chocolates y Especias Para Ti / Repostería',
+        '33350044',
+        'Calle 24 de Septiembre #145',
+        'Cacao, canela, anís, clavo de olor e insumos de repostería.',
+    ),
+    (
+        'Molino Harinero San Gabriel',
+        '33710055',
+        'Parque Industrial Mza. 22',
+        'Harina integral, salvado de trigo y avena laminada.',
+    ),
 ]
 
 
@@ -20,21 +72,28 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         fecha_inicial = timezone.make_aware(datetime(2026, 7, 15, 10, 0))
         creados = 0
+        descripciones = 0
 
         with transaction.atomic():
-            for nombre, telefono, direccion in PROVEEDORES:
-                _, creado = Proveedor.objects.get_or_create(
+            for nombre, telefono, direccion, descripcion in PROVEEDORES:
+                proveedor, creado = Proveedor.objects.get_or_create(
                     nombre=nombre,
                     defaults={
                         'telefono': telefono,
                         'direccion': direccion,
+                        'descripcion': descripcion,
                         'fecha_registro': fecha_inicial,
                         'activo': True,
                     },
                 )
                 if creado:
                     creados += 1
+                elif not proveedor.descripcion:
+                    proveedor.descripcion = descripcion
+                    proveedor.save(update_fields=['descripcion'])
+                    descripciones += 1
 
         self.stdout.write(self.style.SUCCESS(
-            f'{creados} proveedores nuevos; {len(PROVEEDORES) - creados} ya existian y no se modificaron.'
+            f'{creados} proveedores nuevos; {descripciones} descripciones completadas; '
+            f'{len(PROVEEDORES) - creados - descripciones} ya estaban completos.'
         ))

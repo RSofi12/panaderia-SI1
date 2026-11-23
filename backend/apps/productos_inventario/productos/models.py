@@ -9,6 +9,8 @@ class CategoriaProducto(models.Model):
     id_categoria = models.BigAutoField(primary_key=True)
     nombre = models.CharField(max_length=50, verbose_name='Nombre de la categoría')
     descripcion = models.TextField(blank=True, null=True, verbose_name='Descripción')
+    activo = models.BooleanField(default=True, verbose_name='Categoría activa')
+    estado = models.CharField(max_length=20, default='Activo', verbose_name='Estado')
 
     class Meta:
         db_table = 'categoria_producto'
@@ -37,6 +39,7 @@ class Producto(models.Model):
     )
     nombre = models.CharField(max_length=100, verbose_name='Nombre del producto')
     descripcion = models.TextField(blank=True, null=True, verbose_name='Descripción')
+    detalle = models.TextField(blank=True, null=True, default='', verbose_name='Detalle')
     costo_produccion = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, verbose_name='Costo de producción (Bs)'
     )

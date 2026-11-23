@@ -7,6 +7,7 @@ import {
   Receipt,
   ShieldCheck,
   Sparkles,
+  Tag,
   UserCheck,
   Users,
 } from 'lucide-react';
@@ -105,9 +106,17 @@ export const TarjetaRol: React.FC<TarjetaRolProps> = ({
               <h3 id={`rol-titulo-${rol.id_rol}`} className={estilosRoles.tarjetaTitulo}>
                 <span className="truncate">{rol.nombre}</span>
               </h3>
-              <p className="text-[11px] text-slate-500 font-medium">
-                {rol.es_protegido ? 'Perfil base del sistema' : 'Perfil personalizado'}
-              </p>
+              <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                <p className="text-[11px] text-slate-500 font-medium">
+                  {rol.es_protegido ? 'Perfil base del sistema' : 'Perfil personalizado'}
+                </p>
+                {rol.tipo_rol ? (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-amber-100/90 px-2 py-0.5 text-[10px] font-bold text-amber-900 border border-amber-300 shadow-2xs">
+                    <Tag className="h-2.5 w-2.5 text-amber-700" aria-hidden="true" />
+                    <span>Tipo: {rol.tipo_rol}</span>
+                  </span>
+                ) : null}
+              </div>
             </div>
           </div>
 

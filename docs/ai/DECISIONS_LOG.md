@@ -580,6 +580,14 @@
 
 ---
 
+### 52. 📅 2026-11-21 — Población Django: documentación unificada con expansión de Raysa (catálogo + mes operativo)
+- **Decisión:**
+  1. **Dos fuentes de verdad explícitas:** El SQL académico `Poblacion_4_Dias_Panaderia_Santiago.sql` conserva el escenario de **4 jornadas** (sep 2026); el catálogo ampliado y el **mes operativo octubre 2026** viven solo en seeders Django (`seed_mes_operativo`, catálogos 2–5 de `seed_all`).
+  2. **Guía maestra:** `docs/informes/POBLACION_SEEDERS_DJANGO.md` describe orden, idempotencia y rangos de fechas por comando.
+  3. **Metadatos de seeders:** Comentarios y `help` de `seed_productos`, `seed_proveedores`, `seed_materias_primas`, `seed_recetas` y `seed_all` alineados a 36 productos / 9 proveedores / 20 MP (sin reemplazar el SQL del informe).
+- **Motivo:** Evitar confusión del equipo (docs que aún decían “12 panes, 3 proveedores”) tras los commits de Raysa (`RSofi12`, 2026-11-14).
+- **Impacto:** `CURRENT_STATE.md`, `TECH_STACK.md` y bitácora de sesión actualizados; sin cambio de lógica de negocio ni de datos generados por los seeders.
+
 ### 51. 📅 2026-10-14 — CU13: Integración Oficial de Stripe Elements (`CardElement`) y Preservación del Formato Estándar de Stripe
 - **Decisión:**
   1. **Integración Oficial con `@stripe/react-stripe-js`:** Montar el componente oficial `<CardElement>` dentro de `<Elements stripe={stripePromise}>`. Esto delega la captura cifrada de la tarjeta a los iframes oficiales de Stripe, garantizando soporte normativo PCI-DSS y tokenización directa.
@@ -590,7 +598,9 @@
 - **Impacto:** CU13 completamente implementado de extremo a extremo (Efectivo y Tarjeta Stripe) con 16 pruebas backend en verde y frontend Vite compilando limpiamente.
 
 
+---
 
-
-
-
+### 53. 📅 2026-11-19 — Regla Universal: Centralización de Archivos de Apoyo en docs/informes/archivos de apoyo/
+- **Decisión:** Establecer como regla obligatoria y universal del proyecto que todo archivo generado como material de apoyo, plantillas externas, diagramas Draw.io/PlantUML, visualizadores HTML temporales, capturas de prototipos PNG/JPG y scripts auxiliares debe ubicarse exclusivamente en docs/informes/archivos de apoyo/.
+- **Motivo:** Evitar la dispersión de artefactos no productivos en el árbol del proyecto (ackend/, rontend/, raíz, docs/), manteniendo el repositorio ordenado y previniendo que se suban al control de versiones archivos pesados o efímeros.
+- **Impacto:** Dicha carpeta está excluida en .gitignore. Se prohíbe explícitamente a cualquier desarrollador o IA crear o dejar archivos de apoyo sueltos fuera de esta ruta. Se protegen estrictamente los archivos de código del sistema (rontend/index.html, templates de email Django y assets web).

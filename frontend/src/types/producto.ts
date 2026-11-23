@@ -11,6 +11,7 @@ export interface Producto {
   categoria_nombre: string | null;
   nombre: string;
   descripcion: string | null;
+  detalle?: string | null;
   costo_produccion: string;
   porcentaje_ganancia: string;
   precio_sugerido: string;
@@ -23,6 +24,7 @@ export interface ProductoPayload {
   id_categoria: number | null;
   nombre: string;
   descripcion: string;
+  detalle?: string;
   costo_produccion: string;
   porcentaje_ganancia: string;
   precio_venta: string;

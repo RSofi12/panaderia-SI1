@@ -70,6 +70,10 @@ class AccionBitacora(models.TextChoices):
     # --- CU7: Registrar compra ---
     ALTA_COMPRA = 'ALTA_COMPRA', 'Registro de compra de materia prima'
 
+    # --- CU20: Registrar gasto o inversión ---
+    ALTA_MOVIMIENTO_ECONOMICO = 'ALTA_MOVIMIENTO_ECONOMICO', 'Registro de gasto o inversión'
+    ANULACION_MOVIMIENTO_ECONOMICO = 'ANULACION_MOVIMIENTO_ECONOMICO', 'Anulación de gasto o inversión'
+
     # --- CU13: Registrar venta ---
     ALTA_VENTA = 'ALTA_VENTA', 'Registro de venta en mostrador'
 
@@ -94,6 +98,9 @@ class AccionBitacora(models.TextChoices):
 
     # --- CU21: Generar reporte de ventas ---
     CIERRE_REPORTE_VENTAS = 'CIERRE_REPORTE_VENTAS', 'Cierre estático del reporte de ventas'
+
+    # --- CU24: Generar reporte de compras y gastos ---
+    CIERRE_REPORTE_COMPRAS = 'CIERRE_REPORTE_COMPRAS', 'Cierre estático del reporte de compras y gastos'
 
 
 class Bitacora(models.Model):

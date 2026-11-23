@@ -22,7 +22,7 @@ class Command(BaseCommand):
                 (6, 'gestionar_inventario', 'productos_inventario', 'Consultar y ajustar existencias de materia prima y producto terminado'),
                 (7, 'registrar_compras', 'compras', 'Registrar compras a proveedores'),
                 (8, 'gestionar_proveedores', 'compras', 'Registrar y editar datos de proveedores'),
-                (9, 'gestionar_gastos', 'compras', 'Registrar gastos e inversiones del negocio'),
+                (9, 'registrar_gastos', 'compras', 'Registrar gastos e inversiones del negocio'),
                 (10, 'generar_reportes', 'reportes', 'Consultar y generar reportes administrativos y operativos'),
                 (11, 'consultar_bitacora', 'usuarios_seguridad', 'Consultar el historial de acciones registradas en el sistema'),
                 (12, 'asignar_permisos', 'usuarios_seguridad', 'Asignar roles y definir permisos del sistema (matriz de acceso)'),
@@ -48,17 +48,17 @@ class Command(BaseCommand):
 
             # 2. Roles
             roles_data = [
-                (1, 'Administrador', 'Acceso total al sistema: gestión de usuarios, roles, permisos y configuración general'),
-                (2, 'Propietario', 'Supervisión general del negocio, control financiero y acceso a reportes consolidados'),
-                (3, 'Personal de Ventas', 'Registro de ventas, pedidos y atención al cliente en el mostrador'),
-                (4, 'Personal de Producción', 'Registro de producción diaria y consulta de materias primas disponibles'),
+                (1, 'Administrador', 'Administrativo', 'Acceso total al sistema: gestión de usuarios, roles, permisos y configuración general'),
+                (2, 'Propietario', 'Gerencial', 'Supervisión general del negocio, control financiero y acceso a reportes consolidados'),
+                (3, 'Personal de Ventas', 'Mostrador', 'Registro de ventas, pedidos y atención al cliente en el mostrador'),
+                (4, 'Personal de Producción', 'Operativo', 'Registro de producción diaria y consulta de materias primas disponibles'),
             ]
 
             roles_dict = {}
-            for id_r, nombre, desc in roles_data:
+            for id_r, nombre, tipo, desc in roles_data:
                 rol, _ = Rol.objects.update_or_create(
                     id_rol=id_r,
-                    defaults={'nombre': nombre, 'descripcion': desc}
+                    defaults={'nombre': nombre, 'tipo_rol': tipo, 'descripcion': desc}
                 )
                 roles_dict[id_r] = rol
 

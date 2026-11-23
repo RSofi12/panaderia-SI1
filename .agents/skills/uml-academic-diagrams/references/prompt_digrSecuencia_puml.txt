@@ -1,0 +1,54 @@
+En el caso de que el usuario pida una vista previa o diagrama completo en puml:
+Genera un diagrama de secuencia UML 2.5 en PlantUML para el caso de uso: [ CU-0X ].
+Formato obligatorio:
+Fondo completamente blanco.
+Utilizar participantes en forma de cuadros rectangulares. Color de los recuadros celeste claro
+En lugar del icono de base de datos, cuando referencies a la base de datos o a las entidades de la base (como tabla alumno, postulante, rol, etc) diagramalos como los demás, en cuadros rectangulares indicando su su tipo de componente como <<Entity>> o <<Database>>, segun corresponda las reglas del diagrama de secuencia.
+Seguir arquitectura BCE (Boundary-Control-Entity).
+Incluir:
+1 Actor (o actores con "/" según corresponda el CU, color de recuadro amarillo claro),
+1 Pantalla o Interfaz (Boundary como "[:NombreBoundary]").
+1 Controlador (Control como "[:Nombre]").
+Las Entidades necesarias (Entity como "[:Nombre]").
+Los nombres de los participantes deben indicar su estereotipo:
+<<Actor>>
+<<Interface>>
+<<Controller>>
+<<Entity>>
+los mensajes (pasos) del flujo deben numerarse (1, 1.1, 1.2, 2, 2.1, etc.).
+Los mensajes deben describir detalles técnicos del flujo del codigo, como nombres de funciones(), 
+llamados a la base, GET/POST(), entre otros, según la base del código del proyecto.
+Mostrar retornos únicamente hacia el controlador o la pantalla.
+Las entidades NO deben enviarse mensajes entre ellas.
+Las entidades NO deben devolver mensajes a otras entidades.
+Toda la lógica debe centralizarse en el controlador.
+Utilizar fragmentos UML cuando sean necesarios:
+alt para decisiones. No usar más de 2 alt en el diagrama, añadir más solo si es muy necesario con la lógica del CU
+opt para acciones opcionales.
+loop para iteraciones.
+No utilizar fragmentos innecesarios.
+Mantener el diagrama limpio, académico y fácil de leer.
+Evitar cruces de líneas.
+Trazar las lifeline (lineas de vida) de cada componente donde inician/reciben las flechas, incluyendo el lifeline del actor.
+Mantener una distribución horizontal:
+Actor → Pantalla → Controlador → Entidades.
+El resultado debe parecerse a los diagramas de secuencia académicos mostrados en la imagen adjunta.
+Estructura esperada:
+Actor → Pantalla → Controlador → Entidades
+
+DIAGRAMA DE COMUNICACIÓN:
+Con los mismos parámetros del digr. de secuencia, también haces el diagrama de comunicación en plantUML de este CU, 
+con la distribución horizontal, y estos parámetros:
+Actor → Pantalla → Controlador → Entidades
+Tanto para los componentes como los mensajes.
+No es necesario que indiquen su esterioripo, solo los nombres de los participantes
+Sigue las reglas UML 2.5+
+Para este diagrama SÍ utilizas los iconos correspondientes para cada componente (boundary, controller, entity/model)
+los mensajes igual deben ser los nombres de las funciones según el código del proyecto
+Las entidades NO deben enviar mensajes de regreso a lo controllers.
+Los controlleres pueden enviar mensajes recursivos hacia sí mismos (validaciones) si el codigo esta implementado así.
+Lo controllers pueden enviar mensajes (funciones()) a los boundary si lo requiere
+Tambien me das una breve descripcion conceptual del flujo/pasos de este diagrama usando los nombres de los componentes, en un solo párrafo
+y al final una breve conclusion como: "resultado: descripcion_delEstadoPosterior"
+
+

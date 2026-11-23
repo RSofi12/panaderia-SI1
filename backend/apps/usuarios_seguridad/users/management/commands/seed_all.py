@@ -1,6 +1,16 @@
 """
 Comando Maestro de Poblado (Seed Master) — Panadería Santiago (SI-1).
-Ejecuta de manera secuencial, ordenada e idempotente todos los seeders del sistema.
+
+Ejecuta de manera secuencial, ordenada e idempotente los 12 seeders del sistema.
+
+Capas de fechas tras una ejecución completa:
+- Escenario académico 4 días (pasos 6–10): operación 2026-09-05 … 2026-09-09
+- Ventas demo CU21 (paso 11): 2026-09-02 … 2026-11-18 (dispersas)
+- Mes operativo Raysa (paso 12): 2026-10-01 … 2026-10-31 (lun–sáb)
+
+Catálogo ampliado (pasos 2–5): 36 productos, 20 MP, 9 proveedores, recetas BOM.
+
+Documentación: docs/informes/POBLACION_SEEDERS_DJANGO.md
 
 Uso:
     python manage.py seed_all
@@ -39,6 +49,7 @@ class Command(BaseCommand):
             ('seed_pedidos_demo', '9. Clientes y Pedidos en Mostrador/Anticipados'),
             ('seed_gastos_demo', '10. Gastos Operativos e Inversiones'),
             ('seed_ventas_demo', '11. Registro Histórico de Ventas'),
+            ('seed_mes_operativo', '12. Simulación de 1 Mes Operativo Completo (L-S, 8h)'),
         ]
 
         exitos = 0

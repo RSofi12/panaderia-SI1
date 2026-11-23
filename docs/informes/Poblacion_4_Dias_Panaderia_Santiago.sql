@@ -15,6 +15,10 @@
 -- "usuario" (ver Perfil §1.7.1 - Módulo de Usuarios y Seguridad).
 --
 -- Ejecutar este script después de correr el DDL que crea las tablas y FK.
+--
+-- NOTA (2026-11): El catálogo ampliado (36 productos, 9 proveedores, 20 MP) y el mes
+-- operativo de Octubre 2026 NO están en este SQL; viven en los seeders Django.
+-- Ver docs/informes/POBLACION_SEEDERS_DJANGO.md y: python manage.py seed_all
 -- =========================================================
 
 
@@ -159,10 +163,10 @@ INSERT INTO "historial_precio_materia_prima" ("id_historial","id_materia_prima",
 -- Fuente: Perfil §1.7.6
 -- =========================================================
 
-INSERT INTO "proveedor" ("id_proveedor","nombre","telefono","direccion","fecha_registro","activo") VALUES
-(1,'Molinos del Oriente S.R.L.','33210099','Parque Industrial, Santa Cruz','2026-07-15 10:00:00',true),
-(2,'Distribuidora Lácteos Santa Cruz','33220188','Av. Grigotá, 6to anillo','2026-07-15 10:00:00',true),
-(3,'Insumos y Levaduras Bolivia','33230277','Av. Piraí, 4to anillo','2026-07-15 10:00:00',true);
+INSERT INTO "proveedor" ("id_proveedor","nombre","telefono","direccion","descripcion","fecha_registro","activo") VALUES
+(1,'Molinos del Oriente S.R.L.','33210099','Parque Industrial, Santa Cruz','Harina de trigo, azúcar y sal a granel.','2026-07-15 10:00:00',true),
+(2,'Distribuidora Lácteos Santa Cruz','33220188','Av. Grigotá, 6to anillo','Leche, mantequilla y huevos.','2026-07-15 10:00:00',true),
+(3,'Insumos y Levaduras Bolivia','33230277','Av. Piraí, 4to anillo','Levadura fresca y mejoradores de masa.','2026-07-15 10:00:00',true);
 
 INSERT INTO "compra" ("id_compra","id_proveedor","id_usuario","fecha_hora","total") VALUES
 (1,1,2,'2026-09-05 09:00:00',1260.00), -- harina, sal, azúcar

@@ -154,8 +154,8 @@ export const ProveedoresPage: React.FC = () => {
               type="search"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar por nombre o teléfono..."
-              aria-label="Buscar proveedor por nombre o teléfono"
+              placeholder="Buscar por nombre, teléfono o insumos..."
+              aria-label="Buscar proveedor por nombre, teléfono o insumos"
               className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
           </div>
@@ -199,6 +199,9 @@ export const ProveedoresPage: React.FC = () => {
                       <p className={`font-semibold ${proveedor.activo ? 'text-slate-900' : 'text-slate-500'}`}>
                         {proveedor.nombre}
                       </p>
+                      {proveedor.descripcion ? (
+                        <p className="mt-0.5 max-w-xs truncate text-xs text-slate-500">{proveedor.descripcion}</p>
+                      ) : null}
                     </td>
                     <td className="px-4 py-3 tabular-nums text-slate-600">{proveedor.telefono ?? '—'}</td>
                     <td className="px-4 py-3 text-slate-600">

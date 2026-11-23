@@ -25,6 +25,7 @@ export const ModalRol: React.FC<ModalRolProps> = ({
   const esProtegido = rol?.es_protegido ?? false;
 
   const [nombre, setNombre] = useState(rol?.nombre ?? '');
+  const [tipoRol, setTipoRol] = useState(rol?.tipo_rol ?? '');
   const [descripcion, setDescripcion] = useState(rol?.descripcion ?? '');
   const [guardando, setGuardando] = useState(false);
   const [errores, setErrores] = useState<Record<string, string>>({});
@@ -45,12 +46,14 @@ export const ModalRol: React.FC<ModalRolProps> = ({
       if (esEdicion && rol) {
         resultado = await rolesService.editarRol(rol.id_rol, {
           ...(esProtegido ? {} : { nombre: nombreLimpio }),
+          tipo_rol: tipoRol.trim(),
           descripcion: descripcion.trim() || null,
         });
         onExito(`Rol "${resultado.nombre}" actualizado correctamente.`);
       } else {
         resultado = await rolesService.crearRol({
           nombre: nombreLimpio,
+          tipo_rol: tipoRol.trim(),
           descripcion: descripcion.trim() || null,
         });
         onExito(`Rol "${resultado.nombre}" creado exitosamente.`);
@@ -166,6 +169,28 @@ export const ModalRol: React.FC<ModalRolProps> = ({
               {errores.nombre}
             </p>
           )}
+        </div>
+
+        <div>
+          <div className="flex justify-between items-center mb-1.5">
+            <label htmlFor={`tipo-${inputId}`} className="block text-xs font-semibold text-slate-800">
+              Tipo de rol
+            </label>
+            <span className="text-[10px] text-slate-400 font-medium">
+              {tipoRol.length} / 50
+            </span>
+          </div>
+
+          <input
+            id={`tipo-${inputId}`}
+            type="text"
+            value={tipoRol}
+            onChange={(e) => setTipoRol(e.target.value)}
+            disabled={guardando}
+            placeholder="Ej. Administrativo, Operativo, Mostrador, Gerencial..."
+            maxLength={50}
+            className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 transition-colors focus:border-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-100 disabled:bg-slate-100/80 disabled:text-slate-500"
+          />
         </div>
 
         <div>

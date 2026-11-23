@@ -66,6 +66,7 @@ class RolViewSet(viewsets.ModelViewSet):
 
         rol = crear_rol(
             nombre=serializer.validated_data['nombre'],
+            tipo_rol=serializer.validated_data.get('tipo_rol', ''),
             descripcion=serializer.validated_data.get('descripcion'),
             ejecutado_por=request.user,
             ip=self._ip(request),
