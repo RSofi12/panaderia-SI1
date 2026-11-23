@@ -27,8 +27,12 @@ RUN pip install --no-cache-dir --upgrade pip \
 # Copia el resto del código del backend
 COPY . /app/
 
+# Asegura formato UNIX (LF) y permisos de ejecución para el script de entrada
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+
 # Expone el puerto del backend Django
 EXPOSE 8000
 
-# Comando por defecto para desarrollo local
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Script de entrada para producción en Render / Cloud (ejecuta migraciones, seeders y levanta gunicorn)
+ENTRYPOINT ["/app/entrypoint.sh"]
+
