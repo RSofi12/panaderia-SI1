@@ -101,6 +101,8 @@ export const LoginPage: React.FC = () => {
         setError(responseData.error);
       } else if (responseData?.detail) {
         setError(responseData.detail);
+      } else if (isAxiosError(err) && err.response?.status === 500) {
+        setError('Error interno del servidor (HTTP 500). Por favor, intenta nuevamente en unos momentos.');
       } else {
         setError('No se pudo conectar con el servidor. Verifica que el backend esté en ejecución.');
       }

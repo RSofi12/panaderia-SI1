@@ -16,7 +16,7 @@ import OwnerDashboardView from './OwnerDashboardView';
 import AdminDashboardView from './AdminDashboardView';
 
 export const KpiDashboardPage: React.FC = () => {
-  const { user, hasPermission } = useAuth();
+  const { hasPermission } = useAuth();
   const [periodo, setPeriodo] = useState<PeriodoReporte>('mes');
   const [vistaActiva, setVistaActiva] = useState<'propietario' | 'admin'>('propietario');
   const [cargando, setCargando] = useState<boolean>(true);
