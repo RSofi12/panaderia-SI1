@@ -604,3 +604,15 @@
 - **Decisión:** Establecer como regla obligatoria y universal del proyecto que todo archivo generado como material de apoyo, plantillas externas, diagramas Draw.io/PlantUML, visualizadores HTML temporales, capturas de prototipos PNG/JPG y scripts auxiliares debe ubicarse exclusivamente en docs/informes/archivos de apoyo/.
 - **Motivo:** Evitar la dispersión de artefactos no productivos en el árbol del proyecto (ackend/, rontend/, raíz, docs/), manteniendo el repositorio ordenado y previniendo que se suban al control de versiones archivos pesados o efímeros.
 - **Impacto:** Dicha carpeta está excluida en .gitignore. Se prohíbe explícitamente a cualquier desarrollador o IA crear o dejar archivos de apoyo sueltos fuera de esta ruta. Se protegen estrictamente los archivos de código del sistema (rontend/index.html, templates de email Django y assets web).
+
+
+---
+
+### 54. 📅 2026-11-22 — Formalización de CU27 (Generar reportes por voz) y CU28 (Consultar Dashboard) en Ciclo 4
+- **Decisión:**
+  1. Incorporar formalmente a la matriz de Casos de Uso del PUDS del proyecto Panadería Santiago dos nuevas funcionalidades desarrolladas en el Ciclo 4:
+     - **CU27 · Generar reportes por voz:** Interfaz inteligente en lenguaje natural (voz/texto) con motor dual (Gemini API y reglas locales) para consultar y descargar reportes gerenciales (`apps.reportes`).
+     - **CU28 · Consultar Dashboard:** Panel analítico y ejecutivo de KPIs para el Propietario y Administrador (`/dashboard/kpis`), con cálculo de salud financiera/operativa, distribución de ingresos/egresos, top productos vendidos, alertas críticas y accesos rápidos a reportes.
+  2. Actualizar el total de casos de uso de 26 a 28, reflejados en 4 ciclos: Ciclo 1 (7), Ciclo 2 (6), Ciclo 3 (7) y Ciclo 4 (8).
+- **Motivo:** Brindar trazabilidad formal, académica y documental a los desarrollos completados y presentados en la entrega final del Ciclo 4 (fecha de presentación: 22-11-2026).
+- **Impacto:** Trazabilidad completa en la documentación del proyecto (`AGENTS.md`, `PACKAGE_CU_MAP.md`, `PROJECT_VISION.md`, `PROJECT_CONTEXT.md`, `IMPLEMENTATION_PHASES.md`, `CURRENT_STATE.md` y especificaciones de casos de uso).

@@ -16,7 +16,7 @@ import OwnerDashboardView from './OwnerDashboardView';
 import AdminDashboardView from './AdminDashboardView';
 
 export const KpiDashboardPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const [periodo, setPeriodo] = useState<PeriodoReporte>('mes');
   const [vistaActiva, setVistaActiva] = useState<'propietario' | 'admin'>('propietario');
   const [cargando, setCargando] = useState<boolean>(true);
@@ -24,24 +24,25 @@ export const KpiDashboardPage: React.FC = () => {
   const [adminData, setAdminData] = useState<AdminKpiSummary | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const esAdmin = user?.rol?.toLowerCase().includes('admin') || user?.rol?.toLowerCase().includes('administrador');
-  const esPropietario = user?.rol?.toLowerCase().includes('propietario') || user?.rol?.toLowerCase().includes('dueño');
+  // Control estricto basado en permisos RBAC
+  const puedeVerNegocio = hasPermission('generar_reportes');
+  const puedeVerSeguridad = hasPermission('consultar_bitacora') || hasPermission('gestionar_usuarios');
 
   useEffect(() => {
-    // Si es admin exclusivo, arrancar con vista admin
-    if (esAdmin && !esPropietario) {
+    // Si no tiene permiso de negocio (como el Administrador), forzar vista de seguridad
+    if (!puedeVerNegocio && puedeVerSeguridad) {
       setVistaActiva('admin');
     } else {
       setVistaActiva('propietario');
     }
-  }, [esAdmin, esPropietario]);
+  }, [puedeVerNegocio, puedeVerSeguridad]);
 
   const cargarDatos = async (p = periodo) => {
     setCargando(true);
     try {
       const [ownerRes, adminRes] = await Promise.all([
-        kpiDashboardService.obtenerResumenPropietario(p).catch(() => null),
-        kpiDashboardService.obtenerResumenAdmin().catch(() => null),
+        puedeVerNegocio ? kpiDashboardService.obtenerResumenPropietario(p).catch(() => null) : Promise.resolve(null),
+        puedeVerSeguridad ? kpiDashboardService.obtenerResumenAdmin().catch(() => null) : Promise.resolve(null),
       ]);
       setOwnerData(ownerRes);
       setAdminData(adminRes);
@@ -54,7 +55,7 @@ export const KpiDashboardPage: React.FC = () => {
 
   useEffect(() => {
     cargarDatos(periodo);
-  }, [periodo]);
+  }, [periodo, puedeVerNegocio, puedeVerSeguridad]);
 
   const cambiarPeriodo = (nuevoPeriodo: PeriodoReporte) => {
     startTransition(() => {
@@ -85,8 +86,8 @@ export const KpiDashboardPage: React.FC = () => {
 
         {/* CONTROLES Y FILTROS */}
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Selector de Perspectiva (si tiene acceso a ambas) */}
-          {(esAdmin || esPropietario) && (
+          {/* Selector de Perspectiva (solo visible si tiene permiso para AMBAS vistas) */}
+          {puedeVerNegocio && puedeVerSeguridad && (
             <div className="flex items-center rounded-xl bg-slate-100 p-1 text-xs font-semibold text-slate-600">
               <button
                 type="button"
@@ -116,7 +117,7 @@ export const KpiDashboardPage: React.FC = () => {
           )}
 
           {/* Selector de Rango de Fechas (Para vista de negocio) */}
-          {vistaActiva === 'propietario' && (
+          {puedeVerNegocio && vistaActiva === 'propietario' && (
             <div className="flex items-center rounded-xl border border-slate-200 bg-white p-1 text-xs font-medium shadow-xs">
               {(['dia', 'semana', 'mes'] as PeriodoReporte[]).map((p) => (
                 <button
@@ -150,11 +151,11 @@ export const KpiDashboardPage: React.FC = () => {
 
       {/* CONTENIDO DEL DASHBOARD CON TRANSICIONES */}
       <div className={`transition-all duration-300 ease-in-out ${cargando || isPending ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-        {vistaActiva === 'propietario' && ownerData && (
+        {puedeVerNegocio && vistaActiva === 'propietario' && ownerData && (
           <OwnerDashboardView data={ownerData} />
         )}
 
-        {vistaActiva === 'admin' && adminData && (
+        {puedeVerSeguridad && vistaActiva === 'admin' && adminData && (
           <AdminDashboardView data={adminData} />
         )}
       </div>

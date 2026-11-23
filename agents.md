@@ -65,18 +65,18 @@ backend/apps/
 ├── productos_inventario/     # Paquete 2 (Ciclos 1, 2, 3): CU5, CU8, CU9, CU10, CU11, CU12, CU18, CU19
 ├── compras/                  # Paquete 3 (Ciclos 1, 2, 4): CU6, CU7, CU20
 ├── comercializacion/         # Paquete 4 (Ciclo 3): CU13, CU14, CU15, CU16, CU17
-└── reportes/                 # Paquete 5 (Ciclo 4): CU21, CU22, CU23, CU24, CU25
+└── reportes/                 # Paquete 5 (Ciclo 4): CU21, CU22, CU23, CU24, CU25, CU27, CU28
 ```
 
-### Matriz de Casos de Uso x Ciclo PUDS (26 Casos de Uso):
+### Matriz de Casos de Uso x Ciclo PUDS (28 Casos de Uso):
 | Paquete | Ciclo 1 | Ciclo 2 | Ciclo 3 | Ciclo 4 | Total CU |
 |---|---|---|---|---|---|
 | **Usuarios y Seguridad** | CU1, CU2, CU3, CU4, CU26 | — | — | — | 5 |
 | **Productos e Inventario** | CU5 | CU8, CU9, CU10, CU11, CU12 | CU18, CU19 | — | 8 |
 | **Compras y Proveedores** | CU6 | CU7 | — | CU20 | 3 |
 | **Comercialización** | — | — | CU13, CU14, CU15, CU16, CU17 | — | 5 |
-| **Reportes** | — | — | — | CU21, CU22, CU23, CU24, CU25 | 5 |
-| **Total por ciclo** | **7** | **6** | **7** | **6** | **26** |
+| **Reportes** | — | — | — | CU21, CU22, CU23, CU24, CU25, CU27, CU28 | 7 |
+| **Total por ciclo** | **7** | **6** | **7** | **8** | **28** |
 
 ---
 

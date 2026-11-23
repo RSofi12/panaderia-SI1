@@ -69,7 +69,7 @@
 
 ---
 
-### 📌 Ciclo 4 (6 Casos de Uso) — *CU20–CU25 completos (backend + frontend)*
+### 📌 Ciclo 4 (8 Casos de Uso) — *CU20–CU25, CU27, CU28 completos (backend + frontend)*
 | CU | Nombre del Caso de Uso | Paquete Backend | Estado |
 |---|---|---|:---:|
 | **CU20**| Registrar gasto / inversión | `apps.compras` | ✅ |
@@ -78,8 +78,12 @@
 | **CU23**| Generar reporte de existencias | `apps.reportes` | ✅ |
 | **CU24**| Generar reporte de compras y gastos | `apps.reportes` | ✅ |
 | **CU25**| Generar reporte de resultados económicos | `apps.reportes` | ✅ |
+| **CU27**| Generar reportes por voz | `apps.reportes` | ✅ |
+| **CU28**| Consultar Dashboard | `apps.reportes` / `frontend` | ✅ |
 
 **CU20 (2026-11-13):** API backend de gastos e inversiones en `apps.compras.gastos` (rama `prueba`). `POST /api/gastos/` (tipo, categoría, concepto, monto, descripción y fecha no futura), `GET /api/gastos/` con filtros (`tipo`, `categoria`, `fecha_desde`, `fecha_hasta`, `anulado`, `search`), `GET /api/gastos/<id>/` y `POST /api/gastos/<id>/anular/` (anulación lógica, sin borrar). RBAC con permiso `registrar_gastos` (Administrador y Propietario); el responsable sale de la sesión y nunca del payload. Integridad en base de datos: `CHECK (monto > 0)`, `CHECK (tipo IN ...)`, `CHECK (categoria IN ...)` e índice por `fecha_hora` (migración `gastos.0002`). Bitácora `ALTA_MOVIMIENTO_ECONOMICO` y `ANULACION_MOVIMIENTO_ECONOMICO` en la misma transacción (migración `bitacora.0016`). 32 pruebas nuevas, 49 en `apps.compras` en verde. **Frontend:** pestaña "Gastos e inversiones" en Compras y Proveedores (`ComprasModuloPage`, visible con `registrar_gastos`), `GastosPage` con filtros (tipo, categoría, fechas, anulados, búsqueda), resumen de egresos con proporción gasto/inversión, alta y anulación lógica con modales accesibles (`role="dialog"` / `alertdialog`), `types/gasto.ts` y `services/gastosService.ts`. Verificado con `npx tsc -b`, `npm run build` y `npm run lint` (sin hallazgos en los archivos nuevos). Pendiente: recorrido visual con sesión real.
+
+**CU21 (2026-11-01):** Generación de reporte de ventas en `apps.reportes`. Backend: endpoints `/api/reportes/ventas/`, CSV y PDF formal. Frontend: pestaña en `/dashboard/reportes` con KPIs, tabla dinámica, filtros por período y exportaciones.
 
 **CU22 (2026-11-22):** Generación de reporte de producción vs ventas para el Propietario en `apps.reportes`. Backend: servicio `reporte_produccion.py` (jornadas, unidades, costo y comparativa por producto), endpoints `GET /api/reportes/produccion/`, `/csv/` y `/pdf/` con filtro opcional de jornada. Frontend: pestaña CU22 en `/dashboard/reportes` (`ReporteProduccionView.tsx`) calcada del CU21 (período, KPIs, tabla, columnas, CSV/Excel/PDF) y sincronizada con el asistente de voz.
 
@@ -88,6 +92,10 @@
 **CU24 (2026-11-22):** Generación de reporte de compras y gastos para el Propietario en `apps.reportes`. Backend: endpoints `/api/reportes/compras/`, CSV, cierres y PDF; frontend en `/dashboard/reportes/compras` (`ReporteComprasCu24.tsx`). CU23 en `/dashboard/reportes/existencias`. Restaurado desde merge `09e32a3` (Pilar) tras rollback puntual de ventana única.
 
 **CU25 (2026-11-21):** Generación de reporte de resultados económicos y balance financiero para el Propietario en `apps.reportes`. Backend: servicio analítico `generar_reporte_resultados_economicos` con agregaciones SQL (`Coalesce`, `Sum`), cálculo de Margen Bruto, Utilidad Operativa y Resultado Neto deduciendo materias primas, mermas de mostrador y gastos/inversiones no anulados. Exportación binaria en CSV (Excel) y PDF formal con ReportLab (`HojaReporte`). Integración en el intérprete de voz transversal (`interprete_voz.py`). RBAC con permiso `generar_reportes` y auditoría en bitácora. 22 pruebas unitarias e integración en verde en `apps.reportes`. Frontend: pestaña y vista interactiva `ResultadosEconomicosView.tsx` en `/dashboard/reportes`, selectores por período (día, semana, mes), tarjetas de KPIs, tabla de estado de resultados, desglose de gastos e inversiones, descargas automáticas Blob, sincronización con el asistente de voz y build Vite verificado al 100%.
+
+**CU27 (2026-11-21/22):** Generación de reportes por comando de voz en `apps.reportes`. Backend: endpoint `POST /api/reportes/voz/interpretar/` con servicio `interprete_voz.py` (motor dual Gemini API / reglas locales). Infiere caso de uso (CU21–CU25), rango de fechas, formato (`pdf`, `csv`, `excel`, pantalla) y parámetros. Frontend: `AsistenteVozReporte.tsx` con Web Speech API para reconocimiento y síntesis de voz (`speechSynthesis`), chips sugeridos y sincronización bidireccional con las vistas de reportes.
+
+**CU28 (2026-11-14/22):** Consultar Dashboard analítico y ejecutivo de KPIs. Backend: agregación multi-módulo a partir de endpoints de ventas, compras, gastos, inventario y seguridad. Frontend: módulo en `/dashboard/kpis` (`KpiDashboardPage.tsx`) con doble perspectiva (Propietario en `OwnerDashboardView.tsx` y Administrador en `AdminDashboardView.tsx`), selectores de periodo temporal (Hoy, Esta semana, Este mes), tarjetas modulares de KPI (`KpiCard.tsx`), gráficos interactivos Donut y Barras, indicadores operativos tácticos (ticket promedio, % pagos digitales, stock crítico) y accesos directos al centro de reportes oficiales.
 
 
 ---

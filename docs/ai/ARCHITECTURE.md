@@ -261,7 +261,8 @@ frontend/src/apps/
     ├── compras/                       #   CU6, CU7, CU20
     ├── comercializacion/              #   CU13–CU17
     │   └── ventas/                    #   CU13 Registrar venta
-    └── reportes/                      #   CU21–CU25
+    ├── kpis/                          #   CU28 Consultar Dashboard
+    └── reportes/                      #   CU21–CU25, CU27
 ```
 
 ### Correspondencia Pantalla ↔ Caso de Uso ↔ Paquete Backend
@@ -274,7 +275,7 @@ Las carpetas de `src/apps/dashboard/` replican los **5 paquetes del backend** ([
 | `productos/` | `apps.productos_inventario` | CU5, CU8, CU9, CU10, CU11, CU12, CU18, CU19 |
 | `compras/` | `apps.compras` | CU6, CU7, CU20 |
 | `comercializacion/ventas/` | `apps.comercializacion.ventas` | CU13 (CU14–CU17 siguen en el paquete) |
-| `reportes/` | `apps.reportes` | CU21, CU22, CU23, CU24, CU25 |
+| `reportes/` y `kpis/` | `apps.reportes` | CU21, CU22, CU23, CU24, CU25, CU27, CU28 |
 
 > **Nota:** `auth/` es la única carpeta que **no** replica un paquete backend. Es transversal: su lógica reside en `apps.usuarios_seguridad` pero su vida es independiente del dashboard (es lo único accesible sin sesión).
 
@@ -303,7 +304,7 @@ Razones:
 1. **Las diferencias son de datos, no de estructura.** Todos los actores ven el mismo esqueleto; solo cambia un subconjunto de un arreglo (`navigation.ts`). Cuatro dashboards obligarían a duplicar el shell cuatro veces y a corregir el mismo bug cuatro veces.
 2. **La seguridad no depende del diseño de la UI.** El bloqueo real ocurre en `ProtectedRoute` (ruta) y en los permisos de DRF (endpoint). Ocultar un botón es UX, nunca autorización.
 3. **El shell es reutilizable.** `Sidebar` y `Topbar` no reciben props por rol: leen el usuario de `useAuth()`. Agregar un quinto actor en el seed no requiere tocar el frontend.
-4. **Trazabilidad PUDS.** Una sola jerarquía de rutas para 26 CUs hace que el diagrama de navegación del sistema sea legible en la defensa.
+4. **Trazabilidad PUDS.** Una sola jerarquía de rutas para 28 CUs hace que el diagrama de navegación del sistema sea legible en la defensa.
 
 **Única excepción foreseeable:** en el Ciclo 3, el `Personal de Ventas` atiende mostrador en tablet y probablemente necesite una ventana de venta rápida sin el cromo administrativo. Esa será una **ruta distinta dentro del mismo dashboard** (`/dashboard/ventas/registro`), no un dashboard paralelo. La diferencia es de *flujo de trabajo*, no de *permiso*.
 
@@ -351,7 +352,7 @@ Las tablas definidas en [`Database_Panaderia_Santiago_FINAL.sql`](file:///c:/Use
 | **`apps.productos_inventario`** | `categoria_producto`, `producto`, `producto_materia_prima`, `historial_precio_producto`, `materia_prima`, `historial_precio_materia_prima`, `inventario_materia_prima`, `movimiento_materia_prima`, `inventario_producto_terminado`, `movimiento_producto_terminado`, `produccion`, `detalle_produccion`, `nota_perdida_producto` | **CU 5, CU 8, CU 9, CU 10, CU 11, CU 12, CU 18, CU 19** |
 | **`apps.compras`** | `proveedor`, `compra`, `detalle_compra`, `movimiento_economico` | **CU 6, CU 7, CU 20** |
 | **`apps.comercializacion`** | `cliente`, `pedido`, `detalle_pedido`, `venta`, `detalle_venta` | **CU 13, CU 14, CU 15, CU 16, CU 17** |
-| **`apps.reportes`** | *(Vistas / Consultas agregadas de todas las tablas anteriores)* | **CU 21, CU 22, CU 23, CU 24, CU 25** |
+| **`apps.reportes`** | *(Vistas / Consultas agregadas de todas las tablas anteriores)* | **CU 21, CU 22, CU 23, CU 24, CU 25, CU 27, CU 28** |
 
 ---
 

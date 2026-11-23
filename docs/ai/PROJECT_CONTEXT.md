@@ -110,12 +110,12 @@ El alcance se distribuye en 8 módulos funcionales del perfil, mapeados directam
 
 El proyecto se rige bajo el **Proceso Unificado de Desarrollo de Software (PUDS)**:
 - **Iterativo e Incremental:** El software se construye en 4 ciclos de desarrollo bien delimitados.
-- **Dirigido por Casos de Uso:** Cada ciclo aborda un conjunto concreto de los 26 Casos de Uso (CU 1 al CU 26).
+- **Dirigido por Casos de Uso:** Cada ciclo aborda un conjunto concreto de los 28 Casos de Uso (CU 1 al CU 28).
 - **Centrado en la Arquitectura:** Separación estricta de capas (Frontend React, Backend Django REST Framework, Base de Datos PostgreSQL con triggers/procedimientos almacenados).
-- **Enfocado en los Riesgos:** Priorización de los módulos críticos y con mayor cascada de datos (seguridad y catálogos en Ciclo 1, compras y producción en Ciclo 2, ventas en Ciclo 3, y balance financiero en Ciclo 4).
+- **Enfocado en los Riesgos:** Priorización de los módulos críticos y con mayor cascada de datos (seguridad y catálogos en Ciclo 1, compras y producción en Ciclo 2, ventas en Ciclo 3, y balance financiero, reportes inteligentes y dashboard ejecutivo en Ciclo 4).
 
 ### Fases del PUDS en el Proyecto:
 1. **Inicio:** Levantamiento de requerimientos, entrevistas con propietario y maestro panadero, definición del perfil, alcance y casos de uso.
 2. **Elaboración:** Modelado arquitectónico, diseño de base de datos relacional (DDL PostgreSQL, llaves foráneas, triggers) y definición de contratos de API REST.
-3. **Construcción:** Desarrollo modular por ciclos (Ciclo 1: 7 CUs, Ciclo 2: 6 CUs, Ciclo 3: 7 CUs, Ciclo 4: 6 CUs), pruebas unitarias e integración.
+3. **Construcción:** Desarrollo modular por ciclos (Ciclo 1: 7 CUs, Ciclo 2: 6 CUs, Ciclo 3: 7 CUs, Ciclo 4: 8 CUs), pruebas unitarias e integración.
 4. **Transición:** Despliegue, pruebas de aceptación con usuarios finales y entrega del sistema.

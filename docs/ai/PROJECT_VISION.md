@@ -30,7 +30,7 @@ El sistema es de uso exclusivo para el personal interno autorizado:
 - **Backend:** API REST modular construida con Python / Django 5+ / Django REST Framework (5 paquetes bien definidos en `backend/apps/`).
 - **Frontend:** Aplicación de una sola página (SPA) responsiva con React, TypeScript, Vite y Tailwind CSS en `frontend/`.
 - **Base de Datos:** PostgreSQL 14+ con normalización, integridad referencial, llaves foráneas y triggers para bitácora de auditoría.
-- **Metodología:** Proceso Unificado de Desarrollo de Software (PUDS) dividido en 4 ciclos incrementales que cubren 26 Casos de Uso.
+- **Metodología:** Proceso Unificado de Desarrollo de Software (PUDS) dividido en 4 ciclos incrementales que cubren 28 Casos de Uso (ampliado en Ciclo 4 con CU27 Reportes por voz y CU28 Consultar Dashboard).
 
 ---
 

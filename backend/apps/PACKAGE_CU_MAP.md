@@ -1,7 +1,7 @@
 # Mapa de paquetes y casos de uso (backend)
 **Proyecto:** Sistema de Información Web para la Gestión de Ventas, Producción, Inventario y Control Administrativo — Panadería Santiago
 
-Este documento organiza los 26 casos de uso definidos para el proyecto según tres criterios:
+Este documento organiza los 28 casos de uso definidos para el proyecto según tres criterios:
 1. **Paquete (Django app)** — a qué módulo del backend pertenece cada CU.
 2. **Ciclo de desarrollo (PUDS iterativo-incremental)** — en qué iteración se implementa.
 3. **Actor(es)** — qué rol(es) del sistema interactúan con cada CU.
@@ -118,7 +118,7 @@ Alias lógico: `apps/Comercializacion/*`
 
 ---
 
-## Reportes (CU21, CU22, CU23, CU24, CU25)
+## Reportes y Dashboard (CU21, CU22, CU23, CU24, CU25, CU27, CU28)
 
 - **CU21 Generar reporte de ventas** -> `apps.reportes` (Ciclo 4)
   Reporte de las ventas realizadas en un periodo (diario, semanal o mensual), por producto o por método de pago.
@@ -140,6 +140,14 @@ Alias lógico: `apps/Comercializacion/*`
   Reporte que relaciona los ingresos por ventas con los egresos por compras y gastos, mostrando el resultado económico del periodo. Es la base sobre la que a futuro se construirán los reportes dinámicos (ej. relación entre pérdidas, producción y ventas por periodo).
   **Actor(es):** Propietario
 
+- **CU27 Generar reportes por voz** -> `apps.reportes` (Ciclo 4)
+  Permite solicitar en lenguaje natural (voz o texto) la consulta o descarga de reportes gerenciales con procesamiento inteligente, inferencia de parámetros y confirmación sonora.
+  **Actor(es):** Propietario
+
+- **CU28 Consultar Dashboard** -> `apps.reportes` / `frontend/src/apps/dashboard/kpis` (Ciclo 4)
+  Panel analítico y ejecutivo de indicadores clave (KPIs) financieros, comerciales, operativos y de seguridad en tiempo real, con gráficos interactivos (donas, barras), ticket promedio, porcentaje de medios de pago y alertas críticas.
+  **Actor(es):** Propietario, Administrador
+
 Alias lógico: `apps/Reportes/*`
 
 ---
@@ -152,8 +160,8 @@ Alias lógico: `apps/Reportes/*`
 | Productos e Inventario | CU05 | CU08, CU09, CU10, CU11, CU12 | CU18, CU19 | — | 8 | Propietario, Administrador, Personal de Producción, Personal de Ventas |
 | Compras y Proveedores | CU06 | CU07 | — | CU20 | 3 | Propietario, Administrador |
 | Comercialización | — | — | CU13, CU14, CU15, CU16, CU17 | — | 5 | Personal de Ventas, Personal de Producción |
-| Reportes | — | — | — | CU21, CU22, CU23, CU24, CU25 | 5 | Propietario |
-| **Total por ciclo** | **7** | **6** | **7** | **6** | **26** | |
+| Reportes | — | — | — | CU21, CU22, CU23, CU24, CU25, CU27, CU28 | 7 | Propietario, Administrador |
+| **Total por ciclo** | **7** | **6** | **7** | **8** | **28** | |
 
 ---
 

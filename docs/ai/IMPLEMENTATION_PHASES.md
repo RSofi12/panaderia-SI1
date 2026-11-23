@@ -10,7 +10,7 @@
 - [ ] **🔵 Ciclo 1 — Base del Sistema (7 CU):** CU 1, CU 2, CU 3, CU 4, CU 5, CU 6, CU 26
 - [ ] **🟢 Ciclo 2 — Abastecimiento y Producción / MRP (6 CU):** CU 7, CU 8, CU 9, CU 10, CU 11, CU 12
 - [ ] **🟡 Ciclo 3 — Comercialización y Ventas (7 CU):** CU 13, CU 14, CU 15, CU 16, CU 17, CU 18, CU 19
-- [ ] **🔴 Ciclo 4 — Control Financiero y Reportes (6 CU):** CU 20, CU 21, CU 22, CU 23, CU 24, CU 25
+- [ ] **🔴 Ciclo 4 — Control Financiero, Reportes y Dashboard Ejecutivo (8 CU):** CU 20, CU 21, CU 22, CU 23, CU 24, CU 25, CU 27, CU 28
 
 ---
 
@@ -250,10 +250,12 @@
 - [ ] **CU 18:** Registrar baja de productos terminados por pérdida/merma (`apps.productos_inventario` - Producción).
 - [ ] **CU 19:** Consultar historial de precios de productos (`apps.productos_inventario` - Propietario).
 
-### 🔴 Ciclo 4 — Control Financiero y Reportes (6 CU)
-- [ ] **CU 20:** Registrar gasto / inversión operativa (`apps.compras` - Propietario).
-- [ ] **CU 21:** Generar reporte de ventas por periodo/método de pago (`apps.reportes` - Propietario).
+### 🔴 Ciclo 4 — Control Financiero, Reportes y Dashboard Ejecutivo (8 CU)
+- [x] **CU 20:** Registrar gasto / inversión operativa (`apps.compras` - Propietario).
+- [x] **CU 21:** Generar reporte de ventas por periodo/método de pago (`apps.reportes` - Propietario).
 - [x] **CU 22:** Generar reporte de producción vs. ventas (`apps.reportes` - Propietario).
-- [ ] **CU 23:** Generar reporte de existencias consolidado (`apps.reportes` - Propietario).
-- [ ] **CU 24:** Generar reporte de compras y gastos (`apps.reportes` - Propietario).
-- [ ] **CU 25:** Generar reporte de resultados económicos / balance general (`apps.reportes` - Propietario).
+- [x] **CU 23:** Generar reporte de existencias consolidado (`apps.reportes` - Propietario).
+- [x] **CU 24:** Generar reporte de compras y gastos (`apps.reportes` - Propietario).
+- [x] **CU 25:** Generar reporte de resultados económicos / balance general (`apps.reportes` - Propietario).
+- [x] **CU 27:** Generar reportes por voz (`apps.reportes` - Propietario).
+- [x] **CU 28:** Consultar Dashboard (`apps.reportes` / `frontend/src/apps/dashboard/kpis` - Propietario, Administrador).
