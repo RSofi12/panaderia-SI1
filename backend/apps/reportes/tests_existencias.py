@@ -562,6 +562,38 @@ class PruebasApiReporteExistencias(DatosExistencias, TestCase):
         self.assertEqual(pdf_respuesta['Content-Type'], 'application/pdf')
         self.assertTrue(pdf_respuesta.content.startswith(b'%PDF'))
 
+    def test_descargar_excel_con_datos(self):
+        self.autenticar()
+        excel_resp = self.client.get(reverse('reportes:reporte-existencias-excel'))
+        self.assertEqual(excel_resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            excel_resp['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        self.assertIn('reporte-existencias.xlsx', excel_resp['Content-Disposition'])
+        self.assertGreater(len(excel_resp.content), 2000)
+
+    def test_descargar_con_columnas_seleccionadas_csv_pdf_excel(self):
+        self.autenticar()
+        params = {'columnas': 'producto,stock,nivel'}
+
+        # CSV con columnas específicas
+        csv_resp = self.client.get(reverse('reportes:reporte-existencias-csv'), params)
+        self.assertEqual(csv_resp.status_code, status.HTTP_200_OK)
+        texto_csv = csv_resp.content.decode('utf-8-sig')
+        self.assertIn('Producto;Stock;Nivel', texto_csv)
+        self.assertNotIn('Materia prima;Activo', texto_csv)  # Tipo y Estado fueron omitidos
+
+        # PDF con columnas específicas
+        pdf_resp = self.client.get(reverse('reportes:reporte-existencias-pdf'), params)
+        self.assertEqual(pdf_resp.status_code, status.HTTP_200_OK)
+        self.assertTrue(pdf_resp.content.startswith(b'%PDF'))
+
+        # Excel con columnas específicas
+        excel_resp = self.client.get(reverse('reportes:reporte-existencias-excel'), params)
+        self.assertEqual(excel_resp.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(excel_resp.content), 2000)
+
     def test_exportar_existencias_sin_filas_responde_400(self):
         self.autenticar()
         csv_respuesta = self.client.get(

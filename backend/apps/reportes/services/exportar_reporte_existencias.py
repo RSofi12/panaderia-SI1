@@ -37,8 +37,29 @@ def _cantidad(valor) -> str:
     return f'{Decimal(valor):.3f}'.replace('.', ',')
 
 
-def csv_reporte_existencias(reporte: dict, *, tipo='todos', q='', estado='todos') -> bytes:
+def _columnas_existencias():
+    return [
+        ('producto', 'Producto', lambda fila: fila['nombre'], 30, 'izq'),
+        ('tipo', 'Tipo', lambda fila: ETIQUETA_TIPO.get(fila['tipo'], fila['tipo']), 18, 'izq'),
+        ('stock', 'Stock', lambda fila: _cantidad(fila['stock_actual']), 14, 'der'),
+        ('nivel', 'Nivel', lambda fila: ETIQUETA_ESTADO.get(fila['estado'], fila['estado']), 14, 'izq'),
+        ('unidad', 'Unidad', lambda fila: fila['unidad_medida'], 10, 'izq'),
+        ('minimo', 'Mínimo', lambda fila: _cantidad(fila['stock_minimo']), 12, 'der'),
+        ('estado', 'Estado', lambda fila: 'Activo' if fila['activo'] else 'Inactivo', 14, 'izq'),
+    ]
+
+
+def _filtrar_columnas(columnas: list[str] | None):
+    cols_def = _columnas_existencias()
+    if not columnas:
+        return cols_def
+    cols_activas = [c for c in cols_def if c[0] in columnas]
+    return cols_activas or cols_def
+
+
+def csv_reporte_existencias(reporte: dict, columnas: list[str] | None = None, *, tipo='todos', q='', estado='todos') -> bytes:
     generado = timezone.localtime(timezone.now()).strftime('%d/%m/%Y %H:%M')
+    cols_activas = _filtrar_columnas(columnas)
     buffer = io.StringIO()
     writer = csv.writer(buffer, delimiter=';')
     writer.writerow(['Panadería Santiago'])
@@ -57,25 +78,18 @@ def csv_reporte_existencias(reporte: dict, *, tipo='todos', q='', estado='todos'
     writer.writerow(['Sin registro', resumen['sin_inventario']])
     writer.writerow([])
     writer.writerow(['Inventario actual'])
-    writer.writerow(['Nombre', 'Tipo', 'Condición', 'Stock', 'Unidad', 'Mínimo', 'Estado'])
+    writer.writerow([c[1] for c in cols_activas])
     filas = reporte.get('resultados') or []
     for fila in filas:
-        writer.writerow([
-            fila['nombre'],
-            ETIQUETA_TIPO.get(fila['tipo'], fila['tipo']),
-            'Activo' if fila['activo'] else 'Inactivo',
-            _cantidad(fila['stock_actual']),
-            fila['unidad_medida'],
-            _cantidad(fila['stock_minimo']),
-            ETIQUETA_ESTADO.get(fila['estado'], fila['estado']),
-        ])
+        writer.writerow([c[2](fila) for c in cols_activas])
     if not filas:
         writer.writerow(['No hay existencias que coincidan con los filtros.'])
     return buffer.getvalue().encode('utf-8-sig')
 
 
-def pdf_reporte_existencias(reporte: dict, *, tipo='todos', q='', estado='todos') -> bytes:
+def pdf_reporte_existencias(reporte: dict, columnas: list[str] | None = None, *, tipo='todos', q='', estado='todos') -> bytes:
     generado = timezone.localtime(timezone.now()).strftime('%d/%m/%Y %H:%M')
+    cols_activas = _filtrar_columnas(columnas)
     detalle = (
         f'Tipo: {ETIQUETA_FILTRO_TIPO.get(tipo, tipo)}   ·   '
         f'Estado: {ETIQUETA_FILTRO_ESTADO.get(estado, estado)}   ·   '
@@ -93,19 +107,12 @@ def pdf_reporte_existencias(reporte: dict, *, tipo='todos', q='', estado='todos'
             ('Terminados', str(resumen['productos_terminados'])),
         ]
     )
-    anchos = anchos_de(32, 18, 14, 10, 12, 14)
+    anchos = anchos_de(*[c[3] for c in cols_activas])
     hoja.seccion('Inventario de insumos y productos')
 
     def encabezado():
         hoja.fila(
-            [
-                ('Producto', 'izq'),
-                ('Tipo', 'izq'),
-                ('Stock', 'der'),
-                ('Unidad', 'izq'),
-                ('Mínimo', 'der'),
-                ('Estado', 'izq'),
-            ],
+            [(c[1], c[4]) for c in cols_activas],
             anchos,
             encabezado=True,
         )
@@ -114,18 +121,15 @@ def pdf_reporte_existencias(reporte: dict, *, tipo='todos', q='', estado='todos'
     filas = reporte.get('resultados') or []
     for indice, fila in enumerate(filas):
         hoja.fila(
-            [
-                (fila['nombre'], 'izq'),
-                (ETIQUETA_TIPO.get(fila['tipo'], fila['tipo']), 'izq'),
-                (_cantidad(fila['stock_actual']), 'der'),
-                (fila['unidad_medida'], 'izq'),
-                (_cantidad(fila['stock_minimo']), 'der'),
-                (ETIQUETA_ESTADO.get(fila['estado'], fila['estado']), 'izq'),
-            ],
+            [(c[2](fila), c[4]) for c in cols_activas],
             anchos,
             cebra=indice % 2 == 1,
             al_continuar=encabezado,
         )
+    if not filas:
+        hoja.nota('No hay existencias que coincidan con los filtros.')
+    hoja.nota('El stock es un snapshot actual: no depende de un rango de fechas.')
+    return hoja.cerrar()
     if not filas:
         hoja.nota('No hay existencias que coincidan con los filtros.')
     hoja.nota('El stock es un snapshot actual: no depende de un rango de fechas.')

@@ -313,49 +313,56 @@ def excel_reporte_produccion(reporte: dict, jornada=None, columnas: list[str] | 
     return buf.getvalue()
 
 
-def excel_reporte_existencias(reporte: dict, **filtros) -> bytes:
-    """Genera archivo XLSX para CU23 (Reporte de existencias de vitrina)."""
+def excel_reporte_existencias(reporte: dict, columnas: list[str] | None = None, **filtros) -> bytes:
+    """Genera archivo XLSX para CU23 (Reporte de existencias de vitrina e insumos)."""
     wb = Workbook()
     ws = wb.active
     ws.title = 'Existencias'
     ws.views.sheetView[0].showGridLines = True
 
-    sub = f'Tipo: {filtros.get("tipo") or "Todos"} | Nivel de Stock: {filtros.get("nivel_stock") or "Todos"}'
+    sub = f'Tipo: {filtros.get("tipo") or "Todos"} | Estado: {filtros.get("estado") or "Todos"}'
     _crear_banner(ws, 'Reporte de Existencias en Mostrador', sub, max_cols=6)
 
     res = reporte.get('resumen', {})
     kpis = [
-        ('Variedades en Catálogo', str(res.get('total', 0))),
-        ('Stock Normal', str(res.get('normal', 0))),
-        ('Stock Bajo (Alerta)', str(res.get('bajo', 0))),
-        ('Agotados', str(res.get('agotado', 0))),
-        ('Valoración Vitrina', f'Bs {Decimal(res.get("valor_inventario_bs", 0)):,.2f}'),
+        ('Total Ítems', str(res.get('total', 0))),
+        ('Stock Bajo (Alerta)', str(res.get('bajo_stock', res.get('bajo', 0)))),
+        ('Sin Registro', str(res.get('sin_inventario', res.get('agotado', 0)))),
+        ('Terminados', str(res.get('productos_terminados', 0))),
+        ('Materias Primas', str(res.get('materias_primas', 0))),
     ]
     next_row = _agregar_kpis(ws, kpis, start_row=4, max_cols=5)
 
-    items = reporte.get('items', [])
-    filas = [
-        [
-            it.get('producto_nombre', ''),
-            it.get('tipo', 'propio').capitalize(),
-            it.get('stock_actual', 0),
-            it.get('stock_minimo', 0),
-            it.get('nivel_stock', '').upper(),
-            float(Decimal(it.get('precio_unitario', 0))),
-            float(Decimal(it.get('valor_total', 0))),
-        ]
-        for it in items
+    filas_raw = reporte.get('resultados') or reporte.get('items') or []
+
+    cols_map = [
+        ('producto', 'Producto / Insumo', lambda it: it.get('nombre') or it.get('producto_nombre', ''), 'L'),
+        ('tipo', 'Tipo', lambda it: ('Materia prima' if it.get('tipo') == 'materia_prima' else 'Producto terminado'), 'C'),
+        ('stock', 'Stock Actual', lambda it: float(Decimal(it['stock_actual'])) if it.get('stock_actual') is not None else '—', 'R'),
+        ('minimo', 'Stock Mínimo', lambda it: float(Decimal(it['stock_minimo'])) if it.get('stock_minimo') is not None else '—', 'R'),
+        ('nivel', 'Nivel de Alerta', lambda it: it.get('estado', '').replace('_', ' ').capitalize(), 'C'),
+        ('unidad', 'Unidad', lambda it: str(it.get('unidad_medida', '')), 'C'),
+        ('estado', 'Estado', lambda it: ('Activo' if it.get('activo') else 'Inactivo') if 'activo' in it else it.get('estado', ''), 'C'),
     ]
+
+    cols_activas = [c for c in cols_map if c[0] in columnas] if columnas else cols_map
+    if not cols_activas:
+        cols_activas = cols_map
+
+    titulos_th = [c[1] for c in cols_activas]
+    alins = [c[3] for c in cols_activas]
+    filas = [[c[2](it) for c in cols_activas] for it in filas_raw]
+
     _agregar_tabla(
         ws,
-        'INVENTARIO ACTUAL DE PANES EN MOSTRADOR',
-        ['Producto', 'Tipo', 'Stock Actual', 'Stock Mínimo', 'Nivel', 'Precio Venta (Bs)', 'Valoración (Bs)'],
+        'INVENTARIO ACTUAL DE MATERIAS PRIMAS Y PRODUCTOS TERMINADOS',
+        titulos_th,
         filas,
         next_row,
-        ['L', 'C', 'R', 'R', 'C', 'R', 'R'],
+        alins,
     )
 
-    _ajustar_anchos(ws, min_col=1, max_col=7)
+    _ajustar_anchos(ws, min_col=1, max_col=max(len(titulos_th), 5))
     buf = io.BytesIO()
     wb.save(buf)
     return buf.getvalue()
@@ -396,7 +403,14 @@ def excel_reporte_compras(reporte: dict, nombre_prov: str | None = None) -> byte
 
     # Detalle por proveedor
     provs = reporte.get('proveedores', [])
-    filas_prov = [[p['nombre'], p['compras'], float(Decimal(p['total']))] for p in provs]
+    filas_prov = [
+        [
+            p.get('nombre', '—'),
+            p.get('cantidad_compras', p.get('compras', 0)),
+            float(Decimal(str(p.get('total', 0)))),
+        ]
+        for p in provs
+    ]
     _agregar_tabla(
         ws,
         'DESGLOSE POR PROVEEDOR',

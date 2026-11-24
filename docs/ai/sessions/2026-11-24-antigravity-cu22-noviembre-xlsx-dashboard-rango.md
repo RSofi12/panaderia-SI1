@@ -59,3 +59,66 @@
 2. **Compilación Frontend:**
    - Comando: `npm run build` (`tsc -b && vite build`)
    - Resultado: Compilación limpia sin errores TypeScript ni fallos de empaquetado.
+
+---
+
+## 4. Extensión: Selector de Columnas Dinámico en CU23 y Verificación Integral XLSX
+
+### A. Selector de Columnas Dinámico en Existencias (CU23)
+- **Backend:**
+  - `backend/apps/reportes/services/exportar_reporte_existencias.py`:
+    - `csv_reporte_existencias`: Proyección dinámica de columnas según parámetro `columnas: list[str] | None`. Cabeceras y filas filtradas exactamente a las seleccionadas.
+    - `pdf_reporte_existencias`: Cálculo dinámico de ancho de tabla y columnas en ReportLab según las columnas elegidas por el usuario.
+  - `backend/apps/reportes/formatos/excel_reporte.py`:
+    - `excel_reporte_existencias`: Filtrado selectivo de cabeceras y celdas para el libro Openpyxl.
+  - `backend/apps/reportes/views.py`:
+    - `ReporteExistenciasCsvView`, `ReporteExistenciasPdfView`, `ReporteExistenciasExcelView`: Extracción y sanitización de `?columnas=` desde query params.
+- **Frontend:**
+  - `frontend/src/services/reporteExistenciasService.ts`:
+    - Incorporado parámetro opcional `columnas?: string[]` a las funciones de descarga CSV, Excel y PDF.
+  - `frontend/src/apps/dashboard/reportes/components/SeccionReporteExistencias.tsx`:
+    - Desplegable acordeón con checkboxes para las 6 columnas del catálogo: `Producto / Insumo`, `Tipo de catálogo`, `Stock actual y mínimo`, `Nivel de alerta`, `Unidad de medida` y `Estado de registro`.
+    - Proyección reactiva condicional tanto en las cabeceras `<th>` como en las celdas `<td>` de la tabla HTML visible.
+    - Exportación coordinada: al presionar CSV, Excel o PDF, se envían únicamente las columnas activadas en la vista.
+
+### B. Pruebas Automatizadas Unitarias y de Integración (72 tests)
+1. **Reporte de Existencias (`apps.reportes.tests_existencias`):**
+   - 20 pruebas ejecutadas con éxito, incluyendo `test_descargar_excel_con_datos` y `test_descargar_con_columnas_seleccionadas_csv_pdf_excel` verificando que al solicitar `columnas=producto,stock,nivel`, el CSV contiene `Producto;Stock;Nivel` y no incluye las columnas omitidas.
+2. **Reportes Generales (`apps.reportes.tests`):**
+   - 39 pruebas ejecutadas con éxito (100% OK), incluyendo pruebas de descarga Excel con datos reales para:
+     - CU21: `test_exportar_ventas_excel`
+     - CU24: `test_descargar_excel_compras_dinamico`
+     - CU25: `test_exportacion_excel_resultados_economicos`
+     - CU27: `test_exportar_excel_analisis_voz`
+3. **Reporte de Producción (`apps.reportes.tests_produccion`):**
+   - 13 pruebas ejecutadas con éxito (100% OK), incluyendo `test_el_excel_exporta_datos_xlsx`.
+4. **Build Frontend:**
+   - `npm --prefix frontend run build` superado limpiamente en 4.89s.
+
+---
+
+## 5. Corrección de Gráfico de Barras de Demanda (Dashboard) y Reordenamiento de Commits
+
+### A. Diagnóstico de Discrepancia en CU22 (Noviembre 2026)
+- **Problema observado por el usuario:** Al filtrar por noviembre 2026, la vista "Por jornada" reportaba 0 lotes, mientras que "Por producto" mostraba 15,431 unidades vendidas y el reporte descargable reflejaba ventas.
+- **Causa raíz técnica en backend (`reporte_produccion.py`):**
+  - La tabla "Jornadas por período" itera sobre `reporte['lotes']`, poblados desde el modelo `Produccion`. Dado que `seed_noviembre_demo` no estaba registrado en `seed_all.py`, la base de datos remota tenía 0 lotes de producción para noviembre.
+  - La vista "Por producto" itera sobre `reporte['productos']`, que une la producción con las ventas registradas (`DetalleVenta`). El seeder `seed_mes_operativo` sí había poblado ventas para noviembre (15,431 unidades). Al no haber producción, el servicio inicializaba `cantidad = 0` y `vendidas = 15431`, permitiendo que la tabla de productos sí tuviera datos.
+  - **Solución ya integrada:** Al haber añadido `seed_noviembre_demo` a `seed_all.py`, el próximo seed en Render generará tanto las jornadas de producción como el balance cruzado.
+
+### B. Corrección de Gráfico de Columnas (`ColumnBarChart.tsx`)
+- **Problema:** En el Tablero de Indicadores del Dueño, el widget *"Demanda por Producto (Unidades)"* mostraba las etiquetas numéricas (`211, 349, 4201, 3235, 337`) sobre el borde inferior, pero las barras verticales no aparecían (altura 0).
+- **Causa raíz CSS:**
+  - El contenedor principal de columnas usaba `flex items-end`.
+  - El flex child `<div className="flex-1 flex-col items-center">` no definía `h-full`. Al estar en un contenedor con alineación `flex-end`, su altura colapsaba a su contenido intrínseco (`auto`).
+  - La barra interior utilizaba `style={{ height: `${porcentajeAltura}%` }}` dentro de un contenedor sin altura definida, por lo que la altura porcentual en CSS computaba a 0px.
+- **Solución implementada:**
+  - Se asignó `h-full flex-col justify-end` al contenedor de la columna.
+  - Se calculó la altura efectiva en píxeles: `alturaUtil = Math.max(altura - 48, 60)` y `alturaBarraPx = Math.max(8, Math.round(proporcion * alturaUtil))`.
+  - Las barras ahora se renderizan con altura fija en píxeles `style={{ height: `${alturaBarraPx}px` }}`, garantizando visibilidad visual óptima y proporción exacta sin importar el motor de renderizado CSS.
+
+### C. Reordenamiento de Commits en el Historial Git
+- Siguiendo la instrucción estricta del usuario, se reordenó la secuencia de commits para que el fix del dashboard preceda al commit de extensión del CU23:
+  1. `333606d`: `feat(reportes): incorporar exportacion xlsx nativa, rango de fechas en dashboard y correccion de seeders`
+  2. `887cec7`: `fix(dashboard): corregir calculo de altura en grafico de barras de demanda`
+  3. `f566761`: `feat(reportes): agregar selector de columnas dinámico a CU23 y verificar descargas xlsx`

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { isAxiosError } from 'axios';
-import { AlertCircle, Filter, Loader2, Search } from 'lucide-react';
+import { AlertCircle, ChevronDown, ChevronUp, Filter, Loader2, Search } from 'lucide-react';
 import { Paginacion } from '../../components/Paginacion';
 import { paginar, usePagina } from '../../components/paginar';
 import {
@@ -31,6 +31,15 @@ const STATUS_CLASSES: Record<EstadoExistencia, string> = {
 };
 const QUANTITY_FORMAT = new Intl.NumberFormat('es-BO', { maximumFractionDigits: 3 });
 
+const COLUMNAS_EXISTENCIAS = [
+  { id: 'producto', etiqueta: 'Producto / Insumo' },
+  { id: 'tipo', etiqueta: 'Tipo de catálogo' },
+  { id: 'stock', etiqueta: 'Stock actual y mínimo' },
+  { id: 'nivel', etiqueta: 'Nivel de alerta' },
+  { id: 'unidad', etiqueta: 'Unidad de medida' },
+  { id: 'estado', etiqueta: 'Estado de registro' },
+] as const;
+
 function formatQuantity(value: string): string {
   return QUANTITY_FORMAT.format(Number(value));
 }
@@ -52,6 +61,20 @@ export const SeccionReporteExistencias: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [descargando, setDescargando] = useState<'csv' | 'excel' | 'pdf' | ''>('');
+  const [mostrarColumnas, setMostrarColumnas] = useState(false);
+  const [columnasVisibles, setColumnasVisibles] = useState<Record<string, boolean>>({
+    producto: true,
+    tipo: true,
+    stock: true,
+    nivel: true,
+    unidad: true,
+    estado: true,
+  });
+
+  const columnasSeleccionadas = useMemo(
+    () => Object.entries(columnasVisibles).filter(([, v]) => v).map(([k]) => k),
+    [columnasVisibles],
+  );
 
   const queryKey = JSON.stringify(query);
 
@@ -103,11 +126,11 @@ export const SeccionReporteExistencias: React.FC = () => {
     const filtros = { tipo: query.tipo, q: query.q, estado: query.estado };
     try {
       if (tipo === 'pdf') {
-        await descargarReporteExistenciasPdf(filtros);
+        await descargarReporteExistenciasPdf(filtros, columnasSeleccionadas);
       } else if (tipo === 'excel') {
-        await descargarReporteExistenciasExcel(filtros);
+        await descargarReporteExistenciasExcel(filtros, columnasSeleccionadas);
       } else {
-        await descargarReporteExistenciasCsv(filtros);
+        await descargarReporteExistenciasCsv(filtros, columnasSeleccionadas);
       }
     } catch {
       setError('No se pudo descargar el archivo.');
@@ -211,6 +234,37 @@ export const SeccionReporteExistencias: React.FC = () => {
         />
       </div>
 
+      {reporte && reporte.resultados.length > 0 ? (
+        <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/50 p-3">
+          <button
+            type="button"
+            onClick={() => setMostrarColumnas(!mostrarColumnas)}
+            className="flex min-h-11 cursor-pointer items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900"
+            aria-expanded={mostrarColumnas}
+          >
+            {mostrarColumnas ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            Columnas visibles (también se seleccionan para exportar a PDF, Excel y CSV)
+          </button>
+          {mostrarColumnas ? (
+            <div className="mt-2.5 flex flex-wrap gap-4">
+              {COLUMNAS_EXISTENCIAS.map((col) => (
+                <label key={col.id} className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={!!columnasVisibles[col.id]}
+                    onChange={() =>
+                      setColumnasVisibles((prev) => ({ ...prev, [col.id]: !prev[col.id] }))
+                    }
+                    className="rounded border-slate-300 text-amber-700 focus:ring-amber-600"
+                  />
+                  {col.etiqueta}
+                </label>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="mt-5 overflow-x-auto">
         {loading ? (
           <p role="status" className="flex min-h-40 items-center justify-center gap-2 text-sm text-slate-600">
@@ -230,38 +284,50 @@ export const SeccionReporteExistencias: React.FC = () => {
           <table className="w-full min-w-[52rem] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-indigo-900">
-                <th className="px-3 py-3">Producto</th>
-                <th className="px-3 py-3">Tipo</th>
-                <th className="px-3 py-3">Stock</th>
-                <th className="px-3 py-3">Nivel</th>
-                <th className="px-3 py-3">Unidad</th>
-                <th className="px-3 py-3">Estado</th>
+                {columnasVisibles.producto ? <th className="px-3 py-3">Producto</th> : null}
+                {columnasVisibles.tipo ? <th className="px-3 py-3">Tipo</th> : null}
+                {columnasVisibles.stock ? <th className="px-3 py-3">Stock</th> : null}
+                {columnasVisibles.nivel ? <th className="px-3 py-3">Nivel</th> : null}
+                {columnasVisibles.unidad ? <th className="px-3 py-3">Unidad</th> : null}
+                {columnasVisibles.estado ? <th className="px-3 py-3">Estado</th> : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {visible.items.map((item) => (
                 <tr key={`${item.tipo}:${item.id}`} className="hover:bg-slate-50/80">
-                  <th scope="row" className="max-w-64 px-3 py-4 font-semibold text-slate-900">
-                    {item.nombre}
-                  </th>
-                  <td className="px-3 py-4 text-slate-700">
-                    {item.tipo === 'materia_prima' ? 'Materia prima' : 'Producto terminado'}
-                  </td>
-                  <td className="px-3 py-4 font-medium tabular-nums text-slate-900">
-                    {item.stock_actual === null ? '—' : formatQuantity(item.stock_actual)}
-                    {item.stock_actual !== null ? (
-                      <span className="block text-xs font-normal text-slate-500">
-                        Mínimo: {formatQuantity(item.stock_minimo)}
+                  {columnasVisibles.producto ? (
+                    <th scope="row" className="max-w-64 px-3 py-4 font-semibold text-slate-900">
+                      {item.nombre}
+                    </th>
+                  ) : null}
+                  {columnasVisibles.tipo ? (
+                    <td className="px-3 py-4 text-slate-700">
+                      {item.tipo === 'materia_prima' ? 'Materia prima' : 'Producto terminado'}
+                    </td>
+                  ) : null}
+                  {columnasVisibles.stock ? (
+                    <td className="px-3 py-4 font-medium tabular-nums text-slate-900">
+                      {item.stock_actual === null ? '—' : formatQuantity(item.stock_actual)}
+                      {item.stock_actual !== null ? (
+                        <span className="block text-xs font-normal text-slate-500">
+                          Mínimo: {formatQuantity(item.stock_minimo)}
+                        </span>
+                      ) : null}
+                    </td>
+                  ) : null}
+                  {columnasVisibles.nivel ? (
+                    <td className="px-3 py-4">
+                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${STATUS_CLASSES[item.estado]}`}>
+                        {STATUS_LABELS[item.estado]}
                       </span>
-                    ) : null}
-                  </td>
-                  <td className="px-3 py-4">
-                    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${STATUS_CLASSES[item.estado]}`}>
-                      {STATUS_LABELS[item.estado]}
-                    </span>
-                  </td>
-                  <td className="px-3 py-4 text-slate-700">{item.unidad_medida}</td>
-                  <td className="px-3 py-4 text-slate-700">{item.activo ? 'Activo' : 'Inactivo'}</td>
+                    </td>
+                  ) : null}
+                  {columnasVisibles.unidad ? (
+                    <td className="px-3 py-4 text-slate-700">{item.unidad_medida}</td>
+                  ) : null}
+                  {columnasVisibles.estado ? (
+                    <td className="px-3 py-4 text-slate-700">{item.activo ? 'Activo' : 'Inactivo'}</td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>

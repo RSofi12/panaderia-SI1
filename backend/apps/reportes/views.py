@@ -448,7 +448,8 @@ class ReporteExistenciasCsvView(APIView):
 
     def get(self, request):
         reporte, filtros = _consulta_existencias(request)
-        contenido = csv_reporte_existencias(reporte, **filtros)
+        columnas = _parsear_columnas(request.query_params.get('columnas'))
+        contenido = csv_reporte_existencias(reporte, columnas=columnas, **filtros)
         respuesta = HttpResponse(contenido, content_type='text/csv; charset=utf-8-sig')
         respuesta['Content-Disposition'] = 'attachment; filename="reporte-existencias.csv"'
         return respuesta
@@ -461,7 +462,8 @@ class ReporteExistenciasPdfView(APIView):
 
     def get(self, request):
         reporte, filtros = _consulta_existencias(request)
-        contenido = pdf_reporte_existencias(reporte, **filtros)
+        columnas = _parsear_columnas(request.query_params.get('columnas'))
+        contenido = pdf_reporte_existencias(reporte, columnas=columnas, **filtros)
         respuesta = HttpResponse(contenido, content_type='application/pdf')
         respuesta['Content-Disposition'] = 'attachment; filename="reporte-existencias.pdf"'
         return respuesta
@@ -474,7 +476,8 @@ class ReporteExistenciasExcelView(APIView):
 
     def get(self, request):
         reporte, filtros = _consulta_existencias(request)
-        contenido = excel_reporte_existencias(reporte, **filtros)
+        columnas = _parsear_columnas(request.query_params.get('columnas'))
+        contenido = excel_reporte_existencias(reporte, columnas=columnas, **filtros)
         respuesta = HttpResponse(
             contenido,
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

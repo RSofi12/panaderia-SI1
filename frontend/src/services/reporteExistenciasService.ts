@@ -1,8 +1,13 @@
 import api from './api';
 import type { ReporteExistencias, ReporteExistenciasFiltros } from '../types/reporteExistencias';
 
-function paramsExistencias(filtros: ReporteExistenciasFiltros) {
-  return { tipo: filtros.tipo, q: filtros.q.trim(), estado: filtros.estado };
+function paramsExistencias(filtros: ReporteExistenciasFiltros, columnas?: string[]) {
+  return {
+    tipo: filtros.tipo,
+    q: filtros.q.trim(),
+    estado: filtros.estado,
+    ...(columnas && columnas.length > 0 ? { columnas: columnas.join(',') } : {}),
+  };
 }
 
 function guardarBlob(contenido: Blob, nombre: string) {
@@ -27,25 +32,34 @@ export async function consultarReporteExistencias(
   return response.data;
 }
 
-export async function descargarReporteExistenciasCsv(filtros: ReporteExistenciasFiltros): Promise<void> {
+export async function descargarReporteExistenciasCsv(
+  filtros: ReporteExistenciasFiltros,
+  columnas?: string[],
+): Promise<void> {
   const respuesta = await api.get<Blob>('/reportes/existencias/csv/', {
-    params: paramsExistencias(filtros),
+    params: paramsExistencias(filtros, columnas),
     responseType: 'blob',
   });
   guardarBlob(respuesta.data, 'reporte-existencias.csv');
 }
 
-export async function descargarReporteExistenciasExcel(filtros: ReporteExistenciasFiltros): Promise<void> {
+export async function descargarReporteExistenciasExcel(
+  filtros: ReporteExistenciasFiltros,
+  columnas?: string[],
+): Promise<void> {
   const respuesta = await api.get<Blob>('/reportes/existencias/excel/', {
-    params: paramsExistencias(filtros),
+    params: paramsExistencias(filtros, columnas),
     responseType: 'blob',
   });
   guardarBlob(respuesta.data, 'reporte-existencias.xlsx');
 }
 
-export async function descargarReporteExistenciasPdf(filtros: ReporteExistenciasFiltros): Promise<void> {
+export async function descargarReporteExistenciasPdf(
+  filtros: ReporteExistenciasFiltros,
+  columnas?: string[],
+): Promise<void> {
   const respuesta = await api.get<Blob>('/reportes/existencias/pdf/', {
-    params: paramsExistencias(filtros),
+    params: paramsExistencias(filtros, columnas),
     responseType: 'blob',
   });
   guardarBlob(respuesta.data, 'reporte-existencias.pdf');

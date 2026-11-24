@@ -208,6 +208,20 @@ class PruebasReporteVentas(TestCase):
         self.assertEqual(respuesta.data['tarjeta'], '12.00')
         self.assertEqual(respuesta.data['productos'][0]['cantidad'], 1)
 
+    def test_exportar_ventas_excel(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.get('/api/reportes/ventas/excel/', {
+            'desde': '2026-10-01',
+            'hasta': '2026-11-30',
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            respuesta['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        self.assertIn('reporte-ventas-2026-10-01-2026-11-30.xlsx', respuesta['Content-Disposition'])
+        self.assertGreater(len(respuesta.content), 2000)
+
 
 @override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'], GEMINI_API_KEY='')
 class PruebasReporteVoz(TestCase):
@@ -324,10 +338,37 @@ class PruebasReporteVoz(TestCase):
         self.assertEqual(pdf['Content-Type'], 'application/pdf')
         self.assertTrue(pdf.content.startswith(b'%PDF'))
 
+    def test_exportar_excel_analisis_voz(self):
+        self.client.force_authenticate(self.propietario)
+        analisis = self.client.post(
+            '/api/reportes/voz/analizar/',
+            {'texto': 'reporte de roles del sistema'},
+            format='json',
+        )
+        self.assertEqual(analisis.status_code, status.HTTP_200_OK)
+        excel_resp = self.client.post(
+            '/api/reportes/voz/analizar/excel/',
+            {
+                'consulta': analisis.data['consulta'],
+                'tema': analisis.data['tema'],
+                'desde': analisis.data['desde'],
+                'hasta': analisis.data['hasta'],
+                'analisis': analisis.data['analisis'],
+                'motor': analisis.data['motor'],
+            },
+            format='json',
+        )
+        self.assertEqual(excel_resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            excel_resp['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        self.assertGreater(len(excel_resp.content), 2000)
+
     def test_cierre_inexistente_responde_404(self):
         self.client.force_authenticate(self.propietario)
-        detalle = self.client.get('/api/reportes/ventas/cierres/99999/')
-        pdf = self.client.get('/api/reportes/ventas/cierres/99999/pdf/')
+        detalle = self.client.get('/api/reportes/compras/cierres/99999/')
+        pdf = self.client.get('/api/reportes/compras/cierres/99999/pdf/')
         self.assertEqual(detalle.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(pdf.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -552,6 +593,20 @@ class PruebasReporteCompras(TestCase):
         self.assertEqual(respuesta['Content-Type'], 'application/pdf')
         self.assertTrue(respuesta.content.startswith(b'%PDF'))
 
+    def test_descargar_excel_compras_dinamico(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.get('/api/reportes/compras/excel/', {
+            'desde': '2026-10-01',
+            'hasta': '2026-10-31',
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            respuesta['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        self.assertIn('reporte-compras-2026-10-01-2026-10-31.xlsx', respuesta['Content-Disposition'])
+        self.assertGreater(len(respuesta.content), 2000)
+
 
 @override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
 class PruebasReporteResultadosEconomicos(TestCase):
@@ -735,3 +790,17 @@ class PruebasReporteResultadosEconomicos(TestCase):
         self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
         self.assertEqual(respuesta['Content-Type'], 'application/pdf')
         self.assertTrue(respuesta.content.startswith(b'%PDF-'))
+
+    def test_exportacion_excel_resultados_economicos(self):
+        self.client.force_authenticate(self.propietario)
+        respuesta = self.client.get('/api/reportes/resultados-economicos/excel/', {
+            'desde': '2026-11-01',
+            'hasta': '2026-11-30',
+        })
+        self.assertEqual(respuesta.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            respuesta['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        self.assertIn('resultados-economicos-2026-11-01-2026-11-30.xlsx', respuesta['Content-Disposition'])
+        self.assertGreater(len(respuesta.content), 2000)
