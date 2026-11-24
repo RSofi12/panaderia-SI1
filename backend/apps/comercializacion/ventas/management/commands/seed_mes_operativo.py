@@ -50,6 +50,7 @@ from apps.productos_inventario.produccion.models import (
 from apps.productos_inventario.productos.models import Producto
 from apps.productos_inventario.productos_terminados.models import (
     InventarioProductoTerminado,
+    MovimientoProductoTerminado,
     NotaPerdidaProducto,
 )
 
@@ -191,11 +192,39 @@ class Command(BaseCommand):
 
         with transaction.atomic():
             if force or ventas_mes < min_ventas_esperadas:
-                Venta.objects.filter(fecha_hora__year=2026, fecha_hora__month=mes).delete()
-                Compra.objects.filter(fecha_hora__year=2026, fecha_hora__month=mes).delete()
-                Produccion.objects.filter(fecha__year=2026, fecha__month=mes).delete()
+                # 1. Limpiar Ventas y sus detalles protegidos
+                ventas_del_mes = Venta.objects.filter(fecha_hora__year=2026, fecha_hora__month=mes)
+                ids_ventas = list(ventas_del_mes.values_list('id_venta', flat=True))
+                MovimientoProductoTerminado.objects.filter(id_venta_id__in=ids_ventas).delete()
+                DetalleVenta.objects.filter(id_venta_id__in=ids_ventas).delete()
+                ventas_del_mes.delete()
+
+                # 2. Limpiar Pedidos y sus detalles protegidos
+                pedidos_del_mes = Pedido.objects.filter(fecha_registro__year=2026, fecha_registro__month=mes)
+                ids_pedidos = list(pedidos_del_mes.values_list('id_pedido', flat=True))
+                Venta.objects.filter(id_pedido_id__in=ids_pedidos).update(id_pedido=None)
+                MovimientoProductoTerminado.objects.filter(id_pedido_id__in=ids_pedidos).delete()
+                DetallePedido.objects.filter(id_pedido_id__in=ids_pedidos).delete()
+                pedidos_del_mes.delete()
+
+                # 3. Limpiar Producciones y sus detalles / mermas protegidas
+                prods_del_mes = Produccion.objects.filter(fecha__year=2026, fecha__month=mes)
+                ids_prods = list(prods_del_mes.values_list('id_produccion', flat=True))
+                dets_prod = DetalleProduccion.objects.filter(id_produccion_id__in=ids_prods)
+                ids_dets = list(dets_prod.values_list('id_detalle_produccion', flat=True))
+                NotaPerdidaProducto.objects.filter(id_detalle_produccion_id__in=ids_dets).delete()
+                MovimientoProductoTerminado.objects.filter(id_produccion_id__in=ids_prods).delete()
+                dets_prod.delete()
+                prods_del_mes.delete()
+
+                # 4. Limpiar Compras y sus detalles
+                compras_del_mes = Compra.objects.filter(fecha_hora__year=2026, fecha_hora__month=mes)
+                ids_compras = list(compras_del_mes.values_list('id_compra', flat=True))
+                DetalleCompra.objects.filter(id_compra_id__in=ids_compras).delete()
+                compras_del_mes.delete()
+
+                # 5. Limpiar Movimientos económicos (gastos/inversiones)
                 MovimientoEconomico.objects.filter(fecha_hora__year=2026, fecha_hora__month=mes).delete()
-                Pedido.objects.filter(fecha_registro__year=2026, fecha_registro__month=mes).delete()
 
             # A. COMPRAS RECURRENTES DE MATERIA PRIMA
             total_compras_creadas = 0

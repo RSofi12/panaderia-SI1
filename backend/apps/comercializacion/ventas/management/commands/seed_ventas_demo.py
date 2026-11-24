@@ -19,6 +19,7 @@ from django.utils import timezone
 
 from apps.comercializacion.ventas.models import DetalleVenta, MetodoPago, Venta
 from apps.productos_inventario.productos.models import Producto
+from apps.productos_inventario.productos_terminados.models import MovimientoProductoTerminado
 
 MARCADOR_STRIPE = 'pi_demo_cu21_'
 
@@ -252,13 +253,16 @@ class Command(BaseCommand):
             # limpiamos las ventas de noviembre para evitar duplicaciones
             if options['force'] or ventas_nov_existentes < 200:
                 self.stdout.write('Limpiando ventas previas de demostración para actualizar...')
-                Venta.objects.filter(
-                    fecha_hora__year=2026, fecha_hora__month=11
-                ).delete()
-                # También limpiamos las ventas piloto de sep/oct para reescribir la secuencia ordenada
-                Venta.objects.filter(
-                    fecha_hora__year=2026, fecha_hora__month__in=[9, 10]
-                ).delete()
+                ventas_a_limpiar = Venta.objects.filter(
+                    fecha_hora__year=2026, fecha_hora__month__in=[9, 10, 11]
+                )
+                ids_ventas = list(ventas_a_limpiar.values_list('id_venta', flat=True))
+                # 1. Eliminar movimientos de producto terminado asociados
+                MovimientoProductoTerminado.objects.filter(id_venta_id__in=ids_ventas).delete()
+                # 2. Eliminar líneas de detalle protegidas (on_delete=models.PROTECT)
+                DetalleVenta.objects.filter(id_venta_id__in=ids_ventas).delete()
+                # 3. Eliminar cabeceras de venta
+                ventas_a_limpiar.delete()
 
             siguiente_comprobante = _obtener_siguiente_comprobante()
             stripe_contador = 1

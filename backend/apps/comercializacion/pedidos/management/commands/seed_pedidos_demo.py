@@ -13,8 +13,9 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.comercializacion.pedidos.models import Cliente, DetallePedido, EstadoPedido, Pedido
-from apps.comercializacion.ventas.models import MetodoPago
+from apps.comercializacion.ventas.models import MetodoPago, Venta
 from apps.productos_inventario.productos.models import Producto
+from apps.productos_inventario.productos_terminados.models import MovimientoProductoTerminado
 
 Usuario = get_user_model()
 
@@ -316,6 +317,8 @@ class Command(BaseCommand):
         with transaction.atomic():
             if options['force']:
                 self.stdout.write('Limpiando pedidos previos...')
+                Venta.objects.filter(id_pedido__isnull=False).update(id_pedido=None)
+                MovimientoProductoTerminado.objects.filter(id_pedido__isnull=False).delete()
                 DetallePedido.objects.all().delete()
                 Pedido.objects.all().delete()
 
