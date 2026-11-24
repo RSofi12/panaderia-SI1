@@ -64,7 +64,9 @@ def csv_reporte_produccion(reporte: dict, jornada=None, columnas: list[str] | No
         ('Jornadas', reporte['cantidad']),
         ('Unidades producidas', reporte['unidades']),
         ('Unidades vendidas', reporte['unidades_vendidas']),
-        ('Diferencia (prod. − ventas)', reporte['diferencia']),
+        ('Unidades mermadas (CU18)', reporte.get('unidades_mermadas', 0)),
+        ('Costo de mermas (Bs)', dinero_local(reporte.get('costo_mermas', 0))),
+        ('Diferencia neta (prod. − ventas − mermas)', reporte['diferencia']),
         ('Costo de insumos (Bs)', dinero_local(reporte['costo'])),
     ]:
         writer.writerow([etiqueta, valor])
@@ -78,7 +80,7 @@ def csv_reporte_produccion(reporte: dict, jornada=None, columnas: list[str] | No
         writer.writerow(['Este periodo no tiene jornadas de producción registradas.'])
     writer.writerow([])
     writer.writerow(['Producción vs ventas por producto'])
-    writer.writerow(['Producto', 'Producidas', 'Vendidas', 'Diferencia', 'Costo (Bs)'])
+    writer.writerow(['Producto', 'Producidas', 'Vendidas', 'Mermadas', 'Diferencia', 'Costo (Bs)'])
     if productos:
         for producto in productos:
             writer.writerow(
@@ -86,12 +88,34 @@ def csv_reporte_produccion(reporte: dict, jornada=None, columnas: list[str] | No
                     producto['nombre'],
                     producto['cantidad'],
                     producto['vendidas'],
+                    producto.get('mermadas', 0),
                     producto['diferencia'],
                     dinero_local(producto['costo']),
                 ]
             )
     else:
         writer.writerow(['Este periodo no tiene productos producidos ni vendidos.'])
+
+    mermas = reporte.get('mermas', [])
+    if mermas:
+        writer.writerow([])
+        writer.writerow(['Detalle de mermas y pérdidas de producto (CU18)'])
+        writer.writerow(
+            ['Fecha', 'Producto', 'Cantidad', 'Costo Unitario (Bs)', 'Costo Total (Bs)', 'Motivo', 'Observaciones', 'Responsable']
+        )
+        for m in mermas:
+            writer.writerow(
+                [
+                    fecha_visible(m.get('fecha', '')),
+                    m.get('producto', ''),
+                    m.get('cantidad', 0),
+                    dinero_local(m.get('costo_unitario', 0)),
+                    dinero_local(m.get('costo_total', 0)),
+                    m.get('motivo', 'Sobrante al cierre'),
+                    m.get('observaciones', ''),
+                    m.get('responsable', 'Sistema'),
+                ]
+            )
     writer.writerow([])
     writer.writerow(
         [
@@ -117,7 +141,8 @@ def pdf_reporte_produccion(reporte: dict, jornada=None, columnas: list[str] | No
             ('Jornadas', str(reporte['cantidad'])),
             ('Producidas', str(reporte['unidades'])),
             ('Vendidas', str(reporte['unidades_vendidas'])),
-            ('Costo', f'Bs {_dinero(reporte["costo"])}'),
+            ('Mermas (CU18)', f"{reporte.get('unidades_mermadas', 0)} un."),
+            ('Costo Prod.', f'Bs {_dinero(reporte["costo"])}'),
         ]
     )
 
@@ -189,7 +214,7 @@ def pdf_reporte_produccion(reporte: dict, jornada=None, columnas: list[str] | No
 
     productos = reporte.get('productos', [])
     hoja.seccion('Producción vs ventas por producto')
-    anchos_prod = anchos_de(34, 16, 16, 16, 18)
+    anchos_prod = anchos_de(30, 14, 14, 14, 14, 14)
 
     def encabezado_productos():
         hoja.fila(
@@ -197,6 +222,7 @@ def pdf_reporte_produccion(reporte: dict, jornada=None, columnas: list[str] | No
                 ('Producto', 'izq'),
                 ('Producidas', 'der'),
                 ('Vendidas', 'der'),
+                ('Mermas', 'der'),
                 ('Diferencia', 'der'),
                 ('Costo (Bs)', 'der'),
             ],
@@ -211,6 +237,7 @@ def pdf_reporte_produccion(reporte: dict, jornada=None, columnas: list[str] | No
                 (producto['nombre'], 'izq'),
                 (str(producto['cantidad']), 'der'),
                 (str(producto['vendidas']), 'der'),
+                (str(producto.get('mermadas', 0)), 'der'),
                 (str(producto['diferencia']), 'der'),
                 (f"Bs {_dinero(producto['costo'])}", 'der'),
             ],
@@ -221,7 +248,44 @@ def pdf_reporte_produccion(reporte: dict, jornada=None, columnas: list[str] | No
     if not productos:
         hoja.nota('Este período no tiene productos producidos ni vendidos.')
 
+    mermas = reporte.get('mermas', [])
+    if mermas or int(reporte.get('unidades_mermadas', 0) or 0) > 0:
+        hoja.seccion('Detalle de mermas y pérdidas de producto (CU18)')
+        anchos_mermas = anchos_de(16, 22, 12, 26, 12, 12)
+
+        def encabezado_mermas():
+            hoja.fila(
+                [
+                    ('Fecha', 'izq'),
+                    ('Producto', 'izq'),
+                    ('Cant.', 'der'),
+                    ('Motivo', 'izq'),
+                    ('Costo (Bs)', 'der'),
+                    ('Responsable', 'izq'),
+                ],
+                anchos_mermas,
+                encabezado=True,
+            )
+
+        encabezado_mermas()
+        for indice, merma in enumerate(mermas):
+            hoja.fila(
+                [
+                    (fecha_visible(merma.get('fecha', '')), 'izq'),
+                    (str(merma.get('producto', ''))[:24], 'izq'),
+                    (f"-{merma.get('cantidad', 0)} u.", 'der'),
+                    (str(merma.get('motivo', 'Sobrante al cierre'))[:28], 'izq'),
+                    (f"Bs {_dinero(merma.get('costo_total', 0))}", 'der'),
+                    (str(merma.get('responsable', 'Sistema'))[:14], 'izq'),
+                ],
+                anchos_mermas,
+                cebra=indice % 2 == 1,
+                al_continuar=encabezado_mermas,
+            )
+        if not mermas:
+            hoja.nota('No hay registros de mermas disponibles para este período.')
+
     hoja.nota(
-        'Las ventas se comparan por el mismo rango de fechas. La jornada filtra solo la producción.'
+        'Las ventas y mermas se comparan por el mismo rango de fechas. La jornada filtra solo la producción.'
     )
     return hoja.cerrar()

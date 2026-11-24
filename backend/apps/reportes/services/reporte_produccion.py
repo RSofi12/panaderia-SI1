@@ -150,6 +150,33 @@ def reporte_produccion(*, desde: date, hasta: date, jornada=None) -> dict:
         )
     productos.sort(key=lambda item: (-item['cantidad'], -item['vendidas'], item['nombre']))
 
+    notas_mermas_qs = (
+        NotaPerdidaProducto.objects.filter(
+            fecha_salida__date__gte=desde,
+            fecha_salida__date__lte=hasta,
+        )
+        .select_related('id_detalle_produccion__id_producto', 'id_usuario')
+        .order_by('-fecha_salida', '-id_nota_perdida')
+    )
+    lista_mermas = [
+        {
+            'id_nota_perdida': nota.id_nota_perdida,
+            'fecha': nota.fecha_salida.isoformat(),
+            'producto': getattr(
+                nota.id_detalle_produccion.id_producto,
+                'nombre',
+                f'Producto #{nota.id_detalle_produccion.id_producto_id}',
+            ),
+            'cantidad': nota.cantidad,
+            'costo_unitario': (nota.costo_unitario or CERO).quantize(Decimal('0.01')),
+            'costo_total': (Decimal(nota.cantidad) * (nota.costo_unitario or CERO)).quantize(Decimal('0.01')),
+            'motivo': getattr(nota, 'motivo', '') or 'Sobrante de mostrador al cierre',
+            'observaciones': getattr(nota, 'observaciones', ''),
+            'responsable': _responsable(nota.id_usuario),
+        }
+        for nota in notas_mermas_qs
+    ]
+
     return {
         'desde': desde,
         'hasta': hasta,
@@ -165,4 +192,5 @@ def reporte_produccion(*, desde: date, hasta: date, jornada=None) -> dict:
         'noche': por_jornada.get(JornadaProduccion.NOCHE, 0),
         'lotes': lotes,
         'productos': productos,
+        'mermas': lista_mermas,
     }

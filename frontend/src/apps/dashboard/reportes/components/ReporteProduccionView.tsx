@@ -410,7 +410,7 @@ export const ReporteProduccionView: React.FC<ReporteProduccionViewProps> = ({
       </section>
 
       {reporte ? (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           <TarjetaKpiReporte
             etiqueta="Unidades producidas"
             valor={reporte.unidades}
@@ -422,9 +422,14 @@ export const ReporteProduccionView: React.FC<ReporteProduccionViewProps> = ({
             detalle="Mismo rango de fechas"
           />
           <TarjetaKpiReporte
+            etiqueta="Mermas (CU18)"
+            valor={`${reporte.unidades_mermadas ?? 0} u.`}
+            detalle={`Costo: ${bolivianos(reporte.costo_mermas ?? 0)}`}
+          />
+          <TarjetaKpiReporte
             etiqueta="Diferencia"
             valor={reporte.diferencia}
-            detalle="Producido − vendido"
+            detalle="Producido − vendido − merma"
           />
           <TarjetaKpiReporte
             etiqueta="Costo de insumos"
@@ -602,6 +607,7 @@ export const ReporteProduccionView: React.FC<ReporteProduccionViewProps> = ({
                   <th className="py-3 px-3">Producto</th>
                   <th className="py-3 px-3 text-center">Producidas</th>
                   <th className="py-3 px-3 text-center">Vendidas</th>
+                  <th className="py-3 px-3 text-center text-rose-700">Mermas</th>
                   <th className="py-3 px-3 text-center">Diferencia</th>
                   <th className="py-3 px-3 text-right">Costo</th>
                 </tr>
@@ -609,7 +615,7 @@ export const ReporteProduccionView: React.FC<ReporteProduccionViewProps> = ({
               <tbody className="divide-y divide-slate-100">
                 {!reporte?.productos || reporte.productos.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-500 font-medium">
+                    <td colSpan={6} className="py-8 text-center text-slate-500 font-medium">
                       No hay productos producidos ni vendidos en este período.
                     </td>
                   </tr>
@@ -619,6 +625,7 @@ export const ReporteProduccionView: React.FC<ReporteProduccionViewProps> = ({
                       <td className="py-3 px-3 font-bold text-slate-900">{prod.nombre}</td>
                       <td className="py-3 px-3 text-center text-slate-600 font-medium">{prod.cantidad} u.</td>
                       <td className="py-3 px-3 text-center text-slate-600 font-medium">{prod.vendidas} u.</td>
+                      <td className="py-3 px-3 text-center font-bold text-rose-700">{prod.mermadas ?? 0} u.</td>
                       <td className={`py-3 px-3 text-center font-bold ${prod.diferencia < 0 ? 'text-rose-700' : 'text-emerald-700'}`}>
                         {prod.diferencia}
                       </td>

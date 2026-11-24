@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 
 from apps.comercializacion.ventas.models import MetodoPago
@@ -139,8 +141,21 @@ class ProductoProducidoSerializer(serializers.Serializer):
     nombre = serializers.CharField()
     cantidad = serializers.IntegerField()
     vendidas = serializers.IntegerField()
+    mermadas = serializers.IntegerField(default=0)
     diferencia = serializers.IntegerField()
     costo = serializers.DecimalField(max_digits=12, decimal_places=2)
+
+
+class MermaProduccionItemSerializer(serializers.Serializer):
+    id_nota_perdida = serializers.IntegerField()
+    fecha = serializers.CharField()
+    producto = serializers.CharField()
+    cantidad = serializers.IntegerField()
+    costo_unitario = serializers.DecimalField(max_digits=12, decimal_places=2)
+    costo_total = serializers.DecimalField(max_digits=12, decimal_places=2)
+    motivo = serializers.CharField()
+    observaciones = serializers.CharField(allow_blank=True, default='')
+    responsable = serializers.CharField()
 
 
 class LoteProduccionItemSerializer(serializers.Serializer):
@@ -162,6 +177,8 @@ class ReporteProduccionSerializer(serializers.Serializer):
     cantidad = serializers.IntegerField()
     unidades = serializers.IntegerField()
     unidades_vendidas = serializers.IntegerField()
+    unidades_mermadas = serializers.IntegerField(default=0)
+    costo_mermas = serializers.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     diferencia = serializers.IntegerField()
     costo = serializers.DecimalField(max_digits=12, decimal_places=2)
     manana = serializers.IntegerField()
@@ -169,6 +186,7 @@ class ReporteProduccionSerializer(serializers.Serializer):
     noche = serializers.IntegerField()
     lotes = LoteProduccionItemSerializer(many=True)
     productos = ProductoProducidoSerializer(many=True)
+    mermas = MermaProduccionItemSerializer(many=True, required=False)
 
 
 class CierreReporteConsultaSerializer(ReporteVentasConsultaSerializer):

@@ -38,10 +38,17 @@
 - **Seeders:**
   - `seed_mes_operativo.py`: Limpieza en orden estricto de dependencias (`MovimientoProductoTerminado` -> `NotaPerdidaProducto` -> `DetalleProduccion` -> `Produccion`) para evitar `ProtectedError`. Generación diaria de mermas por sobrante de mostrador (18:15 hrs) y defectos de horneado cada 2 días (08:30 hrs).
   - `seed_noviembre_demo.py`: Población coherente de mermas diarias de noviembre con motivos y observaciones.
+- **Exportación PDF/CSV (`exportar_reporte_produccion.py`):**
+  - Añadida tarjeta KPI `Mermas (CU18)` en la cabecera del PDF formal.
+  - Añadida columna `Mermas` en la tabla de Producción vs Ventas por Producto.
+  - Incorporada nueva sección tabular `Detalle de mermas y pérdidas de producto (CU18)` con fecha, producto, cantidad, motivo, costo total y responsable.
+  - Sincronizado el archivo CSV para incluir el resumen y detalle completo de mermas.
 
 ### Frontend:
-- **`src/types/existencias.ts`:**
-  - Actualizada interfaz `NotaPerdida` con `motivo?: string` y `observaciones?: string`.
+- **`src/types/existencias.ts` & `src/types/reporteProduccion.ts`:**
+  - Actualizadas interfaces con `motivo`, `observaciones`, `unidades_mermadas`, `costo_mermas` y entidad `MermaProduccion`.
+- **`ReporteProduccionView.tsx`:**
+  - Añadida tarjeta KPI `Mermas (CU18)` y columna `Mermas` en la tabla de productos producidos vs vendidos.
 - **`src/apps/dashboard/productos/existencias/components/HistorialMermasModal.tsx`:**
   - Visualización del `motivo` y `observaciones` en cada fila del historial de mermas.
 
