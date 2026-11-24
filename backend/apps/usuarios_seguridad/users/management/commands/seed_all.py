@@ -49,7 +49,7 @@ class Command(BaseCommand):
             ('seed_pedidos_demo', '9. Clientes y Pedidos en Mostrador/Anticipados'),
             ('seed_gastos_demo', '10. Gastos Operativos e Inversiones'),
             ('seed_ventas_demo', '11. Registro Histórico de Ventas (Noviembre 2026)'),
-            ('seed_mes_operativo', '12. Meses Operativos Completos (Septiembre y Octubre 2026, L-S, 35-40 v/día)'),
+            ('seed_mes_operativo', '12. Meses Operativos Completos (Julio a Octubre 2026, L-S, Apertura y Maduración)'),
         ]
 
         exitos = 0

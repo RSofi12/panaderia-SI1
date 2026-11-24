@@ -1,14 +1,18 @@
 """
-Comando de Poblado para Meses Operativos Completos (Septiembre y Octubre 2026) — Panadería Santiago (SI-1).
+Comando de Poblado para Meses Operativos Completos (Julio, Agosto, Septiembre y Octubre 2026) — Panadería Santiago (SI-1).
 
-Simula la operación comercial y productiva de Septiembre y Octubre de 2026:
-- Septiembre 2026: 26 jornadas laborales (L-S), 35 a 40 ventas/día, compras semanales,
-  producción continua, pedidos institucionales e inversión del horno industrial (Bs 8.000).
-- Octubre 2026: 27 jornadas laborales (L-S), 35 a 40 ventas/día, compras semanales,
-  producción continua, pedidos institucionales y gastos operativos regulares.
+Simula la operación comercial y productiva de 4 meses históricos continuos:
+- Julio 2026 (Mitad / Apertura, 15 al 31 de Julio): 15 días hábiles, 18-24 ventas/día,
+  15 lotes de producción (~450 panes/lote), compras iniciales y menaje menor. Ganancia neta: +Bs 870.
+- Agosto 2026 (Crecimiento, 1 al 31 de Agosto): 26 días hábiles, 26-32 ventas/día,
+  26 lotes de producción (~680 panes/lote), primeros pedidos institucionales. Ganancia neta: +Bs 5.480.
+- Septiembre 2026 (Operación plena): 26 días hábiles, 35-40 ventas/día,
+  26 lotes (~850 panes/lote), compras semanales e inversión del horno rotativo (Bs 8.000). Superávit neto: +Bs 830.
+- Octubre 2026 (Consolidación): 27 días hábiles, 35-40 ventas/día,
+  27 lotes (~850 panes/lote), compras semanales y gastos operativos regulares. Ganancia neta: +Bs 6.080.
 
 Uso:
-    python manage.py seed_mes_operativo [--force] [--mes 9|10]
+    python manage.py seed_mes_operativo [--force] [--mes 7|8|9|10]
 """
 import random
 from datetime import date, datetime, time, timedelta
@@ -53,29 +57,29 @@ Usuario = get_user_model()
 
 
 class Command(BaseCommand):
-    help = 'Puebla meses operativos completos (Septiembre y Octubre 2026, 35-40 ventas/día hábil) con ganancias coherentes.'
+    help = 'Puebla meses operativos completos (Julio, Agosto, Septiembre y Octubre 2026) con ganancias coherentes.'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--force',
             action='store_true',
-            help='Ejecuta la población incluso si ya existen registros de septiembre u octubre.',
+            help='Ejecuta la población incluso si ya existen registros en los meses indicados.',
         )
         parser.add_argument(
             '--mes',
             type=int,
-            choices=[9, 10],
-            help='Especifica si se quiere poblar únicamente Septiembre (9) u Octubre (10). Por defecto ambos.',
+            choices=[7, 8, 9, 10],
+            help='Especifica si se quiere poblar únicamente Julio (7), Agosto (8), Septiembre (9) u Octubre (10). Por defecto todos.',
         )
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.MIME(
             '============================================================\n'
-            '  POBLADO DE MESES OPERATIVOS (SEPTIEMBRE Y OCTUBRE 2026)   \n'
+            '  POBLADO DE MESES OPERATIVOS (JULIO A OCTUBRE 2026)        \n'
             '============================================================'
         ) if hasattr(self.style, 'MIME') else self.style.NOTICE(
             '============================================================\n'
-            '  POBLADO DE MESES OPERATIVOS (SEPTIEMBRE Y OCTUBRE 2026)   \n'
+            '  POBLADO DE MESES OPERATIVOS (JULIO A OCTUBRE 2026)        \n'
             '============================================================'
         ))
 
@@ -127,7 +131,7 @@ class Command(BaseCommand):
                 )
                 clientes.append(c)
 
-        meses_a_procesar = [options['mes']] if options.get('mes') else [9, 10]
+        meses_a_procesar = [options['mes']] if options.get('mes') else [7, 8, 9, 10]
 
         for num_mes in meses_a_procesar:
             self._poblar_mes(
@@ -144,19 +148,23 @@ class Command(BaseCommand):
             )
 
     def _poblar_mes(self, *, mes, force, usuarios, cajeras, panaderos, admin_user, productos, proveedores, materias, clientes):
-        nombre_mes = 'Septiembre' if mes == 9 else 'Octubre'
-        prefijo_stripe = 'pi_mes_sep_' if mes == 9 else 'pi_mes_oct_'
-        seed_rnd = 202609 if mes == 9 else 202610
-        rng = random.Random(seed_rnd)
+        nombres_mes = {7: 'Julio (Apertura)', 8: 'Agosto', 9: 'Septiembre', 10: 'Octubre'}
+        prefijos_stripe = {7: 'pi_mes_jul_', 8: 'pi_mes_ago_', 9: 'pi_mes_sep_', 10: 'pi_mes_oct_'}
+        seed_rnds = {7: 202607, 8: 202608, 9: 202609, 10: 202610}
+
+        nombre_mes = nombres_mes[mes]
+        prefijo_stripe = prefijos_stripe[mes]
+        rng = random.Random(seed_rnds[mes])
 
         self.stdout.write(self.style.NOTICE(f'\n--- Procesando {nombre_mes} 2026 ---'))
 
-        # Verificar si ya tiene datos
+        # Verificar si ya tiene datos suficientes
         ventas_mes = Venta.objects.filter(
             fecha_hora__year=2026, fecha_hora__month=mes
         ).count()
 
-        if ventas_mes >= 500 and not force:
+        min_ventas_esperadas = 200 if mes == 7 else 500
+        if ventas_mes >= min_ventas_esperadas and not force:
             self.stdout.write(self.style.WARNING(
                 f'{nombre_mes} 2026 ya cuenta con {ventas_mes} ventas. Use --force para regenerar.'
             ))
@@ -167,13 +175,14 @@ class Command(BaseCommand):
         numero_comprobante = max_comp + 1
 
         # Rango de fechas
-        ultimo_dia = 30 if mes == 9 else 31
+        primer_dia = 15 if mes == 7 else 1
+        ultimo_dia = 31 if mes in [7, 8, 10] else 30
         dias_operativos = []
-        fecha_cursor = date(2026, mes, 1)
+        fecha_cursor = date(2026, mes, primer_dia)
         fecha_fin = date(2026, mes, ultimo_dia)
 
         while fecha_cursor <= fecha_fin:
-            # 0=Lunes ... 5=Sábado, 6=Domingo
+            # 0=Lunes ... 5=Sábado, 6=Domingo (Descanso dominical)
             if fecha_cursor.weekday() < 6:
                 dias_operativos.append(fecha_cursor)
             fecha_cursor += timedelta(days=1)
@@ -181,24 +190,26 @@ class Command(BaseCommand):
         self.stdout.write(f'Jornadas laborales a simular en {nombre_mes}: {len(dias_operativos)} días (Lunes a Sábado)')
 
         with transaction.atomic():
-            if force or ventas_mes < 500:
-                # Limpiar ventas previas de ese mes si se solicita regeneración
+            if force or ventas_mes < min_ventas_esperadas:
                 Venta.objects.filter(fecha_hora__year=2026, fecha_hora__month=mes).delete()
-                # Limpiar compras del mes si existían de simulaciones previas
                 Compra.objects.filter(fecha_hora__year=2026, fecha_hora__month=mes).delete()
-                # Limpiar producciones del mes
                 Produccion.objects.filter(fecha__year=2026, fecha__month=mes).delete()
-                # Limpiar gastos del mes
                 MovimientoEconomico.objects.filter(fecha_hora__year=2026, fecha_hora__month=mes).delete()
-                # Limpiar pedidos del mes
                 Pedido.objects.filter(fecha_registro__year=2026, fecha_registro__month=mes).delete()
 
-            # A. COMPRAS SEMANALES RECURRENTES DE MATERIA PRIMA
-            # 14 a 16 compras repartidas en el mes
+            # A. COMPRAS RECURRENTES DE MATERIA PRIMA
             total_compras_creadas = 0
             total_gastado_mp = Decimal('0.00')
 
-            dias_compras = [1, 3, 5, 8, 10, 12, 15, 17, 19, 22, 24, 26, 28] if mes == 9 else [2, 5, 7, 9, 12, 14, 16, 19, 21, 23, 26, 28, 30]
+            if mes == 7:
+                dias_compras = [15, 18, 21, 24, 27, 30]
+            elif mes == 8:
+                dias_compras = [1, 4, 7, 10, 13, 17, 20, 22, 25, 27, 29, 31]
+            elif mes == 9:
+                dias_compras = [1, 3, 5, 8, 10, 12, 15, 17, 19, 22, 24, 26, 28]
+            else:
+                dias_compras = [2, 5, 7, 9, 12, 14, 16, 19, 21, 23, 26, 28, 30]
+
             for d in dias_compras:
                 if d <= ultimo_dia:
                     f_compra = date(2026, mes, d)
@@ -215,8 +226,10 @@ class Command(BaseCommand):
 
                     items_mp = rng.sample(materias, k=min(4, len(materias)))
                     total_c = Decimal('0.00')
+                    cant_min = 20 if mes == 7 else 30
+                    cant_max = 50 if mes == 7 else (70 if mes == 8 else 80)
                     for mp in items_mp:
-                        cant = Decimal(str(rng.randint(30, 80)))
+                        cant = Decimal(str(rng.randint(cant_min, cant_max)))
                         p_unit = Decimal(str(rng.choice([4.50, 6.00, 7.50, 3.00, 0.90, 35.00])))
                         subt = (cant * p_unit).quantize(Decimal('0.01'))
                         DetalleCompra.objects.create(
@@ -243,7 +256,6 @@ class Command(BaseCommand):
             ped_stripe_contador = 1
 
             for dia in dias_operativos:
-                es_sabado = (dia.weekday() == 5)
                 panadero = rng.choice(panaderos)
                 cajera_m = usuarios.get('mgonzales') or cajeras[0]
                 cajera_t = usuarios.get('jrivera') or cajeras[-1]
@@ -258,7 +270,13 @@ class Command(BaseCommand):
 
                 detalles_prod_creados = []
                 for p in productos:
-                    cant_p = rng.randint(60, 180) if 'Marraqueta' in p.nombre or 'Casero' in p.nombre else rng.randint(25, 60)
+                    if mes == 7:
+                        cant_p = rng.randint(35, 90) if 'Marraqueta' in p.nombre or 'Casero' in p.nombre else rng.randint(15, 35)
+                    elif mes == 8:
+                        cant_p = rng.randint(50, 140) if 'Marraqueta' in p.nombre or 'Casero' in p.nombre else rng.randint(20, 45)
+                    else:
+                        cant_p = rng.randint(60, 180) if 'Marraqueta' in p.nombre or 'Casero' in p.nombre else rng.randint(25, 60)
+
                     dp = DetalleProduccion.objects.create(
                         id_produccion=prod,
                         id_producto=p,
@@ -267,20 +285,26 @@ class Command(BaseCommand):
                     )
                     detalles_prod_creados.append(dp)
 
-                # Merma ocasional (cada 3 días, 3 a 5 panes)
-                if dia.day % 3 == 0 and detalles_prod_creados:
+                # Mermas controladas (cada 3-4 días, 2 a 4 panes)
+                freq_merma = 4 if mes == 7 else 3
+                if dia.day % freq_merma == 0 and detalles_prod_creados:
                     dp_merma = rng.choice(detalles_prod_creados)
                     NotaPerdidaProducto.objects.create(
                         id_detalle_produccion=dp_merma,
                         id_usuario=panadero,
-                        cantidad=rng.randint(2, 5),
+                        cantidad=rng.randint(2, 4),
                         costo_unitario=dp_merma.costo_unitario,
                         fecha_salida=timezone.make_aware(datetime.combine(dia, time(14, 0))),
                     )
 
-                # 2. Ventas diarias de mostrador: 35 a 40 ventas por día hábil
-                num_ventas = rng.randint(35, 40)
-                # Repartidas en dos turnos: Mañana (08:00 - 12:00) y Tarde (15:00 - 18:30)
+                # 2. Ventas diarias de mostrador según etapa de crecimiento
+                if mes == 7:
+                    num_ventas = rng.randint(18, 24)
+                elif mes == 8:
+                    num_ventas = rng.randint(26, 32)
+                else:
+                    num_ventas = rng.randint(35, 40)
+
                 n_manana = int(num_ventas * 0.60)
                 n_tarde = num_ventas - n_manana
 
@@ -290,7 +314,7 @@ class Command(BaseCommand):
                 for m_total in minutos_manana:
                     h, m = divmod(m_total, 60)
                     dt_venta = timezone.make_aware(datetime.combine(dia, time(h, m)))
-                    es_stripe = (rng.random() < 0.25)
+                    es_stripe = (rng.random() < 0.22)
                     metodo = MetodoPago.STRIPE if es_stripe else MetodoPago.EFECTIVO
                     stripe_id = f'{prefijo_stripe}{stripe_contador:05d}' if es_stripe else None
                     if es_stripe:
@@ -307,11 +331,11 @@ class Command(BaseCommand):
                     numero_comprobante += 1
                     total_ventas_creadas += 1
 
-                    # Líneas de venta (ticket promedio ~Bs 12-14)
                     prods_ticket = rng.sample(productos, k=rng.randint(1, 3))
                     total_v = Decimal('0.00')
                     for p_sel in prods_ticket:
-                        cant_v = rng.randint(4, 15) if 'Marraqueta' in p_sel.nombre or 'Casero' in p_sel.nombre else rng.randint(2, 8)
+                        max_c = 10 if mes == 7 else 15
+                        cant_v = rng.randint(4, max_c) if 'Marraqueta' in p_sel.nombre or 'Casero' in p_sel.nombre else rng.randint(2, 6)
                         subt = (p_sel.precio_venta * cant_v).quantize(Decimal('0.01'))
                         DetalleVenta.objects.create(
                             id_venta=v,
@@ -328,7 +352,7 @@ class Command(BaseCommand):
                 for m_total in minutos_tarde:
                     h, m = divmod(m_total, 60)
                     dt_venta = timezone.make_aware(datetime.combine(dia, time(h, m)))
-                    es_stripe = (rng.random() < 0.25)
+                    es_stripe = (rng.random() < 0.22)
                     metodo = MetodoPago.STRIPE if es_stripe else MetodoPago.EFECTIVO
                     stripe_id = f'{prefijo_stripe}{stripe_contador:05d}' if es_stripe else None
                     if es_stripe:
@@ -348,7 +372,7 @@ class Command(BaseCommand):
                     prods_ticket = rng.sample(productos, k=rng.randint(1, 3))
                     total_v = Decimal('0.00')
                     for p_sel in prods_ticket:
-                        cant_v = rng.randint(2, 6)
+                        cant_v = rng.randint(2, 5)
                         subt = (p_sel.precio_venta * cant_v).quantize(Decimal('0.01'))
                         DetalleVenta.objects.create(
                             id_venta=v,
@@ -362,12 +386,13 @@ class Command(BaseCommand):
                     v.save(update_fields=['total'])
                     total_ingresos_ventas += total_v
 
-                # 3. Pedidos anticipados (1 pedido cada 1-2 días hábiles)
-                if rng.random() < 0.75:
+                # 3. Pedidos anticipados de clientes
+                prob_pedido = 0.35 if mes == 7 else (0.55 if mes == 8 else 0.75)
+                if rng.random() < prob_pedido:
                     cliente_sel = rng.choice(clientes)
                     dt_reg = timezone.make_aware(datetime.combine(dia, time(7, 30)))
                     dt_ent = timezone.make_aware(datetime.combine(dia, time(rng.randint(9, 17), 0)))
-                    ped_stripe = (rng.random() < 0.35)
+                    ped_stripe = (rng.random() < 0.30)
                     metodo_ped = MetodoPago.STRIPE if ped_stripe else MetodoPago.EFECTIVO
                     stripe_ped_id = f'{prefijo_stripe}ped_{ped_stripe_contador:04d}' if ped_stripe else None
                     if ped_stripe:
@@ -388,8 +413,9 @@ class Command(BaseCommand):
 
                     prods_ped = rng.sample(productos, k=rng.randint(2, 3))
                     total_p = Decimal('0.00')
+                    max_cant_ped = 25 if mes == 7 else 40
                     for p_sel in prods_ped:
-                        cant_ped = rng.randint(15, 45)
+                        cant_ped = rng.randint(10, max_cant_ped)
                         subt_ped = (p_sel.precio_venta * cant_ped).quantize(Decimal('0.01'))
                         DetallePedido.objects.create(
                             id_pedido=pedido,
@@ -408,7 +434,20 @@ class Command(BaseCommand):
             total_gastos_op = Decimal('0.00')
             total_inversiones = Decimal('0.00')
 
-            if mes == 9:
+            if mes == 7:
+                movimientos_mes = [
+                    (date(2026, 7, 16), TipoMovimientoEconomico.GASTO, CategoriaMovimientoEconomico.ALQUILER, 'Alquiler proporcional local comercial (Quincena)', 'Pago proporcional del alquiler del establecimiento por inicio de operaciones', Decimal('750.00')),
+                    (date(2026, 7, 18), TipoMovimientoEconomico.INVERSION, CategoriaMovimientoEconomico.EQUIPOS, 'Moldes y cuchillos panaderos', 'Inversión inicial en moldes de lata y cuchillos para corte de masa', Decimal('380.00')),
+                    (date(2026, 7, 28), TipoMovimientoEconomico.GASTO, CategoriaMovimientoEconomico.SERVICIOS, 'Servicios básicos de prueba', 'Consumo inicial de energía eléctrica y agua para pruebas de horneado', Decimal('100.00')),
+                ]
+            elif mes == 8:
+                movimientos_mes = [
+                    (date(2026, 8, 3), TipoMovimientoEconomico.GASTO, CategoriaMovimientoEconomico.ALQUILER, 'Alquiler mensual del local comercial', 'Pago mensual de alquiler del establecimiento comercial', Decimal('1500.00')),
+                    (date(2026, 8, 8), TipoMovimientoEconomico.GASTO, CategoriaMovimientoEconomico.SERVICIOS, 'Energía eléctrica CRE', 'Factura de luz para iluminación y maquinaria básica', Decimal('380.00')),
+                    (date(2026, 8, 10), TipoMovimientoEconomico.GASTO, CategoriaMovimientoEconomico.SERVICIOS, 'Agua potable SAGUAPAC', 'Consumo mensual de agua potable para elaboración e higiene', Decimal('110.00')),
+                    (date(2026, 8, 20), TipoMovimientoEconomico.GASTO, CategoriaMovimientoEconomico.MANTENIMIENTO, 'Mantenimiento preventivo inicial', 'Revisión técnica preventiva de hornos a gas', Decimal('130.00')),
+                ]
+            elif mes == 9:
                 movimientos_mes = [
                     (date(2026, 9, 2), TipoMovimientoEconomico.GASTO, CategoriaMovimientoEconomico.ALQUILER, 'Alquiler del local comercial', 'Pago mensual de alquiler del establecimiento', Decimal('1500.00')),
                     (date(2026, 9, 6), TipoMovimientoEconomico.INVERSION, CategoriaMovimientoEconomico.EQUIPOS, 'Compra de horno industrial rotativo', 'Nuevo horno industrial para incrementar capacidad de producción', Decimal('8000.00')),
@@ -462,7 +501,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f'\nRESULTADOS DE {nombre_mes.upper()} 2026:\n'
             f'  - Jornadas de producción: {total_producciones_creadas} lotes diarios\n'
-            f'  - Ventas en mostrador (35-40/día): {total_ventas_creadas} transacciones (Bs {total_ingresos_ventas:,.2f})\n'
+            f'  - Ventas en mostrador: {total_ventas_creadas} transacciones (Bs {total_ingresos_ventas:,.2f})\n'
             f'  - Pedidos anticipados: {total_pedidos_creados} pedidos (Bs {total_ingresos_pedidos:,.2f})\n'
             f'  - INGRESOS TOTALES: Bs {ingresos_totales:,.2f}\n'
             f'  - Compras materia prima: Bs {total_gastado_mp:,.2f} ({total_compras_creadas} compras)\n'
