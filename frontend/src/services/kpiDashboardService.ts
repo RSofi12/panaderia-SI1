@@ -21,7 +21,9 @@ import type { UsuarioFila } from '../types/usuarios';
 import type { RegistroBitacora } from '../types/bitacora';
 
 export interface OwnerKpiSummary {
-  periodo: PeriodoReporte;
+  periodo: PeriodoReporte | 'personalizado';
+  desde?: string;
+  hasta?: string;
   ingresosTotales: number;
   transaccionesVentas: number;
   totalComprasInsumos: number;
@@ -54,9 +56,12 @@ export const kpiDashboardService = {
   /**
    * Agrega métricas estratégicas para el Propietario (CU05, CU07, CU08, CU09, CU12, CU13, CU14, CU15, CU20, CU21, CU25)
    */
-  async obtenerResumenPropietario(periodo: PeriodoReporte = 'mes'): Promise<OwnerKpiSummary> {
+  async obtenerResumenPropietario(
+    periodo: PeriodoReporte = 'mes',
+    rangoPersonalizado?: { desde: string; hasta: string },
+  ): Promise<OwnerKpiSummary> {
     const valorPeriodo = periodo === 'dia' ? fechaHoy() : periodo === 'semana' ? semanaActual() : mesActual();
-    const rango = rangoDelPeriodo(periodo, valorPeriodo);
+    const rango = rangoPersonalizado || rangoDelPeriodo(periodo, valorPeriodo);
 
     // 1. Consultar ventas del periodo
     const reporteVentas = await consultarReporteVentas(rango.desde, rango.hasta);
@@ -118,7 +123,9 @@ export const kpiDashboardService = {
     );
 
     return {
-      periodo,
+      periodo: rangoPersonalizado ? 'personalizado' : periodo,
+      desde: rango.desde,
+      hasta: rango.hasta,
       ingresosTotales: ingresos,
       transaccionesVentas: transacciones,
       totalComprasInsumos: totalCompras,

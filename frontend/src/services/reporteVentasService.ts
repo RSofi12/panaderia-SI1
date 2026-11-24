@@ -146,6 +146,24 @@ export async function descargarReporteCsv(
   guardarBlob(respuesta.data, `reporte-ventas-${desde}-${hasta}.csv`);
 }
 
+export async function descargarReporteExcel(
+  desde: string,
+  hasta: string,
+  metodoPago?: string,
+  columnas?: string[],
+): Promise<void> {
+  const respuesta = await api.get<Blob>('/reportes/ventas/excel/', {
+    params: {
+      desde,
+      hasta,
+      ...(metodoPago ? { metodo_pago: metodoPago } : {}),
+      ...(columnas && columnas.length > 0 ? { columnas: columnas.join(',') } : {}),
+    },
+    responseType: 'blob',
+  });
+  guardarBlob(respuesta.data, `reporte-ventas-${desde}-${hasta}.xlsx`);
+}
+
 export async function descargarReportePdf(
   desde: string,
   hasta: string,

@@ -2,13 +2,21 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { AlertCircle, BarChart3, Filter, Loader2 } from 'lucide-react';
 import {
   descargarAnalisisReporteCsv,
+  descargarAnalisisReporteExcel,
   descargarAnalisisReportePdf,
 } from '../../../services/reporteVozService';
 import {
   descargarReporteProduccionCsv,
+  descargarReporteProduccionExcel,
   descargarReporteProduccionPdf,
 } from '../../../services/reporteProduccionService';
-import { descargarReporteCsv, descargarReportePdf, rangoDelPeriodo, mesActual } from '../../../services/reporteVentasService';
+import {
+  descargarReporteCsv,
+  descargarReporteExcel,
+  descargarReportePdf,
+  rangoDelPeriodo,
+  mesActual,
+} from '../../../services/reporteVentasService';
 import type { AnalisisVozReporte, ContextoDescargaAsistente } from '../../../types/reporteVoz';
 import AsistenteVozReporte from './components/AsistenteVozReporte';
 import { ReporteProduccionView } from './components/ReporteProduccionView';
@@ -140,6 +148,8 @@ export const ReportesPage: React.FC = () => {
       if (ctx.exportarVentas) {
         if (formato === 'pdf') {
           await descargarReportePdf(ctx.desde, ctx.hasta, ctx.metodo, ctx.columnas);
+        } else if (formato === 'excel') {
+          await descargarReporteExcel(ctx.desde, ctx.hasta, ctx.metodo, ctx.columnas);
         } else {
           await descargarReporteCsv(ctx.desde, ctx.hasta, ctx.metodo, ctx.columnas);
         }
@@ -148,6 +158,8 @@ export const ReportesPage: React.FC = () => {
       if (ctx.exportarProduccion) {
         if (formato === 'pdf') {
           await descargarReporteProduccionPdf(ctx.desde, ctx.hasta, ctx.jornada, ctx.columnas);
+        } else if (formato === 'excel') {
+          await descargarReporteProduccionExcel(ctx.desde, ctx.hasta, ctx.jornada, ctx.columnas);
         } else {
           await descargarReporteProduccionCsv(ctx.desde, ctx.hasta, ctx.jornada, ctx.columnas);
         }
@@ -162,6 +174,8 @@ export const ReportesPage: React.FC = () => {
       };
       if (formato === 'pdf') {
         await descargarAnalisisReportePdf(payload);
+      } else if (formato === 'excel') {
+        await descargarAnalisisReporteExcel(payload);
       } else {
         await descargarAnalisisReporteCsv(payload);
       }

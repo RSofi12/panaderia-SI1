@@ -45,6 +45,24 @@ export async function descargarReporteProduccionCsv(
   guardarBlob(respuesta.data, `reporte-produccion-${desde}-${hasta}.csv`);
 }
 
+export async function descargarReporteProduccionExcel(
+  desde: string,
+  hasta: string,
+  jornada?: string,
+  columnas?: string[],
+): Promise<void> {
+  const respuesta = await api.get<Blob>('/reportes/produccion/excel/', {
+    params: {
+      desde,
+      hasta,
+      ...(jornada ? { jornada } : {}),
+      ...(columnas && columnas.length > 0 ? { columnas: columnas.join(',') } : {}),
+    },
+    responseType: 'blob',
+  });
+  guardarBlob(respuesta.data, `reporte-produccion-${desde}-${hasta}.xlsx`);
+}
+
 export async function descargarReporteProduccionPdf(
   desde: string,
   hasta: string,

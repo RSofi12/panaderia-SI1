@@ -17,6 +17,7 @@ import {
   consultarReporteCompras,
   descargarCierreComprasPdf,
   descargarReporteComprasCsv,
+  descargarReporteComprasExcel,
   descargarReporteComprasPdf,
   fechaHoy,
   guardarCierreCompras,
@@ -191,6 +192,13 @@ export const ReporteComprasCu24: React.FC<ReporteComprasCu24Props> = ({ rangoCom
     try {
       if (tipo === 'pdf') {
         await descargarReporteComprasPdf(
+          consulta.desde,
+          consulta.hasta,
+          idProveedor,
+          idMateriaPrima,
+        );
+      } else if (tipo === 'excel') {
+        await descargarReporteComprasExcel(
           consulta.desde,
           consulta.hasta,
           idProveedor,

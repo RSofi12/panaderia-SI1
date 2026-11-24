@@ -6,6 +6,7 @@ import { paginar, usePagina } from '../../components/paginar';
 import {
   consultarReporteExistencias,
   descargarReporteExistenciasCsv,
+  descargarReporteExistenciasExcel,
   descargarReporteExistenciasPdf,
 } from '../../../../services/reporteExistenciasService';
 import type {
@@ -103,6 +104,8 @@ export const SeccionReporteExistencias: React.FC = () => {
     try {
       if (tipo === 'pdf') {
         await descargarReporteExistenciasPdf(filtros);
+      } else if (tipo === 'excel') {
+        await descargarReporteExistenciasExcel(filtros);
       } else {
         await descargarReporteExistenciasCsv(filtros);
       }

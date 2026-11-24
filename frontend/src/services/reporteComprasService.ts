@@ -122,6 +122,19 @@ export async function descargarReporteComprasCsv(
   guardarBlob(respuesta.data, `reporte-compras-${desde}-${hasta}.csv`);
 }
 
+export async function descargarReporteComprasExcel(
+  desde: string,
+  hasta: string,
+  idProveedor?: number | '',
+  idMateriaPrima?: number | '',
+): Promise<void> {
+  const respuesta = await api.get<Blob>('/reportes/compras/excel/', {
+    params: paramsCompras(desde, hasta, idProveedor, idMateriaPrima),
+    responseType: 'blob',
+  });
+  guardarBlob(respuesta.data, `reporte-compras-${desde}-${hasta}.xlsx`);
+}
+
 export async function descargarReporteComprasPdf(
   desde: string,
   hasta: string,

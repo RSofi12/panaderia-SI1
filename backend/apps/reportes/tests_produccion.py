@@ -239,6 +239,23 @@ class PruebasReporteProduccion(TestCase):
             pdf['Content-Disposition'],
         )
 
+    def test_el_excel_exporta_datos_xlsx(self):
+        self.client.force_authenticate(self.propietario)
+        excel = self.client.get('/api/reportes/produccion/excel/', {
+            'desde': '2026-10-01',
+            'hasta': '2026-10-31',
+        })
+        self.assertEqual(excel.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            excel['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        self.assertIn(
+            'attachment; filename="reporte-produccion-2026-10-01-2026-10-31.xlsx"',
+            excel['Content-Disposition'],
+        )
+        self.assertGreater(len(excel.content), 2000)
+
 
 @override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'], GEMINI_API_KEY='')
 class PruebasVozReporteProduccion(TestCase):

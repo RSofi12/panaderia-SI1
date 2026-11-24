@@ -13,6 +13,7 @@ import { paginar, usePagina } from '../../components/paginar';
 import {
   consultarReporteProduccion,
   descargarReporteProduccionCsv,
+  descargarReporteProduccionExcel,
   descargarReporteProduccionPdf,
 } from '../../../../services/reporteProduccionService';
 import {
@@ -284,6 +285,13 @@ export const ReporteProduccionView: React.FC<ReporteProduccionViewProps> = ({
     try {
       if (tipo === 'pdf') {
         await descargarReporteProduccionPdf(
+          consulta.desde,
+          consulta.hasta,
+          consulta.jornada,
+          columnasSeleccionadas,
+        );
+      } else if (tipo === 'excel') {
+        await descargarReporteProduccionExcel(
           consulta.desde,
           consulta.hasta,
           consulta.jornada,

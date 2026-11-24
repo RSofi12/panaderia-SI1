@@ -25,6 +25,14 @@ from apps.reportes.serializers import (
     ReporteVentasConsultaSerializer,
     ReporteVentasSerializer,
 )
+from apps.reportes.formatos.excel_reporte import (
+    excel_reporte_analisis,
+    excel_reporte_compras,
+    excel_reporte_existencias,
+    excel_reporte_produccion,
+    excel_reporte_ventas,
+    excel_resultados_economicos,
+)
 from apps.reportes.services.analisis_ia import analizar_consulta_reporte
 from apps.reportes.services.cierre_compras import (
     cierre_como_reporte as cierre_compras_como_reporte,
@@ -148,6 +156,33 @@ class ReporteAnalizarVozCsvView(APIView):
         return respuesta
 
 
+class ReporteAnalizarVozExcelView(APIView):
+    """POST /api/reportes/voz/analizar/excel/ — Hoja de cálculo Excel XLSX con formato profesional."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def post(self, request):
+        entrada = AnalizarVozPdfEntradaSerializer(data=request.data)
+        entrada.is_valid(raise_exception=True)
+        datos = entrada.validated_data
+        contenido = excel_reporte_analisis(
+            consulta=datos['consulta'],
+            tema=datos['tema'],
+            desde=datos['desde'].isoformat(),
+            hasta=datos['hasta'].isoformat(),
+            analisis=datos['analisis'],
+            motor=datos.get('motor') or 'local',
+        )
+        slug_tema = datos['tema'].replace('_', '-')[:24]
+        nombre = f'reporte-{slug_tema}-{datos["desde"]}-{datos["hasta"]}.xlsx'
+        respuesta = HttpResponse(
+            contenido,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
+        return respuesta
+
+
 class ReporteInterpretarVozView(APIView):
     """POST /api/reportes/voz/interpretar/ — CU21–CU25 (voz/texto + Gemini o fallback local)."""
 
@@ -236,6 +271,32 @@ class ReporteVentasPdfView(APIView):
         return respuesta
 
 
+class ReporteVentasExcelView(APIView):
+    """GET /api/reportes/ventas/excel/ — Exportación nativa XLSX para Excel con KPIs y diseño formal."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        consulta = ReporteVentasConsultaSerializer(data=request.query_params)
+        consulta.is_valid(raise_exception=True)
+        datos = consulta.validated_data
+        metodo = datos.get('metodo_pago') or None
+        columnas = _parsear_columnas(request.query_params.get('columnas'))
+        try:
+            reporte = reporte_ventas(desde=datos['desde'], hasta=datos['hasta'], metodo_pago=metodo)
+        except DjangoValidationError as exc:
+            _error_de_validacion(exc)
+        _rechazar_exportacion_sin_datos(reporte)
+        contenido = excel_reporte_ventas(reporte, metodo, columnas)
+        nombre = f'reporte-ventas-{reporte["desde"]}-{reporte["hasta"]}.xlsx'
+        respuesta = HttpResponse(
+            contenido,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
+        return respuesta
+
+
 # ==============================================================================
 # CU22: Reporte de producción
 # ==============================================================================
@@ -320,6 +381,39 @@ class ReporteProduccionPdfView(APIView):
         return respuesta
 
 
+class ReporteProduccionExcelView(APIView):
+    """GET /api/reportes/produccion/excel/ — Exportación nativa XLSX con balance de productos y mermas."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        consulta = ReporteProduccionConsultaSerializer(data=request.query_params)
+        consulta.is_valid(raise_exception=True)
+        datos = consulta.validated_data
+        jornada = datos.get('jornada') or None
+        columnas = _parsear_columnas(request.query_params.get('columnas'))
+        try:
+            reporte = reporte_produccion(
+                desde=datos['desde'],
+                hasta=datos['hasta'],
+                jornada=jornada,
+            )
+        except DjangoValidationError as exc:
+            _error_de_validacion(exc)
+        if reporte['cantidad'] == 0 and not reporte.get('productos'):
+            raise serializers.ValidationError(
+                {'detail': 'No hay datos disponibles para el período solicitado.'}
+            )
+        contenido = excel_reporte_produccion(reporte, jornada, columnas)
+        nombre = f'reporte-produccion-{reporte["desde"]}-{reporte["hasta"]}.xlsx'
+        respuesta = HttpResponse(
+            contenido,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
+        return respuesta
+
+
 # ==============================================================================
 # CU23: Reporte de existencias
 # ==============================================================================
@@ -370,6 +464,22 @@ class ReporteExistenciasPdfView(APIView):
         contenido = pdf_reporte_existencias(reporte, **filtros)
         respuesta = HttpResponse(contenido, content_type='application/pdf')
         respuesta['Content-Disposition'] = 'attachment; filename="reporte-existencias.pdf"'
+        return respuesta
+
+
+class ReporteExistenciasExcelView(APIView):
+    """GET /api/reportes/existencias/excel/ — Exportación nativa XLSX del stock actual en vitrina."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        reporte, filtros = _consulta_existencias(request)
+        contenido = excel_reporte_existencias(reporte, **filtros)
+        respuesta = HttpResponse(
+            contenido,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        respuesta['Content-Disposition'] = 'attachment; filename="reporte-existencias.xlsx"'
         return respuesta
 
 
@@ -453,6 +563,38 @@ class ReporteComprasPdfView(APIView):
         contenido = pdf_reporte_compras(reporte, nombre_prov)
         respuesta = HttpResponse(contenido, content_type='application/pdf')
         nombre = f'reporte-compras-{reporte["desde"]}-{reporte["hasta"]}.pdf'
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
+        return respuesta
+
+
+class ReporteComprasExcelView(APIView):
+    """GET /api/reportes/compras/excel/ — Exportación nativa XLSX de insumos adquiridos y compras."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        consulta = ReporteComprasConsultaSerializer(data=request.query_params)
+        consulta.is_valid(raise_exception=True)
+        datos = consulta.validated_data
+        try:
+            reporte = reporte_compras(
+                desde=datos['desde'],
+                hasta=datos['hasta'],
+                id_proveedor=datos.get('id_proveedor'),
+                id_materia_prima=datos.get('id_materia_prima'),
+            )
+        except DjangoValidationError as exc:
+            _error_de_validacion(exc)
+        _rechazar_exportacion_sin_datos(reporte)
+        nombre_prov = None
+        if datos.get('id_proveedor') and reporte['proveedores']:
+            nombre_prov = reporte['proveedores'][0]['nombre']
+        contenido = excel_reporte_compras(reporte, nombre_prov)
+        nombre = f'reporte-compras-{reporte["desde"]}-{reporte["hasta"]}.xlsx'
+        respuesta = HttpResponse(
+            contenido,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
         respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
         return respuesta
 
@@ -573,5 +715,32 @@ class ReporteResultadosEconomicosPdfView(APIView):
         contenido = pdf_resultados_economicos(reporte)
         respuesta = HttpResponse(contenido, content_type='application/pdf')
         nombre = f'resultados-economicos-{reporte["desde"]}-{reporte["hasta"]}.pdf'
+        respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
+        return respuesta
+
+
+class ReporteResultadosEconomicosExcelView(APIView):
+    """GET /api/reportes/resultados-economicos/excel/ — Exportación XLSX para balance y estado de resultados."""
+
+    permission_classes = [PuedeGenerarReportes]
+
+    def get(self, request):
+        consulta = ReporteResultadosEconomicosConsultaSerializer(data=request.query_params)
+        consulta.is_valid(raise_exception=True)
+        datos = consulta.validated_data
+        try:
+            reporte = reporte_resultados_economicos(desde=datos['desde'], hasta=datos['hasta'])
+        except DjangoValidationError as exc:
+            _error_de_validacion(exc)
+        if not reporte.get('tiene_movimientos'):
+            raise serializers.ValidationError(
+                {'detail': 'No hay movimientos económicos registrados para el período solicitado.'}
+            )
+        contenido = excel_resultados_economicos(reporte)
+        nombre = f'resultados-economicos-{reporte["desde"]}-{reporte["hasta"]}.xlsx'
+        respuesta = HttpResponse(
+            contenido,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
         respuesta['Content-Disposition'] = f'attachment; filename="{nombre}"'
         return respuesta

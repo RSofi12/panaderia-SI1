@@ -50,6 +50,7 @@ class Command(BaseCommand):
             ('seed_gastos_demo', '10. Gastos Operativos e Inversiones'),
             ('seed_ventas_demo', '11. Registro Histórico de Ventas (Noviembre 2026)'),
             ('seed_mes_operativo', '12. Meses Operativos Completos (Julio a Octubre 2026, L-S, Apertura y Maduración)'),
+            ('seed_noviembre_demo', '13. Jornadas de Producción y Balance de Noviembre 2026'),
         ]
 
         exitos = 0

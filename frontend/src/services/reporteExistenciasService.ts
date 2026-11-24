@@ -35,6 +35,14 @@ export async function descargarReporteExistenciasCsv(filtros: ReporteExistencias
   guardarBlob(respuesta.data, 'reporte-existencias.csv');
 }
 
+export async function descargarReporteExistenciasExcel(filtros: ReporteExistenciasFiltros): Promise<void> {
+  const respuesta = await api.get<Blob>('/reportes/existencias/excel/', {
+    params: paramsExistencias(filtros),
+    responseType: 'blob',
+  });
+  guardarBlob(respuesta.data, 'reporte-existencias.xlsx');
+}
+
 export async function descargarReporteExistenciasPdf(filtros: ReporteExistenciasFiltros): Promise<void> {
   const respuesta = await api.get<Blob>('/reportes/existencias/pdf/', {
     params: paramsExistencias(filtros),

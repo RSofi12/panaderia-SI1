@@ -194,41 +194,31 @@ class Command(BaseCommand):
             if force or ventas_mes < min_ventas_esperadas:
                 # 1. Limpiar Ventas y sus detalles protegidos
                 ventas_del_mes = Venta.objects.filter(fecha_hora__year=2026, fecha_hora__month=mes)
-                ids_ventas = list(ventas_del_mes.values_list('id_venta', flat=True))
-                MovimientoProductoTerminado.objects.filter(id_venta_id__in=ids_ventas).delete()
-                DetalleVenta.objects.filter(id_venta_id__in=ids_ventas).delete()
+                MovimientoProductoTerminado.objects.filter(id_venta__in=ventas_del_mes).delete()
+                DetalleVenta.objects.filter(id_venta__in=ventas_del_mes).delete()
                 ventas_del_mes.delete()
 
                 # 2. Limpiar Pedidos y sus detalles protegidos
                 pedidos_del_mes = Pedido.objects.filter(fecha_registro__year=2026, fecha_registro__month=mes)
-                ids_pedidos = list(pedidos_del_mes.values_list('id_pedido', flat=True))
-                Venta.objects.filter(id_pedido_id__in=ids_pedidos).update(id_pedido=None)
-                MovimientoProductoTerminado.objects.filter(id_pedido_id__in=ids_pedidos).delete()
-                DetallePedido.objects.filter(id_pedido_id__in=ids_pedidos).delete()
+                Venta.objects.filter(id_pedido__in=pedidos_del_mes).update(id_pedido=None)
+                MovimientoProductoTerminado.objects.filter(id_pedido__in=pedidos_del_mes).delete()
+                DetallePedido.objects.filter(id_pedido__in=pedidos_del_mes).delete()
                 pedidos_del_mes.delete()
 
                 # 3. Limpiar Producciones y sus detalles / mermas protegidas
                 prods_del_mes = Produccion.objects.filter(fecha__year=2026, fecha__month=mes)
-                ids_prods = list(prods_del_mes.values_list('id_produccion', flat=True))
-                dets_prod = DetalleProduccion.objects.filter(id_produccion_id__in=ids_prods)
-                ids_dets = list(dets_prod.values_list('id_detalle_produccion', flat=True))
+                dets_prod = DetalleProduccion.objects.filter(id_produccion__in=prods_del_mes)
+                notas_perdida = NotaPerdidaProducto.objects.filter(id_detalle_produccion__in=dets_prod)
+                MovimientoProductoTerminado.objects.filter(id_nota_perdida__in=notas_perdida).delete()
+                notas_perdida.delete()
 
-                ids_notas_perdida = list(
-                    NotaPerdidaProducto.objects.filter(id_detalle_produccion_id__in=ids_dets).values_list(
-                        'id_nota_perdida', flat=True
-                    )
-                )
-                MovimientoProductoTerminado.objects.filter(id_nota_perdida_id__in=ids_notas_perdida).delete()
-                NotaPerdidaProducto.objects.filter(id_nota_perdida__in=ids_notas_perdida).delete()
-
-                MovimientoProductoTerminado.objects.filter(id_produccion_id__in=ids_prods).delete()
+                MovimientoProductoTerminado.objects.filter(id_produccion__in=prods_del_mes).delete()
                 dets_prod.delete()
                 prods_del_mes.delete()
 
                 # 4. Limpiar Compras y sus detalles
                 compras_del_mes = Compra.objects.filter(fecha_hora__year=2026, fecha_hora__month=mes)
-                ids_compras = list(compras_del_mes.values_list('id_compra', flat=True))
-                DetalleCompra.objects.filter(id_compra_id__in=ids_compras).delete()
+                DetalleCompra.objects.filter(id_compra__in=compras_del_mes).delete()
                 compras_del_mes.delete()
 
                 # 5. Limpiar Movimientos económicos (gastos/inversiones)

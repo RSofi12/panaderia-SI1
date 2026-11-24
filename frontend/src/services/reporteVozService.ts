@@ -65,6 +65,14 @@ export async function descargarAnalisisReporteCsv(payload: PayloadAnalisisExport
   guardarBlob(respuesta.data, base);
 }
 
+export async function descargarAnalisisReporteExcel(payload: PayloadAnalisisExport): Promise<void> {
+  const respuesta = await api.post<Blob>('/reportes/voz/analizar/excel/', payload, {
+    responseType: 'blob',
+  });
+  const base = `reporte-${payload.tema}-${payload.desde}-${payload.hasta}.xlsx`;
+  guardarBlob(respuesta.data, base);
+}
+
 export function descargarTextoComoArchivo(
   contenido: string,
   nombreArchivo: string,

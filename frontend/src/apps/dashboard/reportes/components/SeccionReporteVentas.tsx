@@ -5,6 +5,7 @@ import { paginar, usePagina } from '../../components/paginar';
 import {
   consultarReporteVentas,
   descargarReporteCsv,
+  descargarReporteExcel,
   descargarReportePdf,
   fechaHoy,
   mesActual,
@@ -178,6 +179,8 @@ export const SeccionReporteVentas: React.FC<SeccionReporteVentasProps> = ({
     try {
       if (tipo === 'pdf') {
         await descargarReportePdf(consulta.desde, consulta.hasta, consulta.metodo, columnasSeleccionadas);
+      } else if (tipo === 'excel') {
+        await descargarReporteExcel(consulta.desde, consulta.hasta, consulta.metodo, columnasSeleccionadas);
       } else {
         await descargarReporteCsv(consulta.desde, consulta.hasta, consulta.metodo, columnasSeleccionadas);
       }

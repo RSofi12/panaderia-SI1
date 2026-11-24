@@ -11,13 +11,20 @@ import {
   type OwnerKpiSummary,
   type AdminKpiSummary,
 } from '../../../services/kpiDashboardService';
-import type { PeriodoReporte } from '../../../services/reporteVentasService';
+import {
+  fechaHoy,
+  mesActual,
+  rangoDelPeriodo,
+  semanaActual,
+  type PeriodoReporte,
+} from '../../../services/reporteVentasService';
 import OwnerDashboardView from './OwnerDashboardView';
 import AdminDashboardView from './AdminDashboardView';
 
 export const KpiDashboardPage: React.FC = () => {
   const { hasPermission } = useAuth();
-  const [periodo, setPeriodo] = useState<PeriodoReporte>('mes');
+  const [periodo, setPeriodo] = useState<PeriodoReporte | 'personalizado'>('mes');
+  const [rangoFechas, setRangoFechas] = useState(() => rangoDelPeriodo('mes', mesActual()));
   const [vistaActiva, setVistaActiva] = useState<'propietario' | 'admin'>('propietario');
   const [cargando, setCargando] = useState<boolean>(true);
   const [ownerData, setOwnerData] = useState<OwnerKpiSummary | null>(null);
@@ -37,11 +44,18 @@ export const KpiDashboardPage: React.FC = () => {
     }
   }, [puedeVerNegocio, puedeVerSeguridad]);
 
-  const cargarDatos = async (p = periodo) => {
+  const cargarDatos = async (
+    p: PeriodoReporte | 'personalizado' = periodo,
+    fechas: { desde: string; hasta: string } = rangoFechas,
+  ) => {
     setCargando(true);
     try {
+      const rangoPers = p === 'personalizado' ? fechas : undefined;
+      const periodoValido: PeriodoReporte = p === 'personalizado' ? 'mes' : p;
       const [ownerRes, adminRes] = await Promise.all([
-        puedeVerNegocio ? kpiDashboardService.obtenerResumenPropietario(p).catch(() => null) : Promise.resolve(null),
+        puedeVerNegocio
+          ? kpiDashboardService.obtenerResumenPropietario(periodoValido, rangoPers).catch(() => null)
+          : Promise.resolve(null),
         puedeVerSeguridad ? kpiDashboardService.obtenerResumenAdmin().catch(() => null) : Promise.resolve(null),
       ]);
       setOwnerData(ownerRes);
@@ -54,13 +68,27 @@ export const KpiDashboardPage: React.FC = () => {
   };
 
   useEffect(() => {
-    cargarDatos(periodo);
-  }, [periodo, puedeVerNegocio, puedeVerSeguridad]);
+    cargarDatos(periodo, rangoFechas);
+  }, [periodo, rangoFechas, puedeVerNegocio, puedeVerSeguridad]);
 
-  const cambiarPeriodo = (nuevoPeriodo: PeriodoReporte) => {
+  const seleccionarPreset = (nuevoPeriodo: PeriodoReporte) => {
+    const valorPeriodo = nuevoPeriodo === 'dia' ? fechaHoy() : nuevoPeriodo === 'semana' ? semanaActual() : mesActual();
+    const nuevoRango = rangoDelPeriodo(nuevoPeriodo, valorPeriodo);
     startTransition(() => {
       setPeriodo(nuevoPeriodo);
+      setRangoFechas(nuevoRango);
     });
+  };
+
+  const handleCambioFecha = (desde: string, hasta: string) => {
+    startTransition(() => {
+      setPeriodo('personalizado');
+      setRangoFechas({ desde, hasta });
+    });
+  };
+
+  const limpiarFiltros = () => {
+    seleccionarPreset('mes');
   };
 
   return (
@@ -118,21 +146,57 @@ export const KpiDashboardPage: React.FC = () => {
 
           {/* Selector de Rango de Fechas (Para vista de negocio) */}
           {puedeVerNegocio && vistaActiva === 'propietario' && (
-            <div className="flex items-center rounded-xl border border-slate-200 bg-white p-1 text-xs font-medium shadow-xs">
-              {(['dia', 'semana', 'mes'] as PeriodoReporte[]).map((p) => (
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Presets rápidos */}
+              <div className="flex items-center rounded-xl border border-slate-200 bg-white p-1 text-xs font-medium shadow-xs">
+                {(['dia', 'semana', 'mes'] as PeriodoReporte[]).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => seleccionarPreset(p)}
+                    className={`rounded-lg px-3 py-1.5 transition-colors ${
+                      periodo === p
+                        ? 'bg-amber-600 font-bold text-white shadow-2xs'
+                        : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {p === 'dia' ? 'Hoy' : p === 'semana' ? 'Esta semana' : 'Este mes'}
+                  </button>
+                ))}
+              </div>
+
+              {/* Rango de fechas libre (Desde / Hasta) */}
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs shadow-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Desde</span>
+                  <input
+                    type="date"
+                    value={rangoFechas.desde}
+                    onChange={(e) => handleCambioFecha(e.target.value, rangoFechas.hasta)}
+                    className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700 outline-none focus:border-amber-600 focus:bg-white"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Hasta</span>
+                  <input
+                    type="date"
+                    value={rangoFechas.hasta}
+                    onChange={(e) => handleCambioFecha(rangoFechas.desde, e.target.value)}
+                    className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700 outline-none focus:border-amber-600 focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Botón limpiar filtros cuando se usa fecha personalizada */}
+              {periodo === 'personalizado' && (
                 <button
-                  key={p}
                   type="button"
-                  onClick={() => cambiarPeriodo(p)}
-                  className={`rounded-lg px-3 py-1.5 transition-colors ${
-                    periodo === p
-                      ? 'bg-amber-600 font-bold text-white shadow-2xs'
-                      : 'text-slate-600 hover:bg-slate-50'
-                  }`}
+                  onClick={limpiarFiltros}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-xs hover:bg-slate-50 hover:text-slate-900 transition-colors"
                 >
-                  {p === 'dia' ? 'Hoy' : p === 'semana' ? 'Esta semana' : 'Este mes'}
+                  Limpiar filtros
                 </button>
-              ))}
+              )}
             </div>
           )}
 

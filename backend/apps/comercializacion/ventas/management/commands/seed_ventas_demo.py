@@ -256,11 +256,10 @@ class Command(BaseCommand):
                 ventas_a_limpiar = Venta.objects.filter(
                     fecha_hora__year=2026, fecha_hora__month__in=[9, 10, 11]
                 )
-                ids_ventas = list(ventas_a_limpiar.values_list('id_venta', flat=True))
                 # 1. Eliminar movimientos de producto terminado asociados
-                MovimientoProductoTerminado.objects.filter(id_venta_id__in=ids_ventas).delete()
+                MovimientoProductoTerminado.objects.filter(id_venta__in=ventas_a_limpiar).delete()
                 # 2. Eliminar líneas de detalle protegidas (on_delete=models.PROTECT)
-                DetalleVenta.objects.filter(id_venta_id__in=ids_ventas).delete()
+                DetalleVenta.objects.filter(id_venta__in=ventas_a_limpiar).delete()
                 # 3. Eliminar cabeceras de venta
                 ventas_a_limpiar.delete()
 

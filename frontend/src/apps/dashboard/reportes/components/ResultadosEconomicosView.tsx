@@ -3,6 +3,7 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import {
   consultarReporteResultadosEconomicos,
   descargarReporteResultadosCsv,
+  descargarReporteResultadosExcel,
   descargarReporteResultadosPdf,
 } from '../../../../services/reporteResultadosEconomicosService';
 import {
@@ -134,7 +135,11 @@ export const ResultadosEconomicosView: React.FC<ResultadosEconomicosViewProps> =
     }
     setDescargando(tipo);
     try {
-      await descargarReporteResultadosCsv(desde, hasta);
+      if (tipo === 'excel') {
+        await descargarReporteResultadosExcel(desde, hasta);
+      } else {
+        await descargarReporteResultadosCsv(desde, hasta);
+      }
     } catch (err: any) {
       setError(err?.response?.data?.detail || 'Error al exportar en CSV/Excel.');
     } finally {
