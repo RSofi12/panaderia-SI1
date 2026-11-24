@@ -1,5 +1,5 @@
-import React from 'react';
-import { CheckCircle2, Clock, Construction, KeyRound } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Calendar, CheckCircle2, Clock, Construction, KeyRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { NAV_MODULES } from './navigation';
@@ -7,6 +7,17 @@ import UserAvatar from './components/UserAvatar';
 
 export const DashboardHome: React.FC = () => {
   const { user, hasPermission } = useAuth();
+
+  const fechaHoyTexto = useMemo(() => {
+    const ahora = new Date();
+    const formato = new Intl.DateTimeFormat('es-BO', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    return formato.format(ahora);
+  }, []);
 
   if (!user) return null;
 
@@ -19,10 +30,6 @@ export const DashboardHome: React.FC = () => {
   // índice de lo que ya se puede hacer. Por eso el badge dice
   // "Próximamente" solo en los que de verdad no tienen pantalla, y
   // "Disponible" en los que sí.
-  //
-  // Antes este badge era fijo y, cuando CU3 entró en producción, seguía
-  // anunciando "Próximamente" sobre un módulo que ya funcionaba. Es el
-  // tipo de mentira que hace que alguien reporte un fallo que no existe.
   const insigniaDe = (implementado: boolean) =>
     implementado ? (
       <span className="shrink-0 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
@@ -43,10 +50,18 @@ export const DashboardHome: React.FC = () => {
           </div>
 
           <div className="min-w-0 flex-1">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold text-amber-50">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Sesión iniciada (CU1)
-            </span>
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold text-amber-50">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Sesión iniciada (CU1)
+              </span>
+
+              {/* Indicador de Fecha Actual cada vez que se ingresa */}
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1 text-[11px] font-medium text-amber-100 backdrop-blur-xs">
+                <Calendar className="w-3.5 h-3.5 text-amber-200" />
+                <span className="capitalize">{fechaHoyTexto}</span>
+              </span>
+            </div>
 
             <h2 className="font-sugo mt-2.5 text-2xl font-normal tracking-wide text-white sm:text-3xl">
               ¡Bienvenido/a, {user.nombre_completo}!
@@ -84,7 +99,8 @@ export const DashboardHome: React.FC = () => {
             <Clock className="w-5 h-5" />
           </div>
           <p className="text-xs font-medium text-slate-500">Ciclo PUDS en curso</p>
-          <p className="mt-1 text-2xl font-bold text-slate-900">Ciclo 2</p>
+          <p className="mt-1 text-2xl font-bold text-slate-900">Ciclo 4</p>
+          <p className="mt-0.5 text-[11px] text-amber-800 font-medium">Control, Reportes y Balance Económico</p>
         </div>
       </div>
 
