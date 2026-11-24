@@ -75,6 +75,8 @@ export interface NotaPerdida {
   cantidad: number;
   costo_unitario: string;
   costo_total: string;
+  motivo?: string;
+  observaciones?: string;
   fecha_salida: string;
 }
 

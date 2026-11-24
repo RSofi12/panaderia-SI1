@@ -274,19 +274,38 @@ class Command(BaseCommand):
                     )
                     detalles_creados.append(det)
 
-                # Cada 2 o 3 días, registrar una merma de mostrador (CU18)
-                if dia_n % 2 == 0 and detalles_creados:
-                    det_merma = detalles_creados[0]
-                    cant_merma = rng.randint(4, 12)
-                    hora_merma = timezone.make_aware(datetime(2026, 11, dia_n, 14, 30), tz)
+                # Mermas realistas de panadería en Noviembre (CU18)
+                if detalles_creados:
+                    # 1. Sobrante de mostrador al cierre (18:15 hrs)
+                    det_sobrante = rng.choice(detalles_creados)
+                    cant_sobrante = rng.randint(14, 24)
+                    hora_sobrante = timezone.make_aware(datetime(2026, 11, dia_n, 18, 15), tz)
                     NotaPerdidaProducto.objects.create(
-                        id_detalle_produccion=det_merma,
+                        id_detalle_produccion=det_sobrante,
                         id_usuario=panadero,
-                        cantidad=cant_merma,
-                        costo_unitario=det_merma.costo_unitario,
-                        fecha_salida=hora_merma,
+                        cantidad=cant_sobrante,
+                        costo_unitario=det_sobrante.costo_unitario,
+                        motivo='Sobrante de mostrador al cierre',
+                        observaciones='Pan frío no vendido al cierre de mostrador (18:15 hrs)',
+                        fecha_salida=hora_sobrante,
                     )
                     total_mermas_creadas += 1
+
+                    # 2. Defectos de horneado matutino (cada 2 días, 08:30 hrs)
+                    if dia_n % 2 == 0:
+                        det_defecto = rng.choice(detalles_creados)
+                        cant_defecto = rng.randint(4, 8)
+                        hora_defecto = timezone.make_aware(datetime(2026, 11, dia_n, 8, 30), tz)
+                        NotaPerdidaProducto.objects.create(
+                            id_detalle_produccion=det_defecto,
+                            id_usuario=panadero,
+                            cantidad=cant_defecto,
+                            costo_unitario=det_defecto.costo_unitario,
+                            motivo='Defecto de horneado / deformación',
+                            observaciones='Pan con defecto de cocción o deforme retirado de horno (08:30 hrs)',
+                            fecha_salida=hora_defecto,
+                        )
+                        total_mermas_creadas += 1
                 total_lotes_creados += 1
 
             self.stdout.write(

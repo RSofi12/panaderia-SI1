@@ -167,6 +167,8 @@ class NotaPerdidaProductoSerializer(serializers.ModelSerializer):
             'cantidad',
             'costo_unitario',
             'costo_total',
+            'motivo',
+            'observaciones',
             'fecha_salida',
         ]
 

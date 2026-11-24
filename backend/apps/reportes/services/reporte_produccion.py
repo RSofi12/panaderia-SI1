@@ -9,12 +9,13 @@ from datetime import date
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.db.models import Sum
+from django.db.models import DecimalField, F, Sum
 from django.db.models.functions import Coalesce
 
 from apps.comercializacion.ventas.models import DetalleVenta
 from apps.productos_inventario.produccion.models import JornadaProduccion, Produccion
 from apps.productos_inventario.productos.models import Producto
+from apps.productos_inventario.productos_terminados.models import NotaPerdidaProducto
 
 CERO = Decimal('0.00')
 JORNADAS_VALIDAS = frozenset(JornadaProduccion.values)
@@ -103,6 +104,29 @@ def reporte_produccion(*, desde: date, hasta: date, jornada=None) -> dict:
     unidades_vendidas = sum(vendidas_por_producto.values())
     ids_producto.update(vendidas_por_producto)
 
+    # Mermas y pérdidas de pan registrado en el período (CU18)
+    mermas_qs = (
+        NotaPerdidaProducto.objects.filter(
+            fecha_salida__date__gte=desde,
+            fecha_salida__date__lte=hasta,
+        )
+        .values('id_detalle_produccion__id_producto')
+        .annotate(
+            mermas=Coalesce(Sum('cantidad'), 0),
+            costo_merma=Coalesce(
+                Sum(F('cantidad') * F('costo_unitario'), output_field=DecimalField(max_digits=12, decimal_places=2)),
+                CERO,
+            ),
+        )
+    )
+    mermas_por_producto = {fila['id_detalle_produccion__id_producto']: int(fila['mermas']) for fila in mermas_qs}
+    costo_mermas_por_producto = {
+        fila['id_detalle_produccion__id_producto']: Decimal(fila['costo_merma']) for fila in mermas_qs
+    }
+    unidades_mermadas = sum(mermas_por_producto.values())
+    total_costo_mermas = sum(costo_mermas_por_producto.values(), CERO).quantize(Decimal('0.01'))
+    ids_producto.update(mermas_por_producto)
+
     for producto_id in vendidas_por_producto:
         producidas.setdefault(producto_id, {'cantidad': 0, 'costo': CERO})
 
@@ -113,12 +137,14 @@ def reporte_produccion(*, desde: date, hasta: date, jornada=None) -> dict:
     productos = []
     for producto_id, fila in producidas.items():
         vendidas = vendidas_por_producto.get(producto_id, 0)
+        mermadas = mermas_por_producto.get(producto_id, 0)
         productos.append(
             {
                 'nombre': nombres.get(producto_id, f'Producto #{producto_id}'),
                 'cantidad': fila['cantidad'],
                 'vendidas': vendidas,
-                'diferencia': fila['cantidad'] - vendidas,
+                'mermadas': mermadas,
+                'diferencia': fila['cantidad'] - vendidas - mermadas,
                 'costo': fila['costo'].quantize(Decimal('0.01')),
             }
         )
@@ -130,7 +156,9 @@ def reporte_produccion(*, desde: date, hasta: date, jornada=None) -> dict:
         'cantidad': len(lotes),
         'unidades': unidades,
         'unidades_vendidas': unidades_vendidas,
-        'diferencia': unidades - unidades_vendidas,
+        'unidades_mermadas': unidades_mermadas,
+        'costo_mermas': total_costo_mermas,
+        'diferencia': unidades - unidades_vendidas - unidades_mermadas,
         'costo': costo.quantize(Decimal('0.01')),
         'manana': por_jornada.get(JornadaProduccion.MANANA, 0),
         'tarde': por_jornada.get(JornadaProduccion.TARDE, 0),

@@ -133,6 +133,18 @@ class NotaPerdidaProducto(models.Model):
         decimal_places=2,
         verbose_name='Costo unitario (Bs)',
     )
+    motivo = models.CharField(
+        max_length=100,
+        default='Sobrante de mostrador al cierre',
+        verbose_name='Motivo de la merma',
+        help_text='Causa de la baja (ej. Sobrante al cierre, Defecto de horneado, etc.)',
+    )
+    observaciones = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name='Observaciones adicionales',
+    )
     fecha_salida = models.DateTimeField(default=timezone.now, verbose_name='Fecha de salida')
 
     class Meta:

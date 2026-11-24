@@ -218,7 +218,7 @@ def _detectar_caso_uso(texto: str, cu_actual: str | None) -> str:
         ('CU25', ('resultado', 'económico', 'economico', 'utilidad', 'margen', 'ganancia', 'balance')),
         ('CU24', ('compra', 'gasto', 'inversión', 'inversion', 'proveedor', 'egreso')),
         ('CU23', ('existencia', 'inventario', 'stock', 'insumo', 'materia prima')),
-        ('CU22', ('producción', 'produccion', 'horneado', 'jornada', 'merma')),
+        ('CU22', ('producción', 'produccion', 'horneado', 'jornada', 'merma', 'sobrante', 'perdida', 'pérdida')),
         ('CU21', ('venta', 'ingreso', 'factur', 'comprobante', 'ticket', 'recaud')),
     )
     for cu, palabras in reglas:

@@ -106,6 +106,8 @@ def _contexto_produccion(desde: date, hasta: date) -> dict[str, Any]:
         'jornadas': datos['cantidad'],
         'unidades': datos['unidades'],
         'unidades_vendidas': datos['unidades_vendidas'],
+        'unidades_mermadas': datos.get('unidades_mermadas', 0),
+        'costo_mermas': str(datos.get('costo_mermas', '0.00')),
         'diferencia': datos['diferencia'],
         'costo': str(datos['costo']),
         'cantidad': datos['cantidad'],
@@ -115,6 +117,7 @@ def _contexto_produccion(desde: date, hasta: date) -> dict[str, Any]:
                 'unidades': producto['cantidad'],
                 'cantidad': producto['cantidad'],
                 'vendidas': producto['vendidas'],
+                'mermadas': producto.get('mermadas', 0),
                 'diferencia': producto['diferencia'],
                 'jornadas': producto['vendidas'],
                 'costo': str(producto['costo']),
@@ -123,6 +126,29 @@ def _contexto_produccion(desde: date, hasta: date) -> dict[str, Any]:
         ],
         'lotes': datos['lotes'][:20],
     }
+
+
+def _contexto_economico(desde: date, hasta: date) -> dict[str, Any]:
+    from apps.reportes.services.reporte_resultados_economicos import reporte_resultados_economicos
+    try:
+        datos = reporte_resultados_economicos(desde=desde, hasta=hasta)
+        return {
+            'tipo': 'economico',
+            'ingresos_totales': str(datos['ingresos']['total_ingresos']),
+            'compras_materia_prima': str(datos['costos']['compras_materia_prima']),
+            'mermas_perdidas': str(datos['costos']['mermas_perdidas']),
+            'unidades_mermas': datos['costos']['unidades_mermas'],
+            'gastos_operativos': str(datos['gastos']['total_gastos']),
+            'inversiones': str(datos['inversiones']['total_inversiones']),
+            'utilidad_bruta': str(datos['margenes']['utilidad_bruta']),
+            'utilidad_operativa': str(datos['margenes']['utilidad_operativa']),
+            'utilidad_neta': str(datos['margenes']['utilidad_neta']),
+            'margen_bruto_pct': str(datos['margenes']['margen_bruto_pct']),
+            'margen_neto_pct': str(datos['margenes']['margen_neto_pct']),
+            'estado_resultados': datos['estado_resultados'][:10],
+        }
+    except Exception:
+        return {'tipo': 'economico', 'error': 'No se pudo generar el estado de resultados.'}
 
 
 def _contexto_ventas(desde: date, hasta: date, metodo: str | None) -> dict[str, Any]:
@@ -137,7 +163,9 @@ def _recolectar_contexto(tema: str, desde: date, hasta: date, metodo: str) -> di
         return ctx
     if tema == 'produccion':
         return _contexto_produccion(desde, hasta)
-    if tema in ('ventas', 'productos', 'economico', 'general'):
+    if tema == 'economico':
+        return _contexto_economico(desde, hasta)
+    if tema in ('ventas', 'productos', 'general'):
         return _contexto_ventas(desde, hasta, metodo)
     if tema == 'existencias':
         try:
@@ -214,12 +242,26 @@ def _analisis_local(consulta: str, tema: str, contexto: dict[str, Any], desde: s
                 f'No hay producción ni ventas registradas entre {desde} y {hasta} para «{consulta}». '
                 'Prueba octubre o noviembre 2026 si ejecutaste seed_mes_operativo o seed_noviembre_demo.'
             )
+        mermas_txt = ""
+        if int(contexto.get('unidades_mermadas', 0) or 0) > 0:
+            mermas_txt = f", {contexto['unidades_mermadas']} mermas/pérdidas (Bs {contexto.get('costo_mermas', '0.00')})"
         return (
             f"Producción del {desde} al {hasta}: {contexto.get('jornadas', 0)} jornadas, "
             f"{contexto.get('unidades', 0)} unidades horneadas, "
-            f"{contexto.get('unidades_vendidas', 0)} vendidas "
-            f"(diferencia {contexto.get('diferencia', 0)}), "
-            f"costo estimado Bs {contexto.get('costo', '0.00')}."
+            f"{contexto.get('unidades_vendidas', 0)} vendidas"
+            f"{mermas_txt} "
+            f"(diferencia neta {contexto.get('diferencia', 0)}), "
+            f"costo producción Bs {contexto.get('costo', '0.00')}."
+        )
+
+    if contexto.get('tipo') == 'economico':
+        return (
+            f"Resultados económicos del {desde} al {hasta}: Ingresos totales Bs {contexto.get('ingresos_totales', '0.00')}, "
+            f"Compras insumos Bs {contexto.get('compras_materia_prima', '0.00')}, "
+            f"Mermas/pérdidas Bs {contexto.get('mermas_perdidas', '0.00')} ({contexto.get('unidades_mermas', 0)} un.), "
+            f"Gastos operativos Bs {contexto.get('gastos_operativos', '0.00')}. "
+            f"Utilidad Operativa: Bs {contexto.get('utilidad_operativa', '0.00')}, "
+            f"Utilidad Neta: Bs {contexto.get('utilidad_neta', '0.00')} (Margen Neto: {contexto.get('margen_neto_pct', '0.00')}%)."
         )
 
     if contexto.get('tipo') == 'ventas':

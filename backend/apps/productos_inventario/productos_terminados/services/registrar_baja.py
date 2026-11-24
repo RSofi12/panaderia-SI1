@@ -118,6 +118,8 @@ def registrar_baja_producto(
             id_usuario=usuario,
             cantidad=cantidad,
             costo_unitario=costo_unitario,
+            motivo=motivo or 'Sobrante de mostrador al cierre',
+            observaciones=observaciones or '',
             fecha_salida=fecha_salida,
         )
 

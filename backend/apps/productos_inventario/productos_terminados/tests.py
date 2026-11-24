@@ -443,4 +443,5 @@ class PruebasBajasProductosTerminadosCU18(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertTrue(len(resp.data) >= 1)
         self.assertEqual(resp.data[0]['producto_nombre'], 'Marraqueta Especial')
+        self.assertEqual(resp.data[0]['motivo'], 'Sobrante de mostrador al cierre')
         self.assertEqual(resp.data[0]['costo_total'], '1.20')

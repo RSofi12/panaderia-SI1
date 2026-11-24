@@ -123,6 +123,8 @@ class Command(BaseCommand):
                         id_usuario=usuario_mrojas,
                         cantidad=3,
                         costo_unitario=det_pan_dulce_d1.costo_unitario,
+                        motivo='Sobrante de mostrador al cierre',
+                        observaciones='Pan frío sobrante del día 1',
                         fecha_salida=timezone.make_aware(datetime(2026, 9, 6, 20, 0, 0)),
                     )
 
@@ -137,6 +139,8 @@ class Command(BaseCommand):
                         id_usuario=usuario_mrojas,
                         cantidad=5,
                         costo_unitario=det_marraqueta_d2.costo_unitario,
+                        motivo='Sobrante de mostrador al cierre',
+                        observaciones='Marraquetas sobrantes del día 2',
                         fecha_salida=timezone.make_aware(datetime(2026, 9, 7, 20, 0, 0)),
                     )
 

@@ -212,7 +212,15 @@ class Command(BaseCommand):
                 ids_prods = list(prods_del_mes.values_list('id_produccion', flat=True))
                 dets_prod = DetalleProduccion.objects.filter(id_produccion_id__in=ids_prods)
                 ids_dets = list(dets_prod.values_list('id_detalle_produccion', flat=True))
-                NotaPerdidaProducto.objects.filter(id_detalle_produccion_id__in=ids_dets).delete()
+
+                ids_notas_perdida = list(
+                    NotaPerdidaProducto.objects.filter(id_detalle_produccion_id__in=ids_dets).values_list(
+                        'id_nota_perdida', flat=True
+                    )
+                )
+                MovimientoProductoTerminado.objects.filter(id_nota_perdida_id__in=ids_notas_perdida).delete()
+                NotaPerdidaProducto.objects.filter(id_nota_perdida__in=ids_notas_perdida).delete()
+
                 MovimientoProductoTerminado.objects.filter(id_produccion_id__in=ids_prods).delete()
                 dets_prod.delete()
                 prods_del_mes.delete()
@@ -314,17 +322,40 @@ class Command(BaseCommand):
                     )
                     detalles_prod_creados.append(dp)
 
-                # Mermas controladas (cada 3-4 días, 2 a 4 panes)
-                freq_merma = 4 if mes == 7 else 3
-                if dia.day % freq_merma == 0 and detalles_prod_creados:
-                    dp_merma = rng.choice(detalles_prod_creados)
-                    NotaPerdidaProducto.objects.create(
-                        id_detalle_produccion=dp_merma,
-                        id_usuario=panadero,
-                        cantidad=rng.randint(2, 4),
-                        costo_unitario=dp_merma.costo_unitario,
-                        fecha_salida=timezone.make_aware(datetime.combine(dia, time(14, 0))),
+                # Mermas realistas diarias (CU18)
+                if detalles_prod_creados:
+                    # 1. Sobrante de mostrador al cierre de atención (18:15 hrs)
+                    cant_sobrante_rango = (
+                        (6, 12) if mes == 7 else
+                        (10, 18) if mes == 8 else
+                        (14, 22) if mes == 9 else
+                        (16, 24)
                     )
+                    dp_sobrante = rng.choice(detalles_prod_creados)
+                    cant_sob = rng.randint(*cant_sobrante_rango)
+                    NotaPerdidaProducto.objects.create(
+                        id_detalle_produccion=dp_sobrante,
+                        id_usuario=panadero,
+                        cantidad=cant_sob,
+                        costo_unitario=dp_sobrante.costo_unitario,
+                        motivo='Sobrante de mostrador al cierre',
+                        observaciones='Pan frío no vendido al cierre de mostrador (18:15 hrs)',
+                        fecha_salida=timezone.make_aware(datetime.combine(dia, time(18, 15))),
+                    )
+
+                    # 2. Defectos de horneado matutino (cada 2 días, 08:30 hrs)
+                    if dia.day % 2 == 0:
+                        dp_defecto = rng.choice(detalles_prod_creados)
+                        cant_def = rng.randint(3, 7)
+                        NotaPerdidaProducto.objects.create(
+                            id_detalle_produccion=dp_defecto,
+                            id_usuario=panadero,
+                            cantidad=cant_def,
+                            costo_unitario=dp_defecto.costo_unitario,
+                            motivo='Defecto de horneado / deformación',
+                            observaciones='Pan con exceso de cocción o deforme retirado de horno (08:30 hrs)',
+                            fecha_salida=timezone.make_aware(datetime.combine(dia, time(8, 30))),
+                        )
 
                 # 2. Ventas diarias de mostrador según etapa de crecimiento
                 if mes == 7:

@@ -228,8 +228,12 @@ export const HistorialMermasModal: React.FC<HistorialMermasModalProps> = ({
                       </td>
                       <td className="py-3 px-4 font-semibold text-slate-900">
                         {m.producto_nombre}
+                        <span className="block text-[11px] text-amber-700 font-medium">
+                          {m.motivo || 'Merma de producto'}
+                        </span>
                         <span className="block text-[10px] text-slate-400 font-normal">
                           {m.categoria_nombre}
+                          {m.observaciones ? ` · ${m.observaciones}` : ''}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-center">
