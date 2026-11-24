@@ -48,8 +48,8 @@ class Command(BaseCommand):
             ('seed_historial_demo', '8. Jornadas de Producción Diaria y Mermas'),
             ('seed_pedidos_demo', '9. Clientes y Pedidos en Mostrador/Anticipados'),
             ('seed_gastos_demo', '10. Gastos Operativos e Inversiones'),
-            ('seed_ventas_demo', '11. Registro Histórico de Ventas'),
-            ('seed_mes_operativo', '12. Simulación de 1 Mes Operativo Completo (L-S, 8h)'),
+            ('seed_ventas_demo', '11. Registro Histórico de Ventas (Noviembre 2026)'),
+            ('seed_mes_operativo', '12. Meses Operativos Completos (Septiembre y Octubre 2026, L-S, 35-40 v/día)'),
         ]
 
         exitos = 0
